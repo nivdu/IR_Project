@@ -2,7 +2,6 @@ package sample;
 
 import java.io.File;
 import java.util.LinkedList;
-import java.util.List;
 
 public class ReadFile {
     Parse parse;
@@ -17,7 +16,11 @@ public class ReadFile {
             LinkedList<String> docsInFile;
             for (final File fileOfDocs: fileEntry.listFiles()){
                 docsInFile = splitFileByDocs(fileOfDocs);
-                parse.parseDoc(docsInFile);
+                for (String currentDoc:docsInFile){
+                    String docSplitBySpaces[] = currentDoc.split(" ");
+                    parse.parseDoc(docSplitBySpaces);
+                }
+
             }
         }
     }
