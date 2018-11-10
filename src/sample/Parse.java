@@ -1,7 +1,5 @@
 package sample;
 
-import javax.xml.soap.Node;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
@@ -21,7 +19,7 @@ public class Parse {
     public Parse() {
         this.stopWords = new HashSet<String>();
         this.dictionary = new HashSet<String>();
-        this.months = new HashSet<String>();
+        this.months = new HashMap<String, String>();
         createMonthHS();
     }
 
