@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 
 public class Parse {
     //hashSet for all the stop words.
@@ -84,10 +85,10 @@ public class Parse {
                     continue;
 
                 //check DollarTerm function.
-                if(DollarTerm(nextNextToken, nextNextToken, currToken));
+//                if(DollarTerm(nextNextToken, nextNextToken, currToken));
                 //check numberKBMTerms function.
-                if(numberKMB(currToken,nextToken))
-                    continue;
+//                if(numberKMB(currToken,nextToken))
+//                    continue;
 
                 //todo use stemmer.
             }
@@ -169,11 +170,15 @@ public class Parse {
     private boolean DateTerm(String nextT, String token) {
         //todo check if token is empty null and shit
         if (checkIfOnlyDigitsDotsComma(token) && token.length()<4 && months.containsKey(nextT)) {//todo maby check if only numbers without digits and dots.
+            if(token.length()==1)
+                token = "0" + token;
             String toAdd = months.get(nextT) + "-" + token;
             dictionary.add(toAdd);
             return true;
         }
         else if(checkIfOnlyDigitsDotsComma(nextT) && token.length()<4 && months.containsKey(token)){//todo maby check if only numbers without digits and dots.
+            if(nextT.length()==1)
+                nextT = "0" + nextT;
             String toAdd = months.get(token) + "-" + nextT;
             dictionary.add(toAdd);
             return true;
@@ -364,6 +369,27 @@ public class Parse {
     }
 
     /**
+     * Words whose first letter is always a large letter, throughout the corpus, will be preserved with letters
+     * Only large. On the other hand, if a word appears sometimes with a large letter and sometimes without a large letter we will save it
+     * With only lowercase letters.
+     */
+    private void addOnlyLettersWords(String token){
+        if (token!=null && token!="" && (Pattern.matches("[a-zA-Z]+", token))){
+            //if the first char of the token upper case.
+            if(token.charAt(0)<=90 && token.charAt(0)>=65){
+                if(!dictionary.contains(token.toLowerCase()))
+                    dictionary.add(token.toUpperCase());
+            }
+            else if(token.equals(token.toLowerCase()))
+                if(dictionary.contains(token.toUpperCase())) {
+                    dictionary.remove(token.toUpperCase());
+                    dictionary.add(token) ;
+                }
+                else dictionary.add(token);
+        }
+    }
+
+    /**
      * convert number to number K/M/B
      * @param number
      * @param numberAfterDot
@@ -418,12 +444,22 @@ public class Parse {
         Parse parse = new Parse();
       //        String test="123";
 //        System.out.println(test.substring(0,2));
-        parse.percentageTerm("percentage","6");
+//        parse.percentageTerm("percentage","6");
+//        parse.DateTerm("MAY","14");
+//        parse.DateTerm("May","4");
+//        parse.DateTerm("15","MAY");
+//        parse.DateTerm("1994","April");
+//        parse.addOnlyLettersWords("Loren");
+
+//        parse.addOnlyLettersWords("Loren");
+        parse.addOnlyLettersWords("loren");
         for (String s:parse.dictionary){
             System.out.println(s);
         }
 
-      
+
+
+/*
 //        parse.regularNumberTerms("123","456/2345");
         parse.DollarTermLessThanMillion("l","wer","$123");
         parse.DollarTermLessThanMillion("Dollars","wer","123.2");
@@ -432,7 +468,7 @@ public class Parse {
         for (String term:parse.dictionary) {
             System.out.println(term);
         }
-
+*/
 ///    parse.numberKMB("1000","3/4");
 //        parse.numberKMB("-50","Thousand");
 //        parse.numberKMB("50.2","Thousand");
