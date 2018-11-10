@@ -13,7 +13,8 @@ public class Parse {
     //dictionary contain all the terms from the docs
     HashSet<String> dictionary;
     //HashSet for month names
-    HashMap<String,String> months;
+    HashMap<String, String> months;
+
     /**
      * Parse Constructor.
      */
@@ -27,31 +28,31 @@ public class Parse {
     /**
      * add to the month HS all the months names.
      */
-    private void createMonthHS(){
-        months.put("January","01");
-        months.put("JANUARY","01");
-        months.put("February","02");
-        months.put("FEBRUARY","02");
-        months.put("March","03");
-        months.put("MARCH","03");
-        months.put("April","04");
-        months.put("APRIL","04");
-        months.put("MAY","05");
-        months.put("May","05");
-        months.put("June","06");
-        months.put("JUNE","06");
-        months.put("July","07");
-        months.put("JULY","07");
-        months.put("August","08");
-        months.put("AUGUST","08");
-        months.put("September","09");
-        months.put("SEPTEMBER","09");
-        months.put("October","10");
-        months.put("OCTOBER","10");
-        months.put("November","11");
-        months.put("NOVEMBER","11");
-        months.put("December","12");
-        months.put("DECEMBER","12");
+    private void createMonthHS() {
+        months.put("January", "01");
+        months.put("JANUARY", "01");
+        months.put("February", "02");
+        months.put("FEBRUARY", "02");
+        months.put("March", "03");
+        months.put("MARCH", "03");
+        months.put("April", "04");
+        months.put("APRIL", "04");
+        months.put("MAY", "05");
+        months.put("May", "05");
+        months.put("June", "06");
+        months.put("JUNE", "06");
+        months.put("July", "07");
+        months.put("JULY", "07");
+        months.put("August", "08");
+        months.put("AUGUST", "08");
+        months.put("September", "09");
+        months.put("SEPTEMBER", "09");
+        months.put("October", "10");
+        months.put("OCTOBER", "10");
+        months.put("November", "11");
+        months.put("NOVEMBER", "11");
+        months.put("December", "12");
+        months.put("DECEMBER", "12");
     }
 
 
@@ -65,30 +66,31 @@ public class Parse {
 
             //loop over all the tokens in current doc.
 
-            boolean isAddToDic=false;
-            for (int currDocIndex = 0; currDocIndex < splitedDoc.length ; currDocIndex++) {
+            boolean isAddToDic = false;
+            for (int currDocIndex = 0; currDocIndex < splitedDoc.length; currDocIndex++) {
                 //if current word is stop word continue to the next word.
                 String currToken = splitedDoc[currDocIndex];
                 if (deleteStopWords(currToken))
                     continue;
                 //get prev and next tokens if there isn't next token (the end of the array) return nextToken="", if index==0 return prevToken="".
                 String nextToken = getNextToken(splitedDoc, currDocIndex);
-                String nextNextToken = getNextToken(splitedDoc, currDocIndex+1);
+                String nextNextToken = getNextToken(splitedDoc, currDocIndex + 1);
                 String prevToken = getNextToken(splitedDoc, currDocIndex);
                 //check percentageTerms function
                 isAddToDic = percentageTerm(nextToken, currToken);
                 if (isAddToDic && nextToken.equals("percentage") || nextToken.equals("percent")) {
                     currDocIndex++;
                     continue;
-                }
-                else if(isAddToDic)
+                } else if (isAddToDic)
                     continue;
 
-                //check DollarTerm function.
-//                if(DollarTerm(nextNextToken, nextNextToken, currToken));
+                //check DollarTerm function less than miliion.
+                if (DollarTermLessThanMillion(currToken, nextNextToken, nextNextToken))
+                    continue;
                 //check numberKBMTerms function.
-//                if(numberKMB(currToken,nextToken))
-//                    continue;
+                if (regularNumberTerms(currToken, nextToken))
+                    continue;
+
 
                 //todo use stemmer.
             }
@@ -136,15 +138,15 @@ public class Parse {
      * @return - true if the tokens/token are percentage token type.
      */
 
-    private boolean percentageTerm(String nextT, String token){//todo check for %-number
-        if(token==null || token.length()<=0)//todo what to do if the token is null?
+    private boolean percentageTerm(String nextT, String token) {//todo check for %-number
+        if (token == null || token.length() <= 0)//todo what to do if the token is null?
             return false;
         //cases like 6%
         if (token.charAt(token.length() - 1) == '%') {
             //substring from number% to number (6% to 6) todo check if length-2 its ok.
             String checkIfNumber = token.substring(0, token.length() - 2);
             //if before the '%' char there is only digits and docs add to the dictionary the whole token.
-            if(checkIfOnlyDigitsDotsComma(checkIfNumber)) {
+            if (checkIfOnlyDigitsDotsComma(checkIfNumber)) {
                 dictionary.add(token);
                 return true;
             }
@@ -153,7 +155,7 @@ public class Parse {
         else if (nextT != null && nextT != "" && (nextT.equals("percent") || nextT.equals("percentage"))) {
             //if before the percent/percentage there is only digits and docs add to the dictionary the whole token combine with '%'.
 
-            if(checkIfOnlyDigitsDotsComma(token)) {
+            if (checkIfOnlyDigitsDotsComma(token)) {
                 dictionary.add(token + '%');
                 return true;
             }
@@ -163,6 +165,7 @@ public class Parse {
 
     /**
      * check whether a token is date term
+     *
      * @param nextT - the next token in the doc
      * @param token - curr token in the doc
      * @return - true if the token are date token type.
@@ -182,8 +185,7 @@ public class Parse {
             String toAdd = months.get(token) + "-" + nextT;
             dictionary.add(toAdd);
             return true;
-        }
-        else if(months.containsKey(token) && checkIfOnlyDigitsDotsComma(nextT)) {//todo maby check if only numbers without digits and dots.
+        } else if (months.containsKey(token) && checkIfOnlyDigitsDotsComma(nextT)) {//todo maby check if only numbers without digits and dots.
             String toAdd = nextT + "-" + months.get(token);
             dictionary.add(toAdd);
             return true;
@@ -194,24 +196,24 @@ public class Parse {
 
     /**
      * check if a string is a legal fraction
+     *
      * @param token - string to check
      * @return - true if legal fraction else false.
      */
-    private boolean checkIfLegalFraction(String token){
-        int slashCounter=0;
-        if(!Character.isDigit(token.charAt(0)))
+    private boolean checkIfLegalFraction(String token) {
+        int slashCounter = 0;
+        if (!Character.isDigit(token.charAt(0)))
             return false;
-        for (int i = 0; i < token.length() ; i++) {
+        for (int i = 0; i < token.length(); i++) {
             char c = token.charAt(i);
-            if(c=='/') {
+            if (c == '/') {
                 slashCounter++;
-                if(slashCounter!=1)
+                if (slashCounter != 1)
                     return false;
-                if (i+1>=token.length() || !Character.isDigit(token.charAt(i + 1)))
+                if (i + 1 >= token.length() || !Character.isDigit(token.charAt(i + 1)))
                     return false;
                 continue;
-            }
-            else if(!Character.isDigit(c))
+            } else if (!Character.isDigit(c))
                 return false;
         }
         return true;
@@ -224,9 +226,9 @@ public class Parse {
      * @return - true if contain only numbers else false.
      */
 
-    private boolean checkIfOnlyDigitsDotsComma(String number){
-        for (Character c:number.toCharArray()){
-            if(!Character.isDigit(c) && !(c.equals('.')) && !(c.equals(',')))
+    private boolean checkIfOnlyDigitsDotsComma(String number) {
+        for (Character c : number.toCharArray()) {
+            if (!Character.isDigit(c) && !(c.equals('.')) && !(c.equals(',')))
                 return false;
         }
         return true;
@@ -253,14 +255,49 @@ public class Parse {
      * @return - String type of the token at location index -1. if index ==0 return empty string.
      */
 
-    private String getPrevToken(String[] currDoc, int index){
-        if(index-1<0)
+    private String getPrevToken(String[] currDoc, int index) {
+        if (index - 1 < 0)
             return "";
         return currDoc[index - 1];
     }
 
+    /**
+     * check what is the size of the number in the string
+     * @param token - the string which is number
+     * @return - return the kind of the number - K for thousand, M- for miliion, B for Billion and U for numbers
+     * less than thousand
+     */
+    private String checkIfKMBU(String token) {
+        String number = "";
+        for (int i = 0; i < token.length(); i++) {
+            if (i == 0 && token.charAt(0) == '-') {
+                continue;
+            } else if (Character.isDigit(token.charAt(i))) {
+                number += token.charAt(i);
+            } else if (token.charAt(i) == ',') {
+                continue;
+            } else if (token.charAt(i) == '.') {
+                break;
+            }
+        }
+        if(number.length()>=4 && number.length()<=6)
+            return "K";
+        if(number.length()>=7 && number.length()<=9)
+            return "M";
+        if(number.length()>=10)
+            return "B";
+        return "U";//less than thousand
+    }
 
-    private boolean DollarTermLessThanMillion(String nextT, String nextNextT, String token) {
+
+    /**
+     * every price which is less than million dollars will represent as number Dollars
+     * @param nextT - the next token
+     * @param nextNextT - the next next token
+     * @param token - the current token
+     * @return - true if the term keep the given laws
+     */
+    private boolean DollarTermLessThanMillion(String token ,String nextT, String nextNextT) {
         if (token == null || token.length() <= 0)//todo what to do if the token is null?
             return false;
         //cases like $1000
@@ -272,16 +309,32 @@ public class Parse {
                 return true;
             }
         }
-        if(!checkIfOnlyDigitsDotsComma(token))
+        String kind = checkIfKMBU(token);
+        if(!checkIfOnlyDigitsDotsComma(token) || !(kind.equals("K") || kind.equals("U")))
             return false;
+        //cases like 123 Dollars
         if(nextT.equals("Dollars")){
             dictionary.add(token+" "+nextT);
             return true;
         }
+        //cases like 123 3/4 Dollars
         if(checkIfLegalFraction(nextT)&&nextNextT.equals("Dollars")){
             dictionary.add(token+" "+nextT+" "+nextNextT);
             return true;
         }
+        return false;
+    }
+
+    /**
+     * every price which is more than million dollars will represent as number M Dollars
+     * @param token - the curren token
+     * @param nextT - the next token
+     * @param nextNextT- the next next token
+     * @param nextNextNextT- the next next next token
+     * @return- true if the term keep the given laws
+     */
+    private boolean DollarTermMoreThanMillion(String token, String nextT, String nextNextT, String nextNextNextT){
+
         return false;
     }
 
