@@ -1,13 +1,9 @@
 package sample;
 
-import javax.xml.soap.Node;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
-
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Scanner;
 
 public class Parse {
@@ -15,37 +11,83 @@ public class Parse {
     HashSet<String> stopWords;
     //dictionary contain all the terms from the docs
     HashSet<String> dictionary;
-
+    //HashSet for month names
+    HashMap<String,String> months;
     /**
      * Parse Constructor.
      */
     public Parse() {
         this.stopWords = new HashSet<String>();
         this.dictionary = new HashSet<String>();
+        this.months = new HashMap<String, String>();
+        createMonthHS();
     }
 
+    /**
+     * add to the month HS all the months names.
+     */
+    private void createMonthHS(){
+        months.put("January","01");
+        months.put("JANUARY","01");
+        months.put("February","02");
+        months.put("FEBRUARY","02");
+        months.put("March","03");
+        months.put("MARCH","03");
+        months.put("April","04");
+        months.put("APRIL","04");
+        months.put("MAY","05");
+        months.put("May","05");
+        months.put("June","06");
+        months.put("JUNE","06");
+        months.put("July","07");
+        months.put("JULY","07");
+        months.put("August","08");
+        months.put("AUGUST","08");
+        months.put("September","09");
+        months.put("SEPTEMBER","09");
+        months.put("October","10");
+        months.put("OCTOBER","10");
+        months.put("November","11");
+        months.put("NOVEMBER","11");
+        months.put("December","12");
+        months.put("DECEMBER","12");
+    }
+
+
     public void parseDoc(String[] currDoc) {
-        //pinter to the curr index in currDoc array.
         for (String doc:currDoc) {
             //temporary dictionary to find the max tf in current doc.
-            HashMap<String, Integer> FindMaxTf;
+            HashMap<String, Integer> FindMaxTf;//todo at the end of the loop check the tf and everything
             //split by spaces
             String[] splitedDoc = doc.split(" ");
-            //loop over all the tokens in current doc.
-            for (int currDocIndex = 0; currDocIndex < splitedDoc.length ; currDocIndex++) {
-                //todo use stemmer.
-                //if current word is stop word continue to the next word.
-                if (deleteStopWords(splitedDoc[0]))
-                    continue;
 
+            //loop over all the tokens in current doc.
+            boolean isAddToDic=false;
+            for (int currDocIndex = 0; currDocIndex < splitedDoc.length ; currDocIndex++) {
+                //if current word is stop word continue to the next word.
+                String currToken = splitedDoc[currDocIndex];
+                if (deleteStopWords(currToken))
+                    continue;
                 //get prev and next tokens if there isn't next token (the end of the array) return nextToken="", if index==0 return prevToken="".
-                String nextToken = getNextToken(currDoc, currDocIndex);
-                String prevToken = getNextToken(currDoc, currDocIndex);
+                String nextToken = getNextToken(splitedDoc, currDocIndex);
+                String nextNextToken = getNextToken(splitedDoc, currDocIndex+1);
+                String prevToken = getNextToken(splitedDoc, currDocIndex);
                 //check percentageTerms function
-                if (percentageTerm(nextToken, splitedDoc[currDocIndex]) && nextToken.equals("percentage") || nextToken.equals("percent")) {
+                isAddToDic = percentageTerm(nextToken, currToken);
+                if (isAddToDic && nextToken.equals("percentage") || nextToken.equals("percent")) {
                     currDocIndex++;
                     continue;
                 }
+                else if(isAddToDic)
+                    continue;
+
+                //check DollarTerm function.
+                if(DollarTerm(nextNextToken, nextNextToken, currToken));
+                //check numberKBMTerms function.
+                if(numberKMB(currToken,nextToken))
+                    continue;
+
+                //todo use stemmer.
             }
         }
     }
@@ -88,7 +130,7 @@ public class Parse {
      * @param token - the curr token to check in the curr doc.
      * @return - true if the tokens/token are percentage token type.
      */
-    private boolean percentageTerm(String nextT, String token){
+    private boolean percentageTerm(String nextT, String token){//todo check for %-number
         if(token==null || token.length()<=0)//todo what to do if the token is null?
             return false;
         //cases like 6%
@@ -96,7 +138,7 @@ public class Parse {
             //substring from number% to number (6% to 6) todo check if length-2 its ok.
             String checkIfNumber = token.substring(0,token.length()-2);
             //if before the '%' char there is only digits and docs add to the dictionary the whole token.
-            if(checkIfOnlyDigitsAndDots(checkIfNumber)) {
+            if(checkIfOnlyDigitsDotsComma(checkIfNumber)) {
                 dictionary.add(token);
                 return true;
             }
@@ -104,7 +146,7 @@ public class Parse {
         //cases like "6 percent", "6 percentage"
         else if(nextT!=null && nextT!="" &&(nextT.equals("percent") || nextT.equals("percentage"))){
             //if before the percent/percentage there is only digits and docs add to the dictionary the whole token combine with '%'.
-            if(checkIfOnlyDigitsAndDots(token)) {
+            if(checkIfOnlyDigitsDotsComma(token)) {
                 dictionary.add(token + '%');
                 return true;
             }
@@ -113,13 +155,65 @@ public class Parse {
     }
 
     /**
+     * check whether a token is date term
+     * @param nextT - the next token in the doc
+     * @param token - curr token in the doc
+     * @return - true if the token are date token type.
+     */
+    private boolean DateTerm(String nextT, String token) {
+        //todo check if token is empty null and shit
+        if (checkIfOnlyDigitsDotsComma(token) && token.length()<4 && months.containsKey(nextT)) {//todo maby check if only numbers without digits and dots.
+            String toAdd = months.get(nextT) + "-" + token;
+            dictionary.add(toAdd);
+            return true;
+        }
+        else if(checkIfOnlyDigitsDotsComma(nextT) && token.length()<4 && months.containsKey(token)){//todo maby check if only numbers without digits and dots.
+            String toAdd = months.get(token) + "-" + nextT;
+            dictionary.add(toAdd);
+            return true;
+        }
+        else if(months.containsKey(token) && checkIfOnlyDigitsDotsComma(nextT)) {//todo maby check if only numbers without digits and dots.
+            String toAdd = nextT + "-" + months.get(token);
+            dictionary.add(toAdd);
+            return true;
+        }
+        return false;
+    }
+
+
+    /**
+     * check if a string is a legal fraction
+     * @param token - string to check
+     * @return - true if legal fraction else false.
+     */
+    private boolean checkIfLegalFraction(String token){
+        int slashCounter=0;
+        if(!Character.isDigit(token.charAt(0)))
+            return false;
+        for (int i = 0; i < token.length() ; i++) {
+            char c = token.charAt(i);
+            if(c=='/') {
+                slashCounter++;
+                if(slashCounter!=1)
+                    return false;
+                if (i+1>=token.length() || !Character.isDigit(token.charAt(i + 1)))
+                    return false;
+                continue;
+            }
+            else if(!Character.isDigit(c))
+                return false;
+        }
+        return true;
+    }
+
+    /**
      * check whether a given string contain only digits(numbers)
      * @param number - string to check
      * @return - true if contain only numbers else false.
      */
-    private boolean checkIfOnlyDigitsAndDots(String number){
+    private boolean checkIfOnlyDigitsDotsComma(String number){
         for (Character c:number.toCharArray()){
-            if(!Character.isDigit(c) && !(c.equals('.')))
+            if(!Character.isDigit(c) && !(c.equals('.')) && !(c.equals(',')))
                 return false;
         }
         return true;
@@ -144,7 +238,7 @@ public class Parse {
      * @return - String type of the token at location index -1. if index ==0 return empty string.
      */
     private String getPrevToken(String[] currDoc, int index){
-        if(index-1<=0)
+        if(index-1<0)
             return "";
         return currDoc[index-1];
     }
@@ -154,7 +248,7 @@ public class Parse {
      *
      * @param token
      */
-    public void numberKMB(String token){
+    public boolean numberKMB(String token, String nextToken){
         String number="";
         String numberAfterDot="";
         boolean isDouble = false;
@@ -219,6 +313,7 @@ public class Parse {
             }
             System.out.println(term);
         }
+        return isNumber;
     }
 
     private String reduceZeros(String term, int reduce) {
@@ -247,7 +342,12 @@ public class Parse {
         Parse parse=new Parse();
 //        String test="123";
 //        System.out.println(test.substring(0,2));
+        parse.percentageTerm("percentage","6");
+        for (String s:parse.dictionary){
+            System.out.println(s);
+        }
 
+        /*
         parse.numberKMB("123");
         parse.numberKMB("123.23");
         //check k
@@ -269,5 +369,6 @@ public class Parse {
         System.out.println();
         parse.numberKMB("123456789123456");
         parse.numberKMB("1234567891.23");
+        */
     }
 }
