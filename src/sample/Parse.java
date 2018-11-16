@@ -435,13 +435,13 @@ public class Parse {
             }
         }
         String term = "";
-        if (nextToken == "Thousand" && isNumber) {
+        if (nextToken.equals("Thousand") && isNumber) {
             term = token + "K";
-        } else if (nextToken == "Million" && isNumber) {
+        } else if (nextToken.equals("Million") && isNumber) {
             term = token + "M";
-        } else if (nextToken == "Billion" && isNumber) {
+        } else if (nextToken.equals("Billion") && isNumber) {
             term = token + "B";
-        } else if (nextToken == "Trillion" && isNumber) {
+        } else if (nextToken.equals("Trillion") && isNumber) {
             term = token + "000" + "B";
         } else if (isNumber) {
             term = numberToKMB(number, numberAfterDot, isDouble, nextToken);
@@ -557,6 +557,138 @@ public class Parse {
         return term;
     }
 
+    //check if string is one of this options: thousands million billion franction(3/4)
+    private boolean isItNumberFromSectionA(String s){
+        if(s==null || s.equals(""))
+            return false;
+        //if is a legal fraction
+        if(checkIfLegalFraction(s))
+            return true;
+        //if is one of this words
+        if(s.equals("Thousand") || s.equals("Million") || s.equals("Billion") || s.equals("Trillion"))
+            return true;
+        return false;
+    }
+
+
+    /**
+     * Ranges / expressions with hyphen will be added to the dictionary as a single term.
+     * @param nextT
+     * @param currT
+     * @return
+     */
+    private boolean expressionAndRangesTerm(String nextT, String currT, String nextnextT, int currIndex, String[] currDoc){
+        String[] exp;
+        //like 123 Thousand-124, 123 Thousand-124 Thousand, 123 Thousand-word
+        if(checkIfOnlyDigitsDotsComma(currT) && nextT.contains("-")) {
+            exp = nextT.split("-");//thousand,124
+            String leftExp;
+            //if the currT (current token) related to the "- expression"
+            if (isItNumberFromSectionA(exp[0])) {
+                leftExp = regularNumberTerms2(currT, exp[0]);
+                //like 123 T-124 T
+                if (exp.length == 2 && regularNumberTerms2(exp[1], nextnextT) != regularNumberTerms2(exp[1], "stam")) {
+                    String rightExp = regularNumberTerms2(exp[1], nextnextT);
+                    dictionary.add(leftExp + "-" + rightExp);
+                    return true;//todo need 2 jumps
+                    //like 123 T-124 or 123 T-word.
+                } else {
+                    if (exp.length == 2) {
+                        dictionary.add(leftExp + "-" + exp[1]);
+                        return true;//todo need 2 jumps
+                    }
+                }
+            }
+        }
+
+        //like 123-123 2/3
+        else if(currT.contains("-")) {
+            exp = currT.split("-");
+            //if like 123/123 T
+            if(exp.length==2 && isItNumberFromSectionA(nextT)){
+                String rightExp = regularNumberTerms2(exp[1],nextT);
+                dictionary.add(exp[0] + "-" + rightExp);
+                return true;//in this case need 2 jumps (we used the next word) to continue in parsdoc function.//todo
+            }
+        }
+        //like: word-word, word-word-word
+        else if(currT.contains("-")){
+            exp = currT.split("-");
+            if (exp.length==2 && checkIfOnlyLetters(exp[0]) && checkIfOnlyLetters(exp[1])){
+                dictionary.add(currT);//in this case need only to continue in parsdoc function.
+                return true;
+            }
+            if(exp.length==3 && checkIfOnlyLetters(exp[0]) && checkIfOnlyLetters(exp[1]) && checkIfOnlyLetters(exp[2])){
+                dictionary.add(currT);//in this case need only to continue in parsdoc function.
+                return true;
+            }
+        }
+        //like Between number1 and number2
+        if(currT.equals("Between") && checkIfOnlyDigitsDotsComma(nextT)) {
+            int jumps = 4;
+            String Between;
+            String Number1;
+            String And;
+            String Number2;
+            String Number2first;
+            String Number2Second;
+            boolean and = false;
+            //if number1 is two words: 123 Thousand or 123 2/3...
+            if (isItNumberFromSectionA(nextnextT)) {// Between 123 Thousand and number
+                jumps++;
+                Number1 = regularNumberTerms2(nextT, nextnextT);
+            }
+            //if number1 is one word
+            else {
+                Number1 = nextT;
+            }
+            //if it really Between number and number expression
+            if (jumps == 4 && nextnextT.equals("and") || jumps == 5 && getNextToken(currDoc, currIndex + 2).equals("and")) {
+                if (jumps == 4) {//if number1 is one word
+                    Number2first = getNextToken(currDoc, currIndex + 2);
+                    Number2Second = getNextToken(currDoc, currIndex + 3);
+                } else {//if number 1 is two words
+                    Number2first = getNextToken(currDoc, currIndex + 3);
+                    Number2Second = getNextToken(currDoc, currIndex + 4);
+                }
+                //if number2 is two words
+                if (checkIfOnlyDigitsDotsComma(Number2first)) {
+                    if (isItNumberFromSectionA(Number2Second)) {
+                        jumps++;
+                        Number2 = regularNumberTerms2(Number2first, Number2Second);
+                    }
+                    //if number 2 is one word number
+                    else
+                        Number2 = Number2first;
+                    dictionary.add(Number1 + "-" + Number2);//todo check how much jumps to do in the parsdoc function! the number of jumps saved in integer jumps.
+                    return true;
+                }
+            }
+        }
+        //regular word-word, number-word, word-number
+        if(currT.contains("-")) {
+            dictionary.add(currT);
+            return true;//in this case need only to continue in parsdoc function.
+        }
+        return false;
+    }
+
+    /**
+     * taken from url :https://stackoverflow.com/questions/5238491/check-if-string-contains-only-letters
+     * check whether a string combine only from letters.
+     * @param toCheck string to check
+     * @return if only letters true else false.
+     */
+    private boolean checkIfOnlyLetters(String toCheck){
+        char[] chars = toCheck.toCharArray();
+        for (char c : chars) {
+            if(!Character.isLetter(c)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public static void main(String[] args) {
         Parse parse = new Parse();
 
@@ -573,11 +705,7 @@ public class Parse {
 //        parse.addOnlyLettersWords("Loren");
 
 //        parse.addOnlyLettersWords("Loren");
-//        parse.addOnlyLettersWords("loren");
-//        for (String s:parse.dictionary){
-//            System.out.println(s);
-//        }
-//
+
 
 
 /*
