@@ -345,6 +345,16 @@ public class Parse {
      * @return true if legal number
      */
     private boolean regularNumberTerms(String token, String nextToken) {
+        String term = regularNumberTerms2(token,nextToken);
+        if(!term.equals("")){
+            dictionary.add(term);
+            return true;
+        }
+        return false;
+    }
+
+
+    private String regularNumberTerms2(String token, String nextToken) {
         String number = "";
         String numberAfterDot = "";
         boolean isDouble = false;
@@ -378,12 +388,8 @@ public class Parse {
         } else if (isNumber) {
             term = numberToKMB(number, numberAfterDot, isDouble, nextToken);
         }
-        if (isNumber)
-            dictionary.add(term);
-
-        return isNumber;
+        return term;
     }
-
 
     /**
      * reduce non-relevant zeros from the end
