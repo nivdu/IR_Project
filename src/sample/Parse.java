@@ -334,8 +334,66 @@ public class Parse {
      * @return- true if the term keep the given laws
      */
     private boolean DollarTermMoreThanMillion(String token, String nextT, String nextNextT, String nextNextNextT){
+        boolean tokenIsNumber = checkIfOnlyDigitsDotsComma(token);
+        boolean isMoreThanMillion=false;
+        String term = "";
+        if(tokenIsNumber){
+            String kind = checkIfKMBU(token);
+            if(kind.equals("M") || kind.equals("B")){
+                isMoreThanMillion = true;
+            }
+        }
+        //cases like NUMBER Dollars
+        if(tokenIsNumber && isMoreThanMillion){
+            term = regularNumberTerms2(token,nextT);
+            if(term.charAt(term.length()-1)=='B'){
+                term = convertingFromBillionToMillion(term);
+            }
+            if(nextT.equals("Dollars")){
+                term+=" "+nextT;
+            }
+        }
+
 
         return false;
+    }
+
+    private String convertingFromBillionToMillion(String term) {
+        String ans=term.substring(0,term.length()-1);
+        if(!ans.contains(".")){
+            ans+="000";
+        }
+        else{
+            String beforeDot="";
+            String afterDot="";
+            boolean after=false;
+            for (int i = 0; i < ans.length(); i++) {
+                if(!after && ans.charAt(i)=='.')
+                    after=true;
+                else if(!after && Character.isDigit(ans.charAt(i))){
+                    beforeDot+=ans.charAt(i);
+                }
+                else if(after &&  Character.isDigit(ans.charAt(i))){
+                    afterDot+=ans.charAt(i);
+                }
+            }
+            ans=beforeDot;
+            if(3-afterDot.length()>=0){
+                ans+=afterDot;
+                for (int i = 0; i < 3-afterDot.length(); i++) {
+                    ans+="0";
+                }
+            }
+            else{
+                for (int i = 0; i < afterDot.length(); i++) {
+                   ans+=afterDot.charAt(i);
+                    if(i==2){
+                       ans+=".";
+                   }
+                }
+            }
+        }
+        return ans+" M";
     }
 
 
@@ -379,7 +437,7 @@ public class Parse {
         String term = "";
         if (nextToken.equals("Thousand") && isNumber) {
             term = token + "K";
-        } else if (nextToken == "Million" && isNumber) {
+        } else if (nextToken.equals("Million") && isNumber) {
             term = token + "M";
         } else if (nextToken.equals("Billion") && isNumber) {
             term = token + "B";
@@ -633,6 +691,10 @@ public class Parse {
 
     public static void main(String[] args) {
         Parse parse = new Parse();
+
+        String ans = parse.convertingFromBillionToMillion("12.3456 B");
+        System.out.println(ans);
+
       //        String test="123";
 //        System.out.println(test.substring(0,2));
 //        parse.percentageTerm("percentage","6");
@@ -643,14 +705,6 @@ public class Parse {
 //        parse.addOnlyLettersWords("Loren");
 
 //        parse.addOnlyLettersWords("Loren");
-
-        //test "Between 123 and 123"
-        String[] currDoc = "Between 123 and 123 Thousand".split(" ");
-        parse.expressionAndRangesTerm("Thousand-126", "125", "Thousand", 0,currDoc);
-        for (String s:parse.dictionary){
-            System.out.println(s);
-        }
-
 
 
 
