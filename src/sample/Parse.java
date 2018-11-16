@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 
 public class Parse {
     //hashSet for all the stop words.
@@ -84,10 +85,10 @@ public class Parse {
                     continue;
 
                 //check DollarTerm function.
-                if(DollarTerm(nextNextToken, nextNextToken, currToken));
+//                if(DollarTerm(nextNextToken, nextNextToken, currToken));
                 //check numberKBMTerms function.
-                if(numberKMB(currToken,nextToken))
-                    continue;
+//                if(numberKMB(currToken,nextToken))
+//                    continue;
 
                 //todo use stemmer.
             }
@@ -169,11 +170,15 @@ public class Parse {
     private boolean DateTerm(String nextT, String token) {
         //todo check if token is empty null and shit
         if (checkIfOnlyDigitsDotsComma(token) && token.length()<4 && months.containsKey(nextT)) {//todo maby check if only numbers without digits and dots.
+            if(token.length()==1)
+                token = "0" + token;
             String toAdd = months.get(nextT) + "-" + token;
             dictionary.add(toAdd);
             return true;
         }
         else if(checkIfOnlyDigitsDotsComma(nextT) && token.length()<4 && months.containsKey(token)){//todo maby check if only numbers without digits and dots.
+            if(nextT.length()==1)
+                nextT = "0" + nextT;
             String toAdd = months.get(token) + "-" + nextT;
             dictionary.add(toAdd);
             return true;
@@ -319,84 +324,105 @@ public class Parse {
             term = token + "000" + "B";
         } else if (isNumber) {
             term = numberToKMB(number, numberAfterDot, isDouble, nextToken);
-        }
-        if (isNumber)
             dictionary.add(term);
-
-        return isNumber;
-    }
-
-
-    /**
-     * reduce non-relevant zeros from the end
-     *
-     * @param term
-     * @param reduce
-     * @return
-     */
-    private String reduceZeros(String term, int reduce) {
-        String ans = term;
-        for (int i = term.length() - 1; i >= term.length() - reduce; i--) {
-            if (term.charAt(i) == '0')
-                ans = term.substring(0, i);
-            if (i == term.length() - reduce && term.charAt(i) == '0')
-                ans = term.substring(0, i - 1);
         }
-        return ans;
-    }
-
-    /**
-     * adding dot in the appropriate location
-     *
-     * @param number - the term in document
-     * @param reduce - the location of the dot from the end
-     * @return
-     */
-    private String CreatingNumberForDictionary(String number, int reduce) {
-        String term = "";
-        for (int i = 0; i < number.length(); i++) {
-            if (i == number.length() - reduce) {
-                term += '.';
-            }
-            term += number.charAt(i);
+            return isNumber;
         }
-        return term;
-    }
 
-    /**
-     * convert number to number K/M/B
-     * @param number
-     * @param numberAfterDot
-     * @param isDouble
-     * @param nextToken
-     * @return the converted number
-     */
-    private String numberToKMB(String number, String numberAfterDot, boolean isDouble, String nextToken) {
-        String term="";
-        String kind = "";
-        //less than 1000
-        if (number.length() >= 1 && number.length() <= 3) {
-            term = number;
-            if (isDouble) {
-                term += '.' + numberAfterDot;
-            } else if (checkIfLegalFraction(nextToken)) {
-                term += " " + nextToken;
+
+        /**
+         * reduce non-relevant zeros from the end
+         *
+         * @param term
+         * @param reduce
+         * @return
+         */
+        private String reduceZeros(String term, int reduce) {
+            String ans = term;
+            for (int i = term.length() - 1; i >= term.length() - reduce; i--) {
+                if (term.charAt(i) == '0')
+                    ans = term.substring(0, i);
+                if (i == term.length() - reduce && term.charAt(i) == '0')
+                    ans = term.substring(0, i - 1);
             }
-        } else {
-            //Thousand(included) to Million(not included)
-            if (number.length() >= 4 && number.length() <= 6) {
-                kind = "K";
-                term = CreatingNumberForDictionary(number, 3);
-                if (!isDouble)
-                    term = reduceZeros(term, 3);
+            return ans;
+        }
+
+        /**
+         * adding dot in the appropriate location
+         *
+         * @param number - the term in document
+         * @param reduce - the location of the dot from the end
+         * @return
+         */
+        private String CreatingNumberForDictionary(String number, int reduce) {
+            String term = "";
+            for (int i = 0; i < number.length(); i++) {
+                if (i == number.length() - reduce) {
+                    term += '.';
+                }
+                term += number.charAt(i);
             }
-            //Million(included) to Billion(not included)
-            else if (number.length() >= 7 && number.length() <= 9) {
-                kind = "M";
-                term = CreatingNumberForDictionary(number, 6);
-                if (!isDouble)
-                    term = reduceZeros(term, 6);
+            return term;
+        }
+
+        /**
+         * Words whose first letter is always a large letter, throughout the corpus, will be preserved with letters
+         * Only large. On the other hand, if a word appears sometimes with a large letter and sometimes without a large letter we will save it
+         * With only lowercase letters.
+         */
+        private void addOnlyLettersWords(String token){
+            if (token!=null && token!="" && (Pattern.matches("[a-zA-Z]+", token))){
+                //if the first char of the token upper case.
+                if(token.charAt(0)<=90 && token.charAt(0)>=65){
+                    if(!dictionary.contains(token.toLowerCase()))
+                        dictionary.add(token.toUpperCase());
+                }
+                else if(token.equals(token.toLowerCase()))
+                    if(dictionary.contains(token.toUpperCase())) {
+                        dictionary.remove(token.toUpperCase());
+                        dictionary.add(token) ;
+                    }
+                    else dictionary.add(token);
             }
+        }
+
+        /**
+         * convert number to number K/M/B
+         * @param number
+         * @param numberAfterDot
+         * @param isDouble
+         * @param nextToken
+         * @return the converted number
+         */
+        private String numberToKMB(String number, String numberAfterDot, boolean isDouble, String nextToken) {
+            String term="";
+            String kind = "";
+            //less than 1000
+            if (number.length() >= 1 && number.length() <= 3) {
+                term = number;
+                if (isDouble) {
+                    term += '.' + numberAfterDot;
+                } else if (checkIfLegalFraction(nextToken)) {
+                    term += " " + nextToken;
+                }
+            } else {
+                //Thousand(included) to Million(not included)
+                if (number.length() >= 4 && number.length() <= 6) {
+                    kind = "K";
+                    term = CreatingNumberForDictionary(number, 3);
+                    if (!isDouble)
+                        term = reduceZeros(term, 3);
+                }
+                //Million(included) to Billion(not included)
+                else if (number.length() >= 7 && number.length() <= 9) {
+                    kind = "M";
+                    term = CreatingNumberForDictionary(number, 6);
+                    if (!isDouble)
+                        term = reduceZeros(term, 6);
+                }
+            }
+            if (isNumber)
             //more than Billion(included)
             else if (number.length() >= 10) {
                 kind = "B";
@@ -418,12 +444,22 @@ public class Parse {
         Parse parse = new Parse();
       //        String test="123";
 //        System.out.println(test.substring(0,2));
-        parse.percentageTerm("percentage","6");
+//        parse.percentageTerm("percentage","6");
+//        parse.DateTerm("MAY","14");
+//        parse.DateTerm("May","4");
+//        parse.DateTerm("15","MAY");
+//        parse.DateTerm("1994","April");
+//        parse.addOnlyLettersWords("Loren");
+
+//        parse.addOnlyLettersWords("Loren");
+        parse.addOnlyLettersWords("loren");
         for (String s:parse.dictionary){
             System.out.println(s);
         }
 
-      
+
+
+/*
 //        parse.regularNumberTerms("123","456/2345");
         parse.DollarTermLessThanMillion("l","wer","$123");
         parse.DollarTermLessThanMillion("Dollars","wer","123.2");
@@ -432,7 +468,7 @@ public class Parse {
         for (String term:parse.dictionary) {
             System.out.println(term);
         }
-
+*/
 ///    parse.numberKMB("1000","3/4");
 //        parse.numberKMB("-50","Thousand");
 //        parse.numberKMB("50.2","Thousand");
