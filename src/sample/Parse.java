@@ -20,7 +20,7 @@ public class Parse {
      */
     public Parse() {
         this.stopWords = new HashSet<String>();//todo in the constructor build from the StopWords File the HashSet of stop words.
-        getStopWordsIntoHastSet();
+//        getStopWordsIntoHastSet();
         this.dictionary = new HashSet<String>();
         this.months = new HashMap<String, String>();
         createMonthHS();
@@ -62,7 +62,7 @@ public class Parse {
         HashMap<String, Integer> FindMaxTf;//todo at the end of the loop check the tf and everything
         //loop over all the tokens in current doc.
         boolean isAddToDic = false;
-        //delete start and end char punctutations from the terms.todo maybe its very bad hh
+        //delete start and end char punctutations from the terms.
         for (int j = 0; j < splitedDoc.length; j++) {
             splitedDoc[j] = deletePunctutations(splitedDoc[j]);
         }
@@ -71,8 +71,8 @@ public class Parse {
                 continue;
             String currToken = splitedDoc[currDocIndex];
             //continue to next token when it stop Word
-            if (deleteStopWords(currToken))
-                continue;
+//            if (deleteStopWords(currToken))
+//                continue;
             //get prev and next tokens if there isn't next token (the end of the array) return nextToken="", if index==0 return prevToken="".
             String nextToken = getNextToken(splitedDoc, currDocIndex);
             String nextNextToken = getNextToken(splitedDoc, currDocIndex + 1);
@@ -85,16 +85,17 @@ public class Parse {
             }
 
             //check DollarTerm function less than miliion.
-//                jump = DollarTermLessThanMillion(currToken, nextNextToken, nextNextToken);
-//                if (jump != -1) {
-//                    currDocIndex+=jump;
-//                    continue;
-//                }
-//                jump = DollarTermMoreThanMillion(currToken, nextNextToken, nextNextToken, nextNextNextToken);
-//                if (jump != -1) {
-//                    currDocIndex+=jump;
-//                    continue;
-//                }
+            jump = DollarTermLessThanMillion(currToken, nextNextToken, nextNextToken);
+            if (jump != -1) {
+                currDocIndex+=jump;
+                continue;
+            }
+
+            jump = DollarTermMoreThanMillion(currToken, nextNextToken, nextNextToken, nextNextNextToken);
+            if (jump != -1) {
+                currDocIndex+=jump;
+                continue;
+            }
 
             jump = DateTerm(nextToken, currToken);
             if (jump != -1) {
@@ -109,11 +110,11 @@ public class Parse {
             }
 
             //check regularNumberTerms function.
-//                jump = regularNumberTerms(currToken, nextToken)
-//                if (jump != -1) {
-//                    currDocIndex+=jump;
-//                    continue;
-//                }
+            jump = regularNumberTerms(currToken, nextToken);
+            if (jump != -1) {
+                currDocIndex+=jump;
+                continue;
+            }
 
             //check bigsmall letter cases
             addOnlyLettersWords(currToken);
@@ -149,10 +150,10 @@ public class Parse {
             if(toCheck.equals("U.S."))
                 return toCheck;
             int toCheckLength = toCheck.length() - 1;
-            if (toCheck.charAt(0) == '(' || toCheck.charAt(0) == ',' || toCheck.charAt(0) == ':' || toCheck.charAt(0) == '.')
+            if (toCheck.charAt(0) == '\n' || toCheck.charAt(0) == '"'|| toCheck.charAt(0) == '(' || toCheck.charAt(0) == ',' || toCheck.charAt(0) == ':' || toCheck.charAt(0) == '.')
                 toCheck = toCheck.substring(1);
             toCheckLength = toCheck.length() - 1;
-            if (toCheck != "" && toCheck.length()>1 && (toCheck.charAt(toCheckLength) == ',' || toCheck.charAt(toCheckLength) == ')' || toCheck.charAt(toCheckLength) == '.' || toCheck.charAt(toCheckLength) == ':'))
+            if (toCheck != "" && toCheck.length()>1 && (toCheck.charAt(toCheckLength) == ',' || toCheck.charAt(toCheckLength)=='"' ||  toCheck.charAt(toCheckLength) == ')' || toCheck.charAt(toCheckLength) == '.' || toCheck.charAt(toCheckLength) == ':'))
                 toCheck = toCheck.substring(0,toCheckLength);//todo maybe toCheckLength+1
         }
         return toCheck;
@@ -183,7 +184,7 @@ public class Parse {
             return -1;
         //cases like 6%
         if (token.charAt(token.length() - 1) == '%') {
-            //substring from number% to number (6% to 6) todo check if length-2 its ok.
+            //substring from number% to number (6% to 6)
             String checkIfNumber = token.substring(0, token.length() - 1);
             //if before the '%' char there is only digits and docs add to the dictionary the whole token.
             if (checkIfOnlyDigitsDotsComma(checkIfNumber)) {
@@ -240,6 +241,8 @@ public class Parse {
      * @return - true if legal fraction else false.
      */
     private boolean checkIfLegalFraction(String token) {
+        if(token==null || token.equals(""))
+            return false;
         int slashCounter = 0;
         if (!Character.isDigit(token.charAt(0)))
             return false;
@@ -268,6 +271,8 @@ public class Parse {
      */
 
     private boolean checkIfOnlyDigitsDotsComma(String number) {
+        if(number==null || number.equals(""))
+            return false;
         for (Character c : number.toCharArray()) {
             if (!Character.isDigit(c) && !(c.equals('.')) && !(c.equals(',')))
                 return false;
@@ -360,6 +365,8 @@ public class Parse {
      * @return- true if the term keep the given laws
      */
     private int DollarTermMoreThanMillion(String token, String nextT, String nextNextT, String nextNextNextT){
+        if(token.equals(""))
+            return -1;
         boolean tokenIsNumber = checkIfOnlyDigitsDotsComma(token);
         boolean tokenIsMoreThanMillion=false;
         if(tokenIsNumber)
@@ -385,7 +392,7 @@ public class Parse {
                 }
             }
             //cases like 100bn Dollars
-            if(token.charAt(token.length()-2)=='b' && token.charAt(token.length()-1)=='n'){
+            if(token.length()>=2 && token.charAt(token.length()-2)=='b' && token.charAt(token.length()-1)=='n'){
                 String tokenWithoutBN = token.substring(0,token.length()-2);
                 if(checkIfOnlyDigitsDotsComma(tokenWithoutBN)){
                     term=tokenWithoutBN+"000"+" M "+nextT;
@@ -565,9 +572,12 @@ public class Parse {
         } else if (isNumber) {
             term = numberToKMB(number, numberAfterDot, isDouble, nextToken);
         }
-        if(isNegative)
+
+        if(isNumber && isNegative)
             return "-"+term;
-        return term;
+        else if(isNumber && !isNegative)
+            return term;
+        return "";
     }
 
     /**
@@ -784,7 +794,7 @@ public class Parse {
             }
         }
         //regular word-word, number-word, word-number
-        else if(currT.contains("-")) {
+        else if(currT.contains("-") && currT.length()>= 3){
             dictionary.add(currT);
             return 0;
         }
@@ -809,7 +819,10 @@ public class Parse {
 
     public static void main(String[] args) {
         Parse parse = new Parse();
-
+        String[] text = new String[2];
+        text[0]="-";
+        text[1]="";
+        parse.parseDoc(text);
 
         parse.DollarTermMoreThanMillion("1000000","Dollars","","");
         parse.DollarTermMoreThanMillion("20.6m","Dollars","","");

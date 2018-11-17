@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.LinkedList;
 import java.util.stream.Stream;
 
 public class ReadFile {
@@ -59,15 +58,20 @@ public class ReadFile {
     private String file2String(File file)
     {
         StringBuilder contentBuilder = new StringBuilder();
-        try (Stream<String> stream = Files.lines( Paths.get(file.toPath().toString()), StandardCharsets.UTF_8))//todo check if topath.tostring working
         {
-            stream.forEach(s -> contentBuilder.append(s).append("\n"));
+            String content = "";
+
+            try
+            {
+                content = new String ( Files.readAllBytes( Paths.get(file.toPath().toString()) ) );
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+
+            return content;
         }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
-        return contentBuilder.toString();
     }
 
     /**
