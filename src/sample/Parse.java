@@ -297,32 +297,32 @@ public class Parse {
      * @param token - the current token
      * @return - true if the term keep the given laws
      */
-    private boolean DollarTermLessThanMillion(String token ,String nextT, String nextNextT) {
+    private int DollarTermLessThanMillion(String token ,String nextT, String nextNextT) {
         if (token == null || token.length() <= 0)//todo what to do if the token is null?
-            return false;
+            return -1;
         //cases like $1000
         if (token.charAt(0) == '$') {
             String checkIfNumber = token.substring(1);
             //if before the '%' char there is only digits and docs add to the dictionary the whole token.
             if (checkIfOnlyDigitsDotsComma(checkIfNumber)) {
                 dictionary.add(checkIfNumber + " " + "Dollars");
-                return true;
+                return 0;
             }
         }
         String kind = checkIfKMBU(token);
         if(!checkIfOnlyDigitsDotsComma(token) || !(kind.equals("K") || kind.equals("U")))
-            return false;
+            return -1;
         //cases like 123 Dollars
         if(nextT.equals("Dollars")){
             dictionary.add(token+" "+nextT);
-            return true;
+            return 1;
         }
         //cases like 123 3/4 Dollars
         if(checkIfLegalFraction(nextT)&&nextNextT.equals("Dollars")){
             dictionary.add(token+" "+nextT+" "+nextNextT);
-            return true;
+            return 2;
         }
-        return false;
+        return -1;
     }
 
     /**
@@ -333,67 +333,155 @@ public class Parse {
      * @param nextNextNextT- the next next next token
      * @return- true if the term keep the given laws
      */
-    private boolean DollarTermMoreThanMillion(String token, String nextT, String nextNextT, String nextNextNextT){
+    private int DollarTermMoreThanMillion(String token, String nextT, String nextNextT, String nextNextNextT){
         boolean tokenIsNumber = checkIfOnlyDigitsDotsComma(token);
-        boolean isMoreThanMillion=false;
+        boolean tokenIsMoreThanMillion=false;
+        if(tokenIsNumber)
+            tokenIsMoreThanMillion=isMoreThanMillion(token);
         String term = "";
-        if(tokenIsNumber){
-            String kind = checkIfKMBU(token);
-            if(kind.equals("M") || kind.equals("B")){
-                isMoreThanMillion = true;
-            }
-        }
-        //cases like NUMBER Dollars
-        if(tokenIsNumber && isMoreThanMillion){
-            term = regularNumberTerms2(token,nextT);
-            if(term.charAt(term.length()-1)=='B'){
-                term = convertingFromBillionToMillion(term);
-            }
-            if(nextT.equals("Dollars")){
+        //cases like _____ Dollars
+        if(nextT.equals("Dollars")){
+            //cases like 1000000 Dollars
+            if(tokenIsNumber && tokenIsMoreThanMillion){
+                term = regularNumberTerms2(token,nextT);
+                term = convertingToMillionForDollars(term);
                 term+=" "+nextT;
+                dictionary.add(term);
+                return 1;
+            }
+            //cases like 20.6m Dollars
+            if(token.charAt(token.length()-1)=='m'){
+                String tokenWithoutM = token.substring(0,token.length()-1);
+                if(checkIfOnlyDigitsDotsComma(tokenWithoutM)){
+                    term=tokenWithoutM+" M "+nextT;
+                    dictionary.add(term);
+                    return 1;
+                }
+            }
+            //cases like 100bn Dollars
+            if(token.charAt(token.length()-2)=='b' && token.charAt(token.length()-1)=='n'){
+                String tokenWithoutBN = token.substring(0,token.length()-2);
+                if(checkIfOnlyDigitsDotsComma(tokenWithoutBN)){
+                    term=tokenWithoutBN+"000"+" M "+nextT;
+                    dictionary.add(term);
+                    return 1;
+                }
             }
         }
+        if(token.charAt(0)=='$'){
+            boolean tokenIsNumberWithout$ = checkIfOnlyDigitsDotsComma(token.substring(1));
+            //cases like $100 million
+            if(nextT.equals("million") && tokenIsNumberWithout$){
+                String termWithoutCommas = deletingCommasFromNumbers(token.substring(1));
+                dictionary.add(termWithoutCommas+" M Dollars");
+                return 1;
+            }
+            //cases like $100 billion
+            if(nextT.equals("billion") && tokenIsNumberWithout$){
+                String termWithoutCommas = deletingCommasFromNumbers(token.substring(1));
+                dictionary.add(termWithoutCommas+"000"+" M Dollars");
+                return 1;
+            }
+            //cases like $1000000
+            boolean tokenIsMoreThanMillionWithout$=false;
+            if (tokenIsNumberWithout$ )
+                tokenIsMoreThanMillionWithout$ =isMoreThanMillion(token.substring(1));
+            if(tokenIsMoreThanMillionWithout$){
+                term=regularNumberTerms2(token,nextT);
+                term = convertingToMillionForDollars(term);
+                dictionary.add(term+" Dollars");
+                return 0;
+            }
+        }
+        //cases like number _____ U.S. dollars
+        if(tokenIsNumber && nextNextT.equals("U.S.") && nextNextNextT.equals("dollars")){
+            String tokenWithoutComma = deletingCommasFromNumbers(token);
+            //cases like number million U.S. dollars
+            if(nextT.equals("million")){
+                dictionary.add(tokenWithoutComma+" M Dollars");
+                return 3;
+            }
+            //cases like number billion U.S. dollars
+            if(nextT.equals("billion")){
+                dictionary.add(tokenWithoutComma+"000"+" M Dollars");
+                return 3;
+            }
+            //cases like number trillion U.S. dollars
+            if(nextT.equals("trillion")){
+                dictionary.add(tokenWithoutComma+"000000"+" M Dollars");
+                return 3;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * deleting commas from number
+     * @param number - the number with commas
+     * @return the number without commas
+     */
+    private String deletingCommasFromNumbers(String number) {
+        String ans="";
+        for (int i = 0; i < number.length(); i++) {
+            if(number.charAt(i)==',')
+                continue;
+            ans+=number.charAt(i);
+        }
+        return ans;
+    }
 
 
+    private boolean isMoreThanMillion(String token){
+        String kind = checkIfKMBU(token);
+        if(kind.equals("M") || kind.equals("B")){
+            return true;
+        }
         return false;
     }
 
-    private String convertingFromBillionToMillion(String term) {
-        String ans=term.substring(0,term.length()-1);
-        if(!ans.contains(".")){
-            ans+="000";
+    private String convertingToMillionForDollars(String term) {
+        if(term.charAt(term.length()-1)=='M'){
+            String ans=term.substring(0,term.length()-1);
+            return ans+" M";
         }
-        else{
-            String beforeDot="";
-            String afterDot="";
-            boolean after=false;
-            for (int i = 0; i < ans.length(); i++) {
-                if(!after && ans.charAt(i)=='.')
-                    after=true;
-                else if(!after && Character.isDigit(ans.charAt(i))){
-                    beforeDot+=ans.charAt(i);
-                }
-                else if(after &&  Character.isDigit(ans.charAt(i))){
-                    afterDot+=ans.charAt(i);
-                }
-            }
-            ans=beforeDot;
-            if(3-afterDot.length()>=0){
-                ans+=afterDot;
-                for (int i = 0; i < 3-afterDot.length(); i++) {
-                    ans+="0";
-                }
+        else if(term.charAt(term.length()-1)=='B'){
+            String ans=term.substring(0,term.length()-1);
+            if(!ans.contains(".")){
+                ans+="000";
             }
             else{
-                for (int i = 0; i < afterDot.length(); i++) {
-                   ans+=afterDot.charAt(i);
-                    if(i==2){
-                       ans+=".";
-                   }
+                String beforeDot="";
+                String afterDot="";
+                boolean after=false;
+                for (int i = 0; i < ans.length(); i++) {
+                    if(!after && ans.charAt(i)=='.')
+                        after=true;
+                    else if(!after && Character.isDigit(ans.charAt(i))){
+                        beforeDot+=ans.charAt(i);
+                    }
+                    else if(after &&  Character.isDigit(ans.charAt(i))){
+                        afterDot+=ans.charAt(i);
+                    }
+                }
+                ans=beforeDot;
+                if(3-afterDot.length()>=0){
+                    ans+=afterDot;
+                    for (int i = 0; i < 3-afterDot.length(); i++) {
+                        ans+="0";
+                    }
+                }
+                else{
+                    for (int i = 0; i < afterDot.length(); i++) {
+                        ans+=afterDot.charAt(i);
+                        if(i==2){
+                            ans+=".";
+                        }
+                    }
                 }
             }
+            return ans+" M";
         }
-        return ans+" M";
+        return "";
     }
 
 
@@ -402,13 +490,17 @@ public class Parse {
      * @param token - the token in the document
      * @return true if legal number
      */
-    private boolean regularNumberTerms(String token, String nextToken) {
+    private int regularNumberTerms(String token, String nextToken) {
         String term = regularNumberTerms2(token,nextToken);
         if(!term.equals("")){
+            if(nextToken.equals("Thousand") || nextToken.equals("Million") ||nextToken.equals("Billion") ||nextToken.equals("Trillion")){
+                dictionary.add(term);
+                return 1;
+            }
             dictionary.add(term);
-            return true;
+            return 0;
         }
-        return false;
+        return -1;
     }
 
 
@@ -417,10 +509,11 @@ public class Parse {
         String numberAfterDot = "";
         boolean isDouble = false;
         boolean isNumber = false;
+        boolean isNegative=false;
         int countCommas = 0;
         for (int i = 0; i < token.length(); i++) {
             if (i == 0 && token.charAt(0) == '-') {
-                number += token.charAt(i);
+                isNegative=true;
             } else if (!isDouble && Character.isDigit(token.charAt(i))) {
                 number += token.charAt(i);
                 isNumber = true;
@@ -446,6 +539,8 @@ public class Parse {
         } else if (isNumber) {
             term = numberToKMB(number, numberAfterDot, isDouble, nextToken);
         }
+        if(isNegative)
+            return "-"+term;
         return term;
     }
 
@@ -692,8 +787,22 @@ public class Parse {
     public static void main(String[] args) {
         Parse parse = new Parse();
 
-        String ans = parse.convertingFromBillionToMillion("12.3456 B");
-        System.out.println(ans);
+
+        parse.DollarTermMoreThanMillion("1000000","Dollars","","");
+        parse.DollarTermMoreThanMillion("20.6m","Dollars","","");
+        parse.DollarTermMoreThanMillion("100bn","Dollars","","");
+        parse.DollarTermMoreThanMillion("$4500000","Dollars","","");
+        parse.DollarTermMoreThanMillion("$100","million","","");
+        parse.DollarTermMoreThanMillion("$100","billion","","");
+        parse.DollarTermMoreThanMillion("100","billion","U.S.","dollars");
+        parse.DollarTermMoreThanMillion("320","million","U.S.","dollars");
+        parse.DollarTermMoreThanMillion("1","trillion","U.S.","dollars");
+        for (String term:parse.dictionary) {
+            System.out.println(term);
+        }
+//
+//        String ans = parse.convertingToMillionForDollars("12.3456B");
+//        System.out.println(ans);
 
       //        String test="123";
 //        System.out.println(test.substring(0,2));
