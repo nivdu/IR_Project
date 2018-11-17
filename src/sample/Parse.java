@@ -19,12 +19,12 @@ public class Parse {
      * Parse Constructor.
      */
     public Parse() {
-        this.stopWords = new HashSet<String>();
+        this.stopWords = new HashSet<String>();//todo in the constructor build from the StopWords File the HashSet of stop words.
+        getStopWordsIntoHastSet();
         this.dictionary = new HashSet<String>();
         this.months = new HashMap<String, String>();
         createMonthHS();
     }
-
     /**
      * add to the month HS all the months names.
      */
@@ -56,54 +56,79 @@ public class Parse {
     }
 
 
-    public void parseDoc(String[] currDoc) {
-        for (String doc : currDoc) {
-
-            //temporary dictionary to find the max tf in current doc.
-            HashMap<String, Integer> FindMaxTf;//todo at the end of the loop check the tf and everything
-            //split by spaces
-            String[] splitedDoc = doc.split(" ");
-
-            //loop over all the tokens in current doc.
-
-            boolean isAddToDic = false;
-            for (int currDocIndex = 0; currDocIndex < splitedDoc.length; currDocIndex++) {
-                //if current word is stop word continue to the next word.
-                String currToken = splitedDoc[currDocIndex];
-                if (deleteStopWords(currToken))
-                    continue;
-                //get prev and next tokens if there isn't next token (the end of the array) return nextToken="", if index==0 return prevToken="".
-                String nextToken = getNextToken(splitedDoc, currDocIndex);
-                String nextNextToken = getNextToken(splitedDoc, currDocIndex + 1);
-                String prevToken = getNextToken(splitedDoc, currDocIndex);
-                //check percentageTerms function
-                isAddToDic = percentageTerm(nextToken, currToken);
-                if (isAddToDic && nextToken.equals("percentage") || nextToken.equals("percent")) {
-                    currDocIndex++;
-                    continue;
-                } else if (isAddToDic)
-                    continue;
-
-                //check DollarTerm function less than miliion.
-                if (DollarTermLessThanMillion(currToken, nextNextToken, nextNextToken))
-                    continue;
-                //check numberKBMTerms function.
-                if (regularNumberTerms(currToken, nextToken))
-                    continue;
-
-
-                //todo use stemmer.
+    public void parseDoc(String[] splitedDoc) {
+        int jump = 0;
+        //temporary dictionary to find the max tf in current doc.
+        HashMap<String, Integer> FindMaxTf;//todo at the end of the loop check the tf and everything
+        //loop over all the tokens in current doc.
+        boolean isAddToDic = false;
+        //delete start and end char punctutations from the terms.todo maybe its very bad hh
+        for (int j = 0; j < splitedDoc.length; j++) {
+            splitedDoc[j] = deletePunctutations(splitedDoc[j]);
+        }
+        for (int currDocIndex = 0; currDocIndex < splitedDoc.length; currDocIndex++) {
+            if (splitedDoc[currDocIndex].equals("") || splitedDoc[currDocIndex].equals("\n"))
+                continue;
+            String currToken = splitedDoc[currDocIndex];
+            //continue to next token when it stop Word
+            if (deleteStopWords(currToken))
+                continue;
+            //get prev and next tokens if there isn't next token (the end of the array) return nextToken="", if index==0 return prevToken="".
+            String nextToken = getNextToken(splitedDoc, currDocIndex);
+            String nextNextToken = getNextToken(splitedDoc, currDocIndex + 1);
+            String nextNextNextToken = getNextToken(splitedDoc, currDocIndex + 2);
+            //check percentageTerms function
+            jump = percentageTerm(nextToken, currToken);
+            if (jump != -1) {
+                currDocIndex += jump;
+                continue;
             }
+
+            //check DollarTerm function less than miliion.
+//                jump = DollarTermLessThanMillion(currToken, nextNextToken, nextNextToken);
+//                if (jump != -1) {
+//                    currDocIndex+=jump;
+//                    continue;
+//                }
+//                jump = DollarTermMoreThanMillion(currToken, nextNextToken, nextNextToken, nextNextNextToken);
+//                if (jump != -1) {
+//                    currDocIndex+=jump;
+//                    continue;
+//                }
+
+            jump = DateTerm(nextToken, currToken);
+            if (jump != -1) {
+                currDocIndex += jump;
+                continue;
+            }
+
+            jump = expressionAndRangesTerm(nextToken, currToken, nextNextToken, currDocIndex, splitedDoc);
+            if (jump != -1) {
+                currDocIndex += jump;
+                continue;
+            }
+
+            //check regularNumberTerms function.
+//                jump = regularNumberTerms(currToken, nextToken)
+//                if (jump != -1) {
+//                    currDocIndex+=jump;
+//                    continue;
+//                }
+
+            //check bigsmall letter cases
+            addOnlyLettersWords(currToken);
+
+
+            //todo use stemmer.
         }
     }
-
     /**
      * get the stopWords from the stopWords file and insert them into stopWords hashSet.
      */
     private void getStopWordsIntoHastSet() {
         //insert all the stop words from stop words file into HashSet.
         //scanner function from link: "https://stackoverflow.com/questions/30011400/splitting-textfile-at-whitespace"
-        String stopWordsPath = "";//todo what is the path for stopWords text file
+        String stopWordsPath = "C:\\Users\\nivdu\\Desktop\\אחזור\\פרוייקט גוגל\\StopWords";//todo what is the path for stopWords text file
         File file = new File(stopWordsPath);
         try {
             Scanner scanner = new Scanner(file);
@@ -116,6 +141,21 @@ public class Parse {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+
+    private String deletePunctutations(String toCheck){
+        if(toCheck!=null && toCheck!="" && toCheck.length()>1) {
+            if(toCheck.equals("U.S."))
+                return toCheck;
+            int toCheckLength = toCheck.length() - 1;
+            if (toCheck.charAt(0) == '(' || toCheck.charAt(0) == ',' || toCheck.charAt(0) == ':' || toCheck.charAt(0) == '.')
+                toCheck = toCheck.substring(1);
+            toCheckLength = toCheck.length() - 1;
+            if (toCheck != "" && toCheck.length()>1 && (toCheck.charAt(toCheckLength) == ',' || toCheck.charAt(toCheckLength) == ')' || toCheck.charAt(toCheckLength) == '.' || toCheck.charAt(toCheckLength) == ':'))
+                toCheck = toCheck.substring(0,toCheckLength);//todo maybe toCheckLength+1
+        }
+        return toCheck;
     }
 
     /**
@@ -135,20 +175,20 @@ public class Parse {
      *
      * @param nextT - the next token to check in the curr doc.
      * @param token - the curr token to check in the curr doc.
-     * @return - true if the tokens/token are percentage token type.
+     * @return - -1 if not added to the dic else return the number of words used from the doc
      */
 
-    private boolean percentageTerm(String nextT, String token) {//todo check for %-number
+    private int percentageTerm(String nextT, String token) {//todo check for %-number
         if (token == null || token.length() <= 0)//todo what to do if the token is null?
-            return false;
+            return -1;
         //cases like 6%
         if (token.charAt(token.length() - 1) == '%') {
             //substring from number% to number (6% to 6) todo check if length-2 its ok.
-            String checkIfNumber = token.substring(0, token.length() - 2);
+            String checkIfNumber = token.substring(0, token.length() - 1);
             //if before the '%' char there is only digits and docs add to the dictionary the whole token.
             if (checkIfOnlyDigitsDotsComma(checkIfNumber)) {
                 dictionary.add(token);
-                return true;
+                return 0;
             }
         }
         //cases like "6 percent", "6 percentage"
@@ -157,40 +197,39 @@ public class Parse {
 
             if (checkIfOnlyDigitsDotsComma(token)) {
                 dictionary.add(token + '%');
-                return true;
+                return 1;
             }
         }
-        return false;
+        return -1;
     }
 
     /**
-     * check whether a token is date term
-     *
+     * check whether a token is date term.
      * @param nextT - the next token in the doc
      * @param token - curr token in the doc
      * @return - true if the token are date token type.
      */
-    private boolean DateTerm(String nextT, String token) {
+    private int DateTerm(String nextT, String token) {
         //todo check if token is empty null and shit
         if (checkIfOnlyDigitsDotsComma(token) && token.length()<4 && months.containsKey(nextT)) {//todo maby check if only numbers without digits and dots.
             if(token.length()==1)
                 token = "0" + token;
             String toAdd = months.get(nextT) + "-" + token;
             dictionary.add(toAdd);
-            return true;
+            return 1;
         }
         else if(checkIfOnlyDigitsDotsComma(nextT) && token.length()<4 && months.containsKey(token)){//todo maby check if only numbers without digits and dots.
             if(nextT.length()==1)
                 nextT = "0" + nextT;
             String toAdd = months.get(token) + "-" + nextT;
             dictionary.add(toAdd);
-            return true;
+            return 1;
         } else if (months.containsKey(token) && checkIfOnlyDigitsDotsComma(nextT)) {//todo maby check if only numbers without digits and dots.
             String toAdd = nextT + "-" + months.get(token);
             dictionary.add(toAdd);
-            return true;
+            return 1;
         }
-        return false;
+        return -1;
     }
 
 
@@ -216,7 +255,9 @@ public class Parse {
             } else if (!Character.isDigit(c))
                 return false;
         }
-        return true;
+        if(slashCounter==1)
+            return true;
+        return false;
     }
 
     /**
@@ -248,20 +289,6 @@ public class Parse {
     }
 
     /**
-     * return the prev token from currDoc
-     *
-     * @param currDoc - the curr doc
-     * @param index   - current token index
-     * @return - String type of the token at location index -1. if index ==0 return empty string.
-     */
-
-    private String getPrevToken(String[] currDoc, int index) {
-        if (index - 1 < 0)
-            return "";
-        return currDoc[index - 1];
-    }
-
-    /**
      * check what is the size of the number in the string
      * @param token - the string which is number
      * @return - return the kind of the number - K for thousand, M- for miliion, B for Billion and U for numbers
@@ -288,7 +315,6 @@ public class Parse {
             return "B";
         return "U";//less than thousand
     }
-
 
     /**
      * every price which is less than million dollars will represent as number Dollars
@@ -672,30 +698,29 @@ public class Parse {
      * @param currT
      * @return
      */
-    private boolean expressionAndRangesTerm(String nextT, String currT, String nextnextT, int currIndex, String[] currDoc){
+    private int expressionAndRangesTerm(String nextT, String currT, String nextnextT, int currIndex, String[] currDoc){
         String[] exp;
         //like 123 Thousand-124, 123 Thousand-124 Thousand, 123 Thousand-word
         if(checkIfOnlyDigitsDotsComma(currT) && nextT.contains("-")) {
             exp = nextT.split("-");//thousand,124
             String leftExp;
             //if the currT (current token) related to the "- expression"
-            if (isItNumberFromSectionA(exp[0])) {
+            if (exp!=null && exp.length>0 && isItNumberFromSectionA(exp[0])) {
                 leftExp = regularNumberTerms2(currT, exp[0]);
-                //like 123 T-124 T
+                //like 123 T-124 thousand
                 if (exp.length == 2 && regularNumberTerms2(exp[1], nextnextT) != regularNumberTerms2(exp[1], "stam")) {
                     String rightExp = regularNumberTerms2(exp[1], nextnextT);
                     dictionary.add(leftExp + "-" + rightExp);
-                    return true;//todo need 2 jumps
+                    return 2;
                     //like 123 T-124 or 123 T-word.
                 } else {
                     if (exp.length == 2) {
                         dictionary.add(leftExp + "-" + exp[1]);
-                        return true;//todo need 2 jumps
+                        return 1;
                     }
                 }
             }
         }
-
         //like 123-123 2/3
         else if(currT.contains("-")) {
             exp = currT.split("-");
@@ -703,27 +728,25 @@ public class Parse {
             if(exp.length==2 && isItNumberFromSectionA(nextT)){
                 String rightExp = regularNumberTerms2(exp[1],nextT);
                 dictionary.add(exp[0] + "-" + rightExp);
-                return true;//in this case need 2 jumps (we used the next word) to continue in parsdoc function.//todo
+                return 2;
             }
         }
         //like: word-word, word-word-word
         else if(currT.contains("-")){
             exp = currT.split("-");
             if (exp.length==2 && checkIfOnlyLetters(exp[0]) && checkIfOnlyLetters(exp[1])){
-                dictionary.add(currT);//in this case need only to continue in parsdoc function.
-                return true;
+                dictionary.add(currT);
+                return 0;
             }
             if(exp.length==3 && checkIfOnlyLetters(exp[0]) && checkIfOnlyLetters(exp[1]) && checkIfOnlyLetters(exp[2])){
-                dictionary.add(currT);//in this case need only to continue in parsdoc function.
-                return true;
+                dictionary.add(currT);
+                return 0;
             }
         }
         //like Between number1 and number2
         if(currT.equals("Between") && checkIfOnlyDigitsDotsComma(nextT)) {
-            int jumps = 4;
-            String Between;
+            int jumps = 3;
             String Number1;
-            String And;
             String Number2;
             String Number2first;
             String Number2Second;
@@ -738,8 +761,8 @@ public class Parse {
                 Number1 = nextT;
             }
             //if it really Between number and number expression
-            if (jumps == 4 && nextnextT.equals("and") || jumps == 5 && getNextToken(currDoc, currIndex + 2).equals("and")) {
-                if (jumps == 4) {//if number1 is one word
+            if (jumps == 3 && nextnextT.equals("and") || jumps == 4 && getNextToken(currDoc, currIndex + 2).equals("and")) {
+                if (jumps == 3) {//if number1 is one word
                     Number2first = getNextToken(currDoc, currIndex + 2);
                     Number2Second = getNextToken(currDoc, currIndex + 3);
                 } else {//if number 1 is two words
@@ -756,16 +779,16 @@ public class Parse {
                     else
                         Number2 = Number2first;
                     dictionary.add(Number1 + "-" + Number2);//todo check how much jumps to do in the parsdoc function! the number of jumps saved in integer jumps.
-                    return true;
+                    return jumps;
                 }
             }
         }
         //regular word-word, number-word, word-number
-        if(currT.contains("-")) {
+        else if(currT.contains("-")) {
             dictionary.add(currT);
-            return true;//in this case need only to continue in parsdoc function.
+            return 0;
         }
-        return false;
+        return -1;
     }
 
     /**
@@ -814,6 +837,12 @@ public class Parse {
 //        parse.addOnlyLettersWords("Loren");
 
 //        parse.addOnlyLettersWords("Loren");
+        String[] currDoc = "Between 123 and 123 Thousand".split(" ");
+        parse.expressionAndRangesTerm("126", "125-126", "Thousand", 0,currDoc);
+        for (String s:parse.dictionary){
+            System.out.println(s);
+        }
+
 
 
 

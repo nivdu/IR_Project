@@ -1,38 +1,82 @@
 package sample;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.LinkedList;
+import java.util.stream.Stream;
 
 public class ReadFile {
-    Parse parse;
+    private Parse parse;
+    private String path;
 
     /**
-     *
-     * @param path - Path of main directory
+     * Constructor
+     * @param path - path of the corpus file
      */
-    public void SpiltFileIntoSeparateDocs(String path){
-        final File folder = new File(path);
-        for (final File fileEntry : folder.listFiles()) {
-            LinkedList<String> docsInFile;
-            for (final File fileOfDocs: fileEntry.listFiles()){
-                docsInFile = splitFileByDocs(fileOfDocs);
-                for (String currentDoc:docsInFile){
-                    String docSplitBySpaces[] = currentDoc.split(" ");
-                    parse.parseDoc(docSplitBySpaces);
-                }
-
-            }
-        }
+    public ReadFile(String path) {
+        this.parse = new Parse();
+        this.path=path;
     }
 
     /**
      *
-     * @param splitMe - File to split into separate docs.
-     * @return - LinkedList of docs
+     *
      */
-    private LinkedList<String> splitFileByDocs(File splitMe) {
-        LinkedList<String> docsInFile = new LinkedList<String>();
-        //get into the File and split by docs.
-        return docsInFile;
+    public void SpiltFileIntoSeparateDocs(){
+        final File folder = new File(path);
+        for (final File fileEntry : folder.listFiles()) {
+            for (final File fileOfDocs: fileEntry.listFiles()){
+                String wholeFileString = file2String(fileOfDocs);
+                //file split by <Doc>
+                String[] splitByDoc = splitBySpecificString(wholeFileString,"<DOC>\n");
+                //file split by <TEXT> //todo need to delete the <</TEXT> at parse.
+                for (String currentDoc:splitByDoc){
+                    if(currentDoc.equals(""))
+                        continue;
+                    String[] splitByText = splitBySpecificString(currentDoc,"<TEXT>\n");
+                    if(splitByText.length<2)
+                        continue;
+                        String[] splitByEndText = splitBySpecificString(splitByText[1], "</TEXT>\n");
+                        String docSplitBySpaces[] = splitByEndText[0].split(" ");
+                        parse.parseDoc(docSplitBySpaces);
+                }
+            }
+        }
+    }
+
+
+    /**
+     * from url: https://howtodoinjava.com/java/io/java-read-file-to-string-examples/
+     * read file to String line by line
+     * @param file - The path of the file to read into String
+     * @return - String of the context of the file
+     */
+    private String file2String(File file)
+    {
+        StringBuilder contentBuilder = new StringBuilder();
+        try (Stream<String> stream = Files.lines( Paths.get(file.toPath().toString()), StandardCharsets.UTF_8))//todo check if topath.tostring working
+        {
+            stream.forEach(s -> contentBuilder.append(s).append("\n"));
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+        return contentBuilder.toString();
+    }
+
+    /**
+     * split file by specificString
+     * @param file2Split - file to split
+     * @return - String array of the split text file
+     */
+    private String[] splitBySpecificString(String file2Split,String splitBy){
+        String[] docs = file2Split.split(splitBy);
+        return docs;
     }
 }
