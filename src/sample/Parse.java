@@ -1,10 +1,11 @@
 package sample;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Scanner;
 import java.util.regex.Pattern;
 
 public class Parse {
@@ -20,7 +21,7 @@ public class Parse {
      */
     public Parse() {
         this.stopWords = new HashSet<String>();//todo in the constructor build from the StopWords File the HashSet of stop words.
-//        getStopWordsIntoHastSet();
+        getStopWordsIntoHastSet();
         this.dictionary = new HashSet<String>();
         this.months = new HashMap<String, String>();
         createMonthHS();
@@ -30,29 +31,51 @@ public class Parse {
      */
     private void createMonthHS() {
         months.put("January", "01");
+        months.put("Jan", "01");
         months.put("JANUARY", "01");
+        months.put("JAN", "01");
         months.put("February", "02");
-        months.put("FEBRUARY", "02");
+        months.put("Feb", "02");
+        months.put("February", "02");
+        months.put("FEB", "02");
         months.put("March", "03");
+        months.put("Mar", "03");
         months.put("MARCH", "03");
+        months.put("MAR", "03");
         months.put("April", "04");
+        months.put("Apr", "04");
         months.put("APRIL", "04");
+        months.put("APR", "04");
         months.put("MAY", "05");
         months.put("May", "05");
         months.put("June", "06");
+        months.put("Jun", "06");
         months.put("JUNE", "06");
+        months.put("JUN", "06");
         months.put("July", "07");
+        months.put("Jul", "07");
         months.put("JULY", "07");
+        months.put("JUL", "07");
         months.put("August", "08");
+        months.put("Aug", "08");
         months.put("AUGUST", "08");
+        months.put("AUG", "08");
         months.put("September", "09");
+        months.put("Sep", "09");
         months.put("SEPTEMBER", "09");
+        months.put("SEP", "09");
         months.put("October", "10");
+        months.put("Oct", "10");
         months.put("OCTOBER", "10");
+        months.put("OCT", "10");
         months.put("November", "11");
+        months.put("Nov", "11");
         months.put("NOVEMBER", "11");
+        months.put("NOV", "11");
         months.put("December", "12");
+        months.put("Dec", "12");
         months.put("DECEMBER", "12");
+        months.put("DEC", "12");
     }
 
 
@@ -71,8 +94,8 @@ public class Parse {
                 continue;
             String currToken = splitedDoc[currDocIndex];
             //continue to next token when it stop Word
-//            if (deleteStopWords(currToken))
-//                continue;
+            if (deleteStopWords(currToken))
+                continue;
             //get prev and next tokens if there isn't next token (the end of the array) return nextToken="", if index==0 return prevToken="".
             String nextToken = getNextToken(splitedDoc, currDocIndex);
             String nextNextToken = getNextToken(splitedDoc, currDocIndex + 1);
@@ -117,30 +140,70 @@ public class Parse {
             }
 
             //check bigsmall letter cases
-            addOnlyLettersWords(currToken);
+            jump = addOnlyLettersWords(currToken);
+            if (jump != -1) {
+                currDocIndex+=jump;
+                continue;
+            }
+
+            //add token that didn't match any case. (like f16 and a lot more cases).
+            if(currToken.length()>1)
+                dictionary.add(currToken);
+
+            //cases like word/word or word/word/word or word.word or word.[word].
+            String[] toAdd = currToken.split("[?!:;#@^+&{}*|<=/>\"\\.]");
+            for (String s:toAdd){
+                s = deletePunctutations(s);
+                dictionary.add(s);
+            }
+
+
 
 
             //todo use stemmer.
         }
     }
+
+    /**
+     * from url: https://howtodoinjava.com/java/io/java-read-file-to-string-examples/
+     * read file to String line by line
+     * @param file - The path of the file to read into String
+     * @return - String of the context of the file
+     */
+    private String file2String(File file)
+    {
+        StringBuilder contentBuilder = new StringBuilder();
+        {
+            String content = "";
+
+            try
+            {
+                content = new String ( Files.readAllBytes( Paths.get(file.toPath().toString()) ) );
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+
+            return content;
+        }
+    }
+
     /**
      * get the stopWords from the stopWords file and insert them into stopWords hashSet.
      */
     private void getStopWordsIntoHastSet() {
         //insert all the stop words from stop words file into HashSet.
         //scanner function from link: "https://stackoverflow.com/questions/30011400/splitting-textfile-at-whitespace"
-        String stopWordsPath = "C:\\Users\\nivdu\\Desktop\\אחזור\\פרוייקט גוגל\\StopWords";//todo what is the path for stopWords text file
+        String stopWordsPath = "C:\\Users\\nivdu\\Desktop\\StopWords";//todo what is the path for stopWords text file
         File file = new File(stopWordsPath);
-        try {
-            Scanner scanner = new Scanner(file);
-            //now read the file line by line...
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-                String[] currStopWord = line.split(" ");//todo maybe handle the '/n' i didn't check it.
-                stopWords.add(currStopWord[0]);
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+        String wholeFileString="";
+        for (final File fileOfDocs: file.listFiles())
+            wholeFileString = file2String(fileOfDocs);
+        if(!wholeFileString.equals("")) {
+            String[] currStopWord = wholeFileString.split("\r\n");
+            for (String SW : currStopWord)
+                stopWords.add(SW);
         }
     }
 
@@ -150,18 +213,21 @@ public class Parse {
             if(toCheck.equals("U.S."))
                 return toCheck;
             int toCheckLength = toCheck.length() - 1;
-            if (toCheck.charAt(0) == '\n' || toCheck.charAt(0) == '"'|| toCheck.charAt(0) == '(' || toCheck.charAt(0) == ',' || toCheck.charAt(0) == ':' || toCheck.charAt(0) == '.')
+            if (toCheck.charAt(0) == '\n' || toCheck.charAt(0) == '"'|| toCheck.charAt(0) == '(' || toCheck.charAt(0) == ',' || toCheck.charAt(0) == ':' || toCheck.charAt(0) == '.' || toCheck.charAt(0) == '-' || toCheck.charAt(0) == '|' || toCheck.charAt(0) == '`' || toCheck.charAt(0) == '\'' || toCheck.charAt(0) == '[' || toCheck.charAt(0) == ']' || toCheck.charAt(0) == ';' || toCheck.charAt(0) == '?' || toCheck.charAt(0) == '/') {
                 toCheck = toCheck.substring(1);
+                toCheck = deletePunctutations(toCheck);
+            }
             toCheckLength = toCheck.length() - 1;
-            if (toCheck != "" && toCheck.length()>1 && (toCheck.charAt(toCheckLength) == ',' || toCheck.charAt(toCheckLength)=='"' ||  toCheck.charAt(toCheckLength) == ')' || toCheck.charAt(toCheckLength) == '.' || toCheck.charAt(toCheckLength) == ':'))
-                toCheck = toCheck.substring(0,toCheckLength);//todo maybe toCheckLength+1
+            if (toCheck != "" && toCheck.length()>0 && (toCheck.charAt(toCheckLength) == ',' || toCheck.charAt(toCheckLength)=='"' ||  toCheck.charAt(toCheckLength) == ')' || toCheck.charAt(toCheckLength) == '.' || toCheck.charAt(toCheckLength) == ':' || toCheck.charAt(toCheckLength) == '"' || toCheck.charAt(toCheckLength) == '-' || toCheck.charAt(toCheckLength) == '|' || toCheck.charAt(toCheckLength) =='`' || toCheck.charAt(toCheckLength) ==']' || toCheck.charAt(toCheckLength) =='[' || toCheck.charAt(toCheckLength) =='\'' || toCheck.charAt(toCheckLength) ==';' || toCheck.charAt(toCheckLength) =='?' || toCheck.charAt(toCheckLength) =='/')) {
+                toCheck = toCheck.substring(0, toCheckLength);
+                toCheck = deletePunctutations(toCheck);
+            }
         }
         return toCheck;
     }
 
     /**
      * the function check if a word is stop word or not from stopWords HastSet.
-     *
      * @param currToken - current word to check
      * @return - true is current word is stopWord. else false.
      */
@@ -173,7 +239,6 @@ public class Parse {
 
     /**
      * if the token is percentage token add it to the terms dictionary.
-     *
      * @param nextT - the next token to check in the curr doc.
      * @param token - the curr token to check in the curr doc.
      * @return - -1 if not added to the dic else return the number of words used from the doc
@@ -236,7 +301,6 @@ public class Parse {
 
     /**
      * check if a string is a legal fraction
-     *
      * @param token - string to check
      * @return - true if legal fraction else false.
      */
@@ -265,7 +329,6 @@ public class Parse {
 
     /**
      * check whether a given string contain only digits(numbers)
-     *
      * @param number - string to check
      * @return - true if contain only numbers else false.
      */
@@ -282,7 +345,6 @@ public class Parse {
 
     /**
      * return the next token from currDoc
-     *
      * @param currDoc - the curr doc
      * @param index   - current token index
      * @return - String type of the token at location index +1. if index is the last of the array return empty string.
@@ -582,7 +644,6 @@ public class Parse {
 
     /**
      * reduce non-relevant zeros from the end
-     *
      * @param term
      * @param reduce
      * @return
@@ -600,7 +661,6 @@ public class Parse {
 
     /**
      * adding dot in the appropriate location
-     *
      * @param number - the term in document
      * @param reduce - the location of the dot from the end
      * @return
@@ -621,12 +681,14 @@ public class Parse {
      * Only large. On the other hand, if a word appears sometimes with a large letter and sometimes without a large letter we will save it
      * With only lowercase letters.
      */
-    private void addOnlyLettersWords(String token){
+    private int addOnlyLettersWords(String token){
         if (token!=null && token!="" && (Pattern.matches("[a-zA-Z]+", token))){
             //if the first char of the token upper case.
             if(token.charAt(0)<=90 && token.charAt(0)>=65){
-                if(!dictionary.contains(token.toLowerCase()))
+                if(!dictionary.contains(token.toLowerCase())) {
                     dictionary.add(token.toUpperCase());
+
+                }
             }
             else if(token.equals(token.toLowerCase()))
                 if(dictionary.contains(token.toUpperCase())) {
@@ -634,7 +696,9 @@ public class Parse {
                     dictionary.add(token) ;
                 }
                 else dictionary.add(token);
+            return 0;
         }
+        return -1;
     }
 
     /**
@@ -824,18 +888,18 @@ public class Parse {
         text[1]="";
         parse.parseDoc(text);
 
-        parse.DollarTermMoreThanMillion("1000000","Dollars","","");
-        parse.DollarTermMoreThanMillion("20.6m","Dollars","","");
-        parse.DollarTermMoreThanMillion("100bn","Dollars","","");
-        parse.DollarTermMoreThanMillion("$4500000","Dollars","","");
-        parse.DollarTermMoreThanMillion("$100","million","","");
-        parse.DollarTermMoreThanMillion("$100","billion","","");
-        parse.DollarTermMoreThanMillion("100","billion","U.S.","dollars");
-        parse.DollarTermMoreThanMillion("320","million","U.S.","dollars");
-        parse.DollarTermMoreThanMillion("1","trillion","U.S.","dollars");
-        for (String term:parse.dictionary) {
-            System.out.println(term);
-        }
+//        parse.DollarTermMoreThanMillion("1000000","Dollars","","");
+//        parse.DollarTermMoreThanMillion("20.6m","Dollars","","");
+//        parse.DollarTermMoreThanMillion("100bn","Dollars","","");
+//        parse.DollarTermMoreThanMillion("$4500000","Dollars","","");
+//        parse.DollarTermMoreThanMillion("$100","million","","");
+//        parse.DollarTermMoreThanMillion("$100","billion","","");
+//        parse.DollarTermMoreThanMillion("100","billion","U.S.","dollars");
+//        parse.DollarTermMoreThanMillion("320","million","U.S.","dollars");
+//        parse.DollarTermMoreThanMillion("1","trillion","U.S.","dollars");
+//        for (String term:parse.dictionary) {
+//            System.out.println(term);
+//        }
 //
 //        String ans = parse.convertingToMillionForDollars("12.3456B");
 //        System.out.println(ans);
@@ -850,6 +914,12 @@ public class Parse {
 //        parse.addOnlyLettersWords("Loren");
 
 //        parse.addOnlyLettersWords("Loren");
+
+        String testSW = "``c-";
+        testSW = parse.deletePunctutations(testSW);
+        System.out.println(testSW);
+        parse.getStopWordsIntoHastSet();
+        parse.deleteStopWords(testSW);
         String[] currDoc = "Between 123 and 123 Thousand".split(" ");
         parse.expressionAndRangesTerm("126", "125-126", "Thousand", 0,currDoc);
         for (String s:parse.dictionary){

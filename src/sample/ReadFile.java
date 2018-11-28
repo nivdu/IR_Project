@@ -1,13 +1,9 @@
 package sample;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.stream.Stream;
 
 public class ReadFile {
     private Parse parse;
@@ -27,6 +23,7 @@ public class ReadFile {
      *
      */
     public void SpiltFileIntoSeparateDocs(){
+        long Stime = System.currentTimeMillis();
         final File folder = new File(path);
         for (final File fileEntry : folder.listFiles()) {
             for (final File fileOfDocs: fileEntry.listFiles()){
@@ -41,11 +38,14 @@ public class ReadFile {
                     if(splitByText.length<2)
                         continue;
                         String[] splitByEndText = splitBySpecificString(splitByText[1], "</TEXT>\n");
-                        String docSplitBySpaces[] = splitByEndText[0].split(" ");
+                        String docSplitBySpaces[] = splitByEndText[0].split(" |\\\n|\\--");
                         parse.parseDoc(docSplitBySpaces);
                 }
             }
         }
+        long Ftime = System.currentTimeMillis();
+        System.out.println(Ftime-Stime);
+        int temp=-10;
     }
 
 

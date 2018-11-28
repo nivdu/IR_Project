@@ -6,10 +6,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import java.text.NumberFormat;
-import java.text.ParseException;
-import java.util.Locale;
-
 public class Main extends Application {
 
     @Override
