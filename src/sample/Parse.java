@@ -6,13 +6,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.regex.Pattern;
 
 public class Parse {
     //hashSet for all the stop words.
     HashSet<String> stopWords;
-    //dictionary contain all the terms from the docs
-    HashSet<String> dictionary;
     //HashSet for month names
     HashMap<String, String> months;
 
@@ -22,7 +21,6 @@ public class Parse {
     public Parse() {
         this.stopWords = new HashSet<String>();//todo in the constructor build from the StopWords File the HashSet of stop words.
         getStopWordsIntoHastSet();
-        this.dictionary = new HashSet<String>();
         this.months = new HashMap<String, String>();
         createMonthHS();
     }
@@ -79,10 +77,10 @@ public class Parse {
     }
 
 
-    public document parseDoc(String[] splitedDoc) {
+    public document parseDoc(String[] splitedDoc, String city, String stopWordsPath) {
         int jump = 0;
         //temporary dictionary to find the max tf in current doc.
-        HashMap<String, Integer> FindMaxTf = new HashMap<>();//todo at the end of the loop check the tf and everything
+        HashMap<String, Integer> dicDoc = new HashMap<>();//todo at the end of the loop check the tf and everything
         //loop over all the tokens in current doc.
         boolean isAddToDic = false;
         //delete start and end char punctutations from the terms.
@@ -101,46 +99,46 @@ public class Parse {
             String nextNextToken = getNextToken(splitedDoc, currDocIndex + 1);
             String nextNextNextToken = getNextToken(splitedDoc, currDocIndex + 2);
             //check percentageTerms function
-            jump = percentageTerm(nextToken, currToken);
+            jump = percentageTerm(nextToken, currToken, dicDoc);
             if (jump != -1) {
                 currDocIndex += jump;
                 continue;
             }
 
             //check DollarTerm function less than miliion.
-            jump = DollarTermLessThanMillion(currToken, nextNextToken, nextNextToken);
+            jump = DollarTermLessThanMillion(currToken, nextNextToken, nextNextToken, dicDoc);
             if (jump != -1) {
                 currDocIndex+=jump;
                 continue;
             }
 
-            jump = DollarTermMoreThanMillion(currToken, nextNextToken, nextNextToken, nextNextNextToken);
+            jump = DollarTermMoreThanMillion(currToken, nextNextToken, nextNextToken, nextNextNextToken, dicDoc);
             if (jump != -1) {
                 currDocIndex+=jump;
                 continue;
             }
 
-            jump = DateTerm(nextToken, currToken);
+            jump = DateTerm(nextToken, currToken, dicDoc);
             if (jump != -1) {
                 currDocIndex += jump;
                 continue;
             }
 
-            jump = expressionAndRangesTerm(nextToken, currToken, nextNextToken, currDocIndex, splitedDoc);
+            jump = expressionAndRangesTerm(nextToken, currToken, nextNextToken, currDocIndex, splitedDoc, dicDoc);
             if (jump != -1) {
                 currDocIndex += jump;
                 continue;
             }
 
             //check regularNumberTerms function.
-            jump = regularNumberTerms(currToken, nextToken);
+            jump = regularNumberTerms(currToken, nextToken, dicDoc);
             if (jump != -1) {
                 currDocIndex+=jump;
                 continue;
             }
 
             //check bigsmall letter cases
-            jump = addOnlyLettersWords(currToken);
+            jump = addOnlyLettersWords(currToken, dicDoc);
             if (jump != -1) {
                 currDocIndex+=jump;
                 continue;
@@ -148,7 +146,7 @@ public class Parse {
 
             //add token that didn't match any case. (like f16 and a lot more cases).
             if(currToken.length()>1)
-                dictionary.add(currToken);
+                addToDicDoc(dicDoc, currToken);
 
             //cases like word/word or word/word/word or word.word or word.[word].
 //            String[] toAdd = currToken.split("[?!:;#@^+&{}*|<=/>\"\\.]");
@@ -157,7 +155,7 @@ public class Parse {
                 for (String s:toAdd){
                 s = deletePunctutations(s);
                 if(s.length()>1)
-                    dictionary.add(s);
+                    addToDicDoc(dicDoc,s);
                 }
 
 
@@ -165,18 +163,48 @@ public class Parse {
 
             //todo use stemmer.
         }
-        int tf = getMaxTF(FindMaxTf);
-        int maxUnique = getMaxUnique(FindMaxTf);
-
-        return new document(tf,maxUnique,city, FindMaxTf);
+        int tf = getMaxTF(dicDoc);
+        int maxUnique = getMaxUnique(dicDoc);
+        return new document(tf, maxUnique, city, dicDoc);
     }
 
-    private int getMaxUnique(HashMap<String, Integer> findMaxTf) {
-        return 0;//todo
+    /**
+     * add term into the current document dictionary and increase by 1 the tf value in dicDoc.
+     * @param dicDoc - doc dictionary
+     * @param term - term to add to dicDoc
+     */
+    private void addToDicDoc(HashMap<String,Integer> dicDoc, String term){
+        if(dicDoc.containsKey(term)){
+            int tf = dicDoc.get(term);
+            dicDoc.put(term,tf+1);
+        }
+        else{
+            dicDoc.put(term,1);
+        }
     }
 
-    private int getMaxTF(HashMap<String,Integer> findMTF){
-        return 0;//todo
+    /**
+     * iterator over the dicDoc hashmap and find the max tf.
+     * Link : https://stackoverflow.com/questions/1066589/iterate-through-a-hashmap
+     */
+    private int getMaxTF(HashMap<String,Integer> dicDoc){//todo check this function
+        int max = 0;
+        Iterator it = dicDoc.entrySet().iterator();
+        while (it.hasNext()) {
+            HashMap.Entry pair = (HashMap.Entry)it.next();
+            int temp = (int)pair.getValue();
+            if(temp > max)
+                max = temp;
+            it.remove(); // avoids a ConcurrentModificationException
+            }
+            return max;
+    }
+
+    /**
+     * return the size of dicDoc - the number of unique words from current dictionary of document.
+     */
+    private int getMaxUnique(HashMap<String, Integer> dicDoc){
+        return dicDoc.size();
     }
 
     /**
@@ -259,7 +287,7 @@ public class Parse {
      * @return - -1 if not added to the dic else return the number of words used from the doc
      */
 
-    private int percentageTerm(String nextT, String token) {//todo check for %-number
+    private int percentageTerm(String nextT, String token, HashMap dicDoc) {//todo check for %-number
         if (token == null || token.length() <= 0)//todo what to do if the token is null?
             return -1;
         //cases like 6%
@@ -268,7 +296,7 @@ public class Parse {
             String checkIfNumber = token.substring(0, token.length() - 1);
             //if before the '%' char there is only digits and docs add to the dictionary the whole token.
             if (checkIfOnlyDigitsDotsComma(checkIfNumber)) {
-                dictionary.add(token);
+                addToDicDoc(dicDoc,token);
                 return 0;
             }
         }
@@ -277,7 +305,7 @@ public class Parse {
             //if before the percent/percentage there is only digits and docs add to the dictionary the whole token combine with '%'.
 
             if (checkIfOnlyDigitsDotsComma(token)) {
-                dictionary.add(token + '%');
+                addToDicDoc(dicDoc,token + '%');
                 return 1;
             }
         }
@@ -290,24 +318,24 @@ public class Parse {
      * @param token - curr token in the doc
      * @return - true if the token are date token type.
      */
-    private int DateTerm(String nextT, String token) {
+    private int DateTerm(String nextT, String token, HashMap dicDoc) {
         //todo check if token is empty null and shit
         if (checkIfOnlyDigitsDotsComma(token) && token.length()<4 && months.containsKey(nextT)) {//todo maby check if only numbers without digits and dots.
             if(token.length()==1)
                 token = "0" + token;
             String toAdd = months.get(nextT) + "-" + token;
-            dictionary.add(toAdd);
+            addToDicDoc(dicDoc,toAdd);
             return 1;
         }
         else if(checkIfOnlyDigitsDotsComma(nextT) && token.length()<4 && months.containsKey(token)){//todo maby check if only numbers without digits and dots.
             if(nextT.length()==1)
                 nextT = "0" + nextT;
             String toAdd = months.get(token) + "-" + nextT;
-            dictionary.add(toAdd);
+            addToDicDoc(dicDoc,toAdd);
             return 1;
         } else if (months.containsKey(token) && checkIfOnlyDigitsDotsComma(nextT)) {//todo maby check if only numbers without digits and dots.
             String toAdd = nextT + "-" + months.get(token);
-            dictionary.add(toAdd);
+            addToDicDoc(dicDoc,toAdd);
             return 1;
         }
         return -1;
@@ -405,7 +433,7 @@ public class Parse {
      * @param token - the current token
      * @return - true if the term keep the given laws
      */
-    private int DollarTermLessThanMillion(String token ,String nextT, String nextNextT) {
+    private int DollarTermLessThanMillion(String token ,String nextT, String nextNextT, HashMap dicDoc) {
         if (token == null || token.length() <= 0)//todo what to do if the token is null?
             return -1;
         //cases like $1000
@@ -413,7 +441,7 @@ public class Parse {
             String checkIfNumber = token.substring(1);
             //if before the '%' char there is only digits and docs add to the dictionary the whole token.
             if (checkIfOnlyDigitsDotsComma(checkIfNumber)) {
-                dictionary.add(checkIfNumber + " " + "Dollars");
+                addToDicDoc(dicDoc,checkIfNumber + " " + "Dollars");
                 return 0;
             }
         }
@@ -422,12 +450,12 @@ public class Parse {
             return -1;
         //cases like 123 Dollars
         if(nextT.equals("Dollars")){
-            dictionary.add(token+" "+nextT);
+            addToDicDoc(dicDoc,token+" "+nextT);
             return 1;
         }
         //cases like 123 3/4 Dollars
         if(checkIfLegalFraction(nextT)&&nextNextT.equals("Dollars")){
-            dictionary.add(token+" "+nextT+" "+nextNextT);
+            addToDicDoc(dicDoc,token+" "+nextT+" "+nextNextT);
             return 2;
         }
         return -1;
@@ -441,7 +469,7 @@ public class Parse {
      * @param nextNextNextT- the next next next token
      * @return- true if the term keep the given laws
      */
-    private int DollarTermMoreThanMillion(String token, String nextT, String nextNextT, String nextNextNextT){
+    private int DollarTermMoreThanMillion(String token, String nextT, String nextNextT, String nextNextNextT, HashMap dicDoc){
         if(token.equals(""))
             return -1;
         boolean tokenIsNumber = checkIfOnlyDigitsDotsComma(token);
@@ -456,7 +484,7 @@ public class Parse {
                 term = regularNumberTerms2(token,nextT);
                 term = convertingToMillionForDollars(term);
                 term+=" "+nextT;
-                dictionary.add(term);
+                addToDicDoc(dicDoc, term);
                 return 1;
             }
             //cases like 20.6m Dollars
@@ -464,7 +492,7 @@ public class Parse {
                 String tokenWithoutM = token.substring(0,token.length()-1);
                 if(checkIfOnlyDigitsDotsComma(tokenWithoutM)){
                     term=tokenWithoutM+" M "+nextT;
-                    dictionary.add(term);
+                    addToDicDoc(dicDoc, term);
                     return 1;
                 }
             }
@@ -473,7 +501,7 @@ public class Parse {
                 String tokenWithoutBN = token.substring(0,token.length()-2);
                 if(checkIfOnlyDigitsDotsComma(tokenWithoutBN)){
                     term=tokenWithoutBN+"000"+" M "+nextT;
-                    dictionary.add(term);
+                    addToDicDoc(dicDoc, term);
                     return 1;
                 }
             }
@@ -483,13 +511,13 @@ public class Parse {
             //cases like $100 million
             if(nextT.equals("million") && tokenIsNumberWithout$){
                 String termWithoutCommas = deletingCommasFromNumbers(token.substring(1));
-                dictionary.add(termWithoutCommas+" M Dollars");
+                addToDicDoc(dicDoc,termWithoutCommas+" M Dollars");
                 return 1;
             }
             //cases like $100 billion
             if(nextT.equals("billion") && tokenIsNumberWithout$){
                 String termWithoutCommas = deletingCommasFromNumbers(token.substring(1));
-                dictionary.add(termWithoutCommas+"000"+" M Dollars");
+                addToDicDoc(dicDoc,termWithoutCommas+"000"+" M Dollars");
                 return 1;
             }
             //cases like $1000000
@@ -499,7 +527,7 @@ public class Parse {
             if(tokenIsMoreThanMillionWithout$){
                 term=regularNumberTerms2(token,nextT);
                 term = convertingToMillionForDollars(term);
-                dictionary.add(term+" Dollars");
+                addToDicDoc(dicDoc, term+" Dollars");
                 return 0;
             }
         }
@@ -508,17 +536,17 @@ public class Parse {
             String tokenWithoutComma = deletingCommasFromNumbers(token);
             //cases like number million U.S. dollars
             if(nextT.equals("million")){
-                dictionary.add(tokenWithoutComma+" M Dollars");
+                addToDicDoc(dicDoc,tokenWithoutComma+" M Dollars");
                 return 3;
             }
             //cases like number billion U.S. dollars
             if(nextT.equals("billion")){
-                dictionary.add(tokenWithoutComma+"000"+" M Dollars");
+                addToDicDoc(dicDoc, tokenWithoutComma+"000"+" M Dollars");
                 return 3;
             }
             //cases like number trillion U.S. dollars
             if(nextT.equals("trillion")){
-                dictionary.add(tokenWithoutComma+"000000"+" M Dollars");
+                addToDicDoc(dicDoc,tokenWithoutComma+"000000"+" M Dollars");
                 return 3;
             }
         }
@@ -600,14 +628,14 @@ public class Parse {
      * @param token - the token in the document
      * @return true if legal number
      */
-    private int regularNumberTerms(String token, String nextToken) {
+    private int regularNumberTerms(String token, String nextToken, HashMap dicDoc) {
         String term = regularNumberTerms2(token,nextToken);
         if(!term.equals("")){
             if(nextToken.equals("Thousand") || nextToken.equals("Million") ||nextToken.equals("Billion") ||nextToken.equals("Trillion")){
-                dictionary.add(term);
+                addToDicDoc(dicDoc, term);
                 return 1;
             }
-            dictionary.add(term);
+            addToDicDoc(dicDoc, term);
             return 0;
         }
         return -1;
@@ -696,21 +724,21 @@ public class Parse {
      * Only large. On the other hand, if a word appears sometimes with a large letter and sometimes without a large letter we will save it
      * With only lowercase letters.
      */
-    private int addOnlyLettersWords(String token){
+    private int addOnlyLettersWords(String token, HashMap dicDoc){
         if (token!=null && token!="" && (Pattern.matches("[a-zA-Z]+", token))){
             //if the first char of the token upper case.
             if(token.charAt(0)<=90 && token.charAt(0)>=65){
-                if(!dictionary.contains(token.toLowerCase())) {
-                    dictionary.add(token.toUpperCase());
+                if(!dicDoc.containsKey(token.toLowerCase())) {
+                    addToDicDoc(dicDoc, token.toUpperCase());
 
                 }
             }
             else if(token.equals(token.toLowerCase()))
-                if(dictionary.contains(token.toUpperCase())) {
-                    dictionary.remove(token.toUpperCase());
-                    dictionary.add(token) ;
+                if(dicDoc.containsKey(token.toUpperCase())) {
+                    dicDoc.remove(token.toUpperCase());
+                    addToDicDoc(dicDoc, token) ;
                 }
-                else dictionary.add(token);
+                else addToDicDoc(dicDoc, token);
             return 0;
         }
         return -1;
@@ -787,7 +815,7 @@ public class Parse {
      * @param currT
      * @return
      */
-    private int expressionAndRangesTerm(String nextT, String currT, String nextnextT, int currIndex, String[] currDoc){
+    private int expressionAndRangesTerm(String nextT, String currT, String nextnextT, int currIndex, String[] currDoc, HashMap dicDoc){
         String[] exp;
         //like 123 Thousand-124, 123 Thousand-124 Thousand, 123 Thousand-word
         if(checkIfOnlyDigitsDotsComma(currT) && nextT.contains("-")) {
@@ -799,12 +827,12 @@ public class Parse {
                 //like 123 T-124 thousand
                 if (exp.length == 2 && regularNumberTerms2(exp[1], nextnextT) != regularNumberTerms2(exp[1], "stam")) {
                     String rightExp = regularNumberTerms2(exp[1], nextnextT);
-                    dictionary.add(leftExp + "-" + rightExp);
+                    addToDicDoc(dicDoc, leftExp + "-" + rightExp);
                     return 2;
                     //like 123 T-124 or 123 T-word.
                 } else {
                     if (exp.length == 2) {
-                        dictionary.add(leftExp + "-" + exp[1]);
+                        addToDicDoc(dicDoc, leftExp + "-" + exp[1]);
                         return 1;
                     }
                 }
@@ -816,7 +844,7 @@ public class Parse {
             //if like 123/123 T
             if(exp.length==2 && isItNumberFromSectionA(nextT)){
                 String rightExp = regularNumberTerms2(exp[1],nextT);
-                dictionary.add(exp[0] + "-" + rightExp);
+                addToDicDoc(dicDoc, exp[0] + "-" + rightExp);
                 return 2;
             }
         }
@@ -824,11 +852,11 @@ public class Parse {
         else if(currT.contains("-")){
             exp = currT.split("-");
             if (exp.length==2 && checkIfOnlyLetters(exp[0]) && checkIfOnlyLetters(exp[1])){
-                dictionary.add(currT);
+                addToDicDoc(dicDoc, currT);
                 return 0;
             }
             if(exp.length==3 && checkIfOnlyLetters(exp[0]) && checkIfOnlyLetters(exp[1]) && checkIfOnlyLetters(exp[2])){
-                dictionary.add(currT);
+                addToDicDoc(dicDoc, currT);
                 return 0;
             }
         }
@@ -867,14 +895,14 @@ public class Parse {
                     //if number 2 is one word number
                     else
                         Number2 = Number2first;
-                    dictionary.add(Number1 + "-" + Number2);//todo check how much jumps to do in the parsdoc function! the number of jumps saved in integer jumps.
+                    addToDicDoc(dicDoc, Number1 + "-" + Number2);//todo check how much jumps to do in the parsdoc function! the number of jumps saved in integer jumps.
                     return jumps;
                 }
             }
         }
         //regular word-word, number-word, word-number
         else if(currT.contains("-") && currT.length()>= 3){
-            dictionary.add(currT);
+            addToDicDoc(dicDoc, currT);
             return 0;
         }
         return -1;
@@ -901,7 +929,7 @@ public class Parse {
         String[] text = new String[2];
         text[0]="-";
         text[1]="";
-        parse.parseDoc(text);
+//        parse.parseDoc(text);
 
 //        parse.DollarTermMoreThanMillion("1000000","Dollars","","");
 //        parse.DollarTermMoreThanMillion("20.6m","Dollars","","");
@@ -936,10 +964,10 @@ public class Parse {
         parse.getStopWordsIntoHastSet();
         parse.deleteStopWords(testSW);
         String[] currDoc = "Between 123 and 123 Thousand".split(" ");
-        parse.expressionAndRangesTerm("126", "125-126", "Thousand", 0,currDoc);
-        for (String s:parse.dictionary){
-            System.out.println(s);
-        }
+//        parse.expressionAndRangesTerm("126", "125-126", "Thousand", 0,currDoc);
+//        for (String s:parse.dictionary){
+//            System.out.println(s);
+//        }
 
 
 
