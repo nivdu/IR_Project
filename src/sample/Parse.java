@@ -79,10 +79,10 @@ public class Parse {
     }
 
 
-    public void parseDoc(String[] splitedDoc) {
+    public document parseDoc(String[] splitedDoc) {
         int jump = 0;
         //temporary dictionary to find the max tf in current doc.
-        HashMap<String, Integer> FindMaxTf;//todo at the end of the loop check the tf and everything
+        HashMap<String, Integer> FindMaxTf = new HashMap<>();//todo at the end of the loop check the tf and everything
         //loop over all the tokens in current doc.
         boolean isAddToDic = false;
         //delete start and end char punctutations from the terms.
@@ -151,17 +151,32 @@ public class Parse {
                 dictionary.add(currToken);
 
             //cases like word/word or word/word/word or word.word or word.[word].
-            String[] toAdd = currToken.split("[?!:;#@^+&{}*|<=/>\"\\.]");
-            for (String s:toAdd){
+//            String[] toAdd = currToken.split("[?!:;#@^+&{}*|<=/>\"\\.]");
+            String[] toAdd = currToken.split(" |\\/|\\.");
+            if(toAdd.length>1)
+                for (String s:toAdd){
                 s = deletePunctutations(s);
-                dictionary.add(s);
-            }
+                if(s.length()>1)
+                    dictionary.add(s);
+                }
 
 
 
 
             //todo use stemmer.
         }
+        int tf = getMaxTF(FindMaxTf);
+        int maxUnique = getMaxUnique(FindMaxTf);
+
+        return new document(tf,maxUnique,city, FindMaxTf);
+    }
+
+    private int getMaxUnique(HashMap<String, Integer> findMaxTf) {
+        return 0;//todo
+    }
+
+    private int getMaxTF(HashMap<String,Integer> findMTF){
+        return 0;//todo
     }
 
     /**
