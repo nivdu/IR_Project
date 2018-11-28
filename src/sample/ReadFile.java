@@ -48,10 +48,7 @@ public class ReadFile {
         }
     }
 
-    /**
-     *
-     *
-     */
+  /*
     public void SpiltFileIntoSeparateDocs(){
         long Stime = System.currentTimeMillis();
         final File folder = new File(path);
@@ -77,7 +74,7 @@ public class ReadFile {
         System.out.println(Ftime-Stime);
         int temp=-10;
     }
-
+*/
     /**
      * Open file from the given path, split it by Docs tags, by Text tags and split by spaces and \n.
      * @param path - path of text file from the corpus.
