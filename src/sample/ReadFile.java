@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 
 public class ReadFile {
     private Parse parse;
@@ -16,6 +17,35 @@ public class ReadFile {
     public ReadFile(String path) {
         this.parse = new Parse();
         this.path=path;
+    }
+
+    /**
+     * Read All file from corpus and return path to each file isn't a directory
+     * @param corpusPath - path of the corpus directory
+     * @return - array list of Strings, each String is a path to Text File
+     */
+    public ArrayList<String> readCorpus(String corpusPath){
+        ArrayList<String> filePaths = new ArrayList<>();
+        File corpusFolder = new File(corpusPath);
+        File[] corpusFiles = corpusFolder.listFiles();
+        for (File f:corpusFiles){
+            addFilesPath(filePaths, f);
+        }
+        return filePaths;
+    }
+
+    /**
+     * Called from function "readCorpus". Insert file paths into array list from the given file, if the file is directory, open it and take the paths of the files inside it.
+     * @param filePaths - current file/directory path
+     */
+    private void addFilesPath(ArrayList<String> filePaths, File f){
+        if(filePaths==null || f==null)
+            return;
+        for (File fileFromF:f.listFiles()){
+            if(fileFromF.isDirectory())
+                addFilesPath(filePaths, fileFromF);
+            else filePaths.add(fileFromF.getAbsolutePath());
+        }
     }
 
     /**
@@ -48,13 +78,39 @@ public class ReadFile {
         int temp=-10;
     }
 
-
     /**
-     * from url: https://howtodoinjava.com/java/io/java-read-file-to-string-examples/
-     * read file to String line by line
-     * @param file - The path of the file to read into String
-     * @return - String of the context of the file
+     * Open file from the given path, split it by Docs tags, by Text tags and split by spaces and \n.
+     * @param path - path of text file from the corpus.
      */
+    public ArrayList<String[]> spiltFileIntoSeparateDocs2(String path) {
+        ArrayList<String[]> docsFromFile = new ArrayList<>();
+        File fileEntry = new File(path);
+        for (final File fileOfDocs : fileEntry.listFiles()) {
+            String wholeFileString = file2String(fileOfDocs);
+            //file split by <Doc>
+            String[] splitByDoc = splitBySpecificString(wholeFileString, "<DOC>\n");
+            //file split by <TEXT> //todo need to delete the <</TEXT> at parse.
+            for (String currentDoc : splitByDoc) {
+                if (currentDoc.equals(""))
+                    continue;
+                String[] splitByText = splitBySpecificString(currentDoc, "<TEXT>\n");
+                if (splitByText.length < 2)
+                    continue;
+                String[] splitByEndText = splitBySpecificString(splitByText[1], "</TEXT>\n");
+                String docSplitBySpaces[] = splitByEndText[0].split(" |\\\n|\\--");
+                docsFromFile.add(docSplitBySpaces);
+            }
+        }
+        return docsFromFile;
+    }
+
+
+        /**
+         * from url: https://howtodoinjava.com/java/io/java-read-file-to-string-examples/
+         * read file to String line by line
+         * @param file - The path of the file to read into String
+         * @return - String of the context of the file
+         */
     private String file2String(File file)
     {
         StringBuilder contentBuilder = new StringBuilder();
@@ -63,7 +119,7 @@ public class ReadFile {
 
             try
             {
-                content = new String ( Files.readAllBytes( Paths.get(file.toPath().toString()) ) );
+                content = new String ( Files.readAllBytes( Paths.get(file.getAbsolutePath()) ) );//todo maby file.topath.tostring
             }
             catch (IOException e)
             {
