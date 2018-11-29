@@ -14,11 +14,16 @@ public class Parse {
     HashSet<String> stopWords;
     //HashSet for month names
     HashMap<String, String> months;
-
+    //stop Word Path
+    String stopWordPath;
+    //true if stem is needed.
+    boolean stemmer;
     /**
      * Parse Constructor.
      */
-    public Parse() {
+    public Parse(boolean stemmer, String stopWordPath) {
+        this.stemmer=stemmer;
+        this.stopWordPath = stopWordPath;
         this.stopWords = new HashSet<String>();//todo in the constructor build from the StopWords File the HashSet of stop words.
         getStopWordsIntoHastSet();
         this.months = new HashMap<String, String>();
@@ -77,7 +82,7 @@ public class Parse {
     }
 
 
-    public document parseDoc(String[] splitedDoc, String city, String stopWordsPath) {
+    public document parseDoc(String[] splitedDoc, String city, String docId) {
         int jump = 0;
         //temporary dictionary to find the max tf in current doc.
         HashMap<String, Integer> dicDoc = new HashMap<>();//todo at the end of the loop check the tf and everything
@@ -165,7 +170,7 @@ public class Parse {
         }
         int tf = getMaxTF(dicDoc);
         int maxUnique = getMaxUnique(dicDoc);
-        return new document(tf, maxUnique, city, dicDoc);
+        return new document(docId, tf, maxUnique, city, dicDoc);
     }
 
     /**
@@ -195,7 +200,7 @@ public class Parse {
             int temp = (int)pair.getValue();
             if(temp > max)
                 max = temp;
-            it.remove(); // avoids a ConcurrentModificationException
+//            it.remove(); // avoids a ConcurrentModificationException
             }
             return max;
     }
@@ -256,12 +261,12 @@ public class Parse {
             if(toCheck.equals("U.S."))
                 return toCheck;
             int toCheckLength = toCheck.length() - 1;
-            if (toCheck.charAt(0) == '\n' || toCheck.charAt(0) == '"'|| toCheck.charAt(0) == '(' || toCheck.charAt(0) == ',' || toCheck.charAt(0) == ':' || toCheck.charAt(0) == '.' || toCheck.charAt(0) == '-' || toCheck.charAt(0) == '|' || toCheck.charAt(0) == '`' || toCheck.charAt(0) == '\'' || toCheck.charAt(0) == '[' || toCheck.charAt(0) == ']' || toCheck.charAt(0) == ';' || toCheck.charAt(0) == '?' || toCheck.charAt(0) == '/') {
+            if (toCheck.charAt(0) == '\n' || toCheck.charAt(0) == '"'|| toCheck.charAt(0) == '(' || toCheck.charAt(0) == ',' || toCheck.charAt(0) == ':' || toCheck.charAt(0) == '.' || toCheck.charAt(0) == '-' || toCheck.charAt(0) == '|' || toCheck.charAt(0) == '`' || toCheck.charAt(0) == '\'' || toCheck.charAt(0) == '[' || toCheck.charAt(0) == ']' || toCheck.charAt(0) == ';' || toCheck.charAt(0) == '?' || toCheck.charAt(0) == '/' || toCheck.charAt(0) == '<') {
                 toCheck = toCheck.substring(1);
                 toCheck = deletePunctutations(toCheck);
             }
             toCheckLength = toCheck.length() - 1;
-            if (toCheck != "" && toCheck.length()>0 && (toCheck.charAt(toCheckLength) == ',' || toCheck.charAt(toCheckLength)=='"' ||  toCheck.charAt(toCheckLength) == ')' || toCheck.charAt(toCheckLength) == '.' || toCheck.charAt(toCheckLength) == ':' || toCheck.charAt(toCheckLength) == '"' || toCheck.charAt(toCheckLength) == '-' || toCheck.charAt(toCheckLength) == '|' || toCheck.charAt(toCheckLength) =='`' || toCheck.charAt(toCheckLength) ==']' || toCheck.charAt(toCheckLength) =='[' || toCheck.charAt(toCheckLength) =='\'' || toCheck.charAt(toCheckLength) ==';' || toCheck.charAt(toCheckLength) =='?' || toCheck.charAt(toCheckLength) =='/')) {
+            if (toCheck != "" && toCheck.length()>0 && (toCheck.charAt(toCheckLength) == ',' || toCheck.charAt(toCheckLength)=='"' ||  toCheck.charAt(toCheckLength) == ')' || toCheck.charAt(toCheckLength) == '.' || toCheck.charAt(toCheckLength) == ':' || toCheck.charAt(toCheckLength) == '"' || toCheck.charAt(toCheckLength) == '-' || toCheck.charAt(toCheckLength) == '|' || toCheck.charAt(toCheckLength) =='`' || toCheck.charAt(toCheckLength) ==']' || toCheck.charAt(toCheckLength) =='[' || toCheck.charAt(toCheckLength) =='\'' || toCheck.charAt(toCheckLength) ==';' || toCheck.charAt(toCheckLength) =='?' || toCheck.charAt(toCheckLength) =='/' || toCheck.charAt(toCheckLength) =='>')) {
                 toCheck = toCheck.substring(0, toCheckLength);
                 toCheck = deletePunctutations(toCheck);
             }
@@ -925,10 +930,10 @@ public class Parse {
     }
 
     public static void main(String[] args) {
-        Parse parse = new Parse();
-        String[] text = new String[2];
-        text[0]="-";
-        text[1]="";
+//        Parse parse = new Parse();
+//        String[] text = new String[2];
+//        text[0]="-";
+//        text[1]="";
 //        parse.parseDoc(text);
 
 //        parse.DollarTermMoreThanMillion("1000000","Dollars","","");
@@ -957,13 +962,13 @@ public class Parse {
 //        parse.addOnlyLettersWords("Loren");
 
 //        parse.addOnlyLettersWords("Loren");
-
-        String testSW = "``c-";
-        testSW = parse.deletePunctutations(testSW);
-        System.out.println(testSW);
-        parse.getStopWordsIntoHastSet();
-        parse.deleteStopWords(testSW);
-        String[] currDoc = "Between 123 and 123 Thousand".split(" ");
+//
+//        String testSW = "``c-";
+//        testSW = parse.deletePunctutations(testSW);
+//        System.out.println(testSW);
+//        parse.getStopWordsIntoHastSet();
+//        parse.deleteStopWords(testSW);
+//        String[] currDoc = "Between 123 and 123 Thousand".split(" ");
 //        parse.expressionAndRangesTerm("126", "125-126", "Thousand", 0,currDoc);
 //        for (String s:parse.dictionary){
 //            System.out.println(s);

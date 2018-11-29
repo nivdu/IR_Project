@@ -10,13 +10,16 @@ public class document {
     private HashMap<String,Integer> dicDoc;
 
     public document(String documentID, int maxTf, int numOfUniqueWords, String city, HashMap<String,Integer> tempDic) {
-        this.maxTf = 0;
+        this.maxTf = maxTf;
         this.numOfUniqueWords = numOfUniqueWords;
         this.city = city;
         this.dicDoc = tempDic;
         this.documentID=documentID;
     }
 
+    public void removeDic(){
+        dicDoc.clear();
+    }
     public int getMaxTf() {
         return maxTf;
     }

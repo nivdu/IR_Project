@@ -1,6 +1,5 @@
 package sample;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,36 +25,39 @@ public class Indexer {
         readFile = rf;
         parse = p;
         docList = new ArrayList<>();
+        dictionaryPosting=new HashMap<>();
     }
 
 
-    public void createPostingAndDic(String corpusPath, boolean useStem, String stopWordsPath) {
+    public void createPostingAndDic(String corpusPath) {
         ArrayList<String> allFilesPaths = readFile.readCorpus(corpusPath);
         for (String path : allFilesPaths) {
-            parseFile(readFile.spiltFileIntoSeparateDocs2(path), stopWordsPath);
+            parseFile(readFile.spiltFileIntoSeparateDocs2(path));
             //todo separate the for contents into another function and run it by multi threads
         }
     }
 
 
-    public void parseFile(ArrayList<String[]> filesToParse, String stopWordsPath) {
+    public void parseFile(ArrayList<String[]> filesToParse) {
         String city = "";
         String docId = "";
         int index = 0;
         for (String[] currentDoc : filesToParse) {
             if (currentDoc != null && currentDoc.length > 0) {
-                if (index % 3 == 0)
-                    city = currentDoc[0];
-                else if (index % 3 == 1)
-                    docId = currentDoc[0];
-                else {
-                    document currDoc = parse.parseDoc(currentDoc, city, stopWordsPath);
+//                if (index % 3 == 0)
+//                    city = currentDoc[0];
+//                else if (index % 3 == 1)
+//                    docId = currentDoc[0];
+//                else {
+                    document currDoc = parse.parseDoc(currentDoc, city, docId);
+//                    combineDicDocAndDictionary(currDoc);
+                    currDoc.removeDic();
                     docList.add(currDoc);
-                    combineDicDocAndDictionary(currDoc);
-                }
+//                }
                 index++;
             }
         }
+        filesToParse.clear();
     }
 
     /**
@@ -82,6 +84,5 @@ public class Indexer {
                 dictionaryPosting.put(term,dfPosting);
             }
         }
-
     }
 }
