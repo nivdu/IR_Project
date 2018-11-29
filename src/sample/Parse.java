@@ -24,7 +24,7 @@ public class Parse {
     public Parse(boolean stemmer, String stopWordPath) {
         this.stemmer=stemmer;
         this.stopWordPath = stopWordPath;
-        this.stopWords = new HashSet<String>();//todo in the constructor build from the StopWords File the HashSet of stop words.
+        this.stopWords = new HashSet<String>();
         getStopWordsIntoHastSet();
         this.months = new HashMap<String, String>();
         createMonthHS();
@@ -256,6 +256,11 @@ public class Parse {
     }
 
 
+    /**
+     * Deletes initial and final characters if they are punctuation marks
+     * @param toCheck - string to check
+     * @return - string without the unneeded punctuation
+     */
     private String deletePunctutations(String toCheck){
         if(toCheck!=null && toCheck!="" && toCheck.length()>1) {
             if(toCheck.equals("U.S."))
@@ -574,6 +579,11 @@ public class Parse {
     }
 
 
+    /**
+     * check wether a string is a number bigger then one million
+     * @param token - string to check
+     * @return - true if bigger then mil else false
+     */
     private boolean isMoreThanMillion(String token){
         String kind = checkIfKMBU(token);
         if(kind.equals("M") || kind.equals("B")){
@@ -581,6 +591,7 @@ public class Parse {
         }
         return false;
     }
+
 
     private String convertingToMillionForDollars(String term) {
         if(term.charAt(term.length()-1)=='M'){
