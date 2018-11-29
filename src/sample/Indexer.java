@@ -1,5 +1,8 @@
 package sample;
 
+import org.omg.SendingContext.RunTime;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,27 +40,81 @@ public class Indexer {
         }
     }
 
-
     public void parseFile(ArrayList<String[]> filesToParse) {
         String city = "";
         String docId = "";
         int index = 0;
         for (String[] currentDoc : filesToParse) {
             if (currentDoc != null && currentDoc.length > 0) {
-//                if (index % 3 == 0)
-//                    city = currentDoc[0];
-//                else if (index % 3 == 1)
-//                    docId = currentDoc[0];
-//                else {
+                if (index % 3 == 0)
+                    city = currentDoc[0];
+                else if (index % 3 == 1)
+                    docId = currentDoc[0];
+                else {
                     document currDoc = parse.parseDoc(currentDoc, city, docId);
-//                    combineDicDocAndDictionary(currDoc);
-                    currDoc.removeDic();
+                    Long freeMemory = Runtime.getRuntime().freeMemory();
+                    Long totalMemory = Runtime.getRuntime().totalMemory();
+                    double minMemory = totalMemory*0.3;
+                    if(freeMemory<=minMemory)//todo check
+                        saveAndDeletePosition(dictionaryPosting);
+                    combineDicDocAndDictionary(currDoc);
                     docList.add(currDoc);
-//                }
+                    currDoc.removeDic();
+                }
                 index++;
             }
         }
         filesToParse.clear();
+    }
+
+    private void saveAndDeletePosition(HashMap<String,String[]> dictionaryPosting) {
+        int number = 0;
+        copyPostingIntoArrayList(dictionaryPosting);
+        try {
+        File f = new File("resources/posting"+ number +".txt");//todo counter for number
+        if(!f.exists()) {
+                f.createNewFile();
+            FileWriter fw = new FileWriter(f);
+            fw.write("loren");
+            fw.flush();
+            fw.close();
+        }}
+        catch (IOException e) {
+            System.out.println("problem in saveanddeletefunction indexer");//todo delete this
+            e.printStackTrace();
+        }
+
+
+        /*byte[] data = "loran atafa".getBytes();
+        int number =0;
+
+        OutputStream out = null;
+        try {
+            out = new FileOutputStream(new File("resources/posting" +number+ ".txt"));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        try {
+            out.write(data);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+*/
+        //        try {
+//            File tempFile = File.createTempFile("post" + number,"txt",new File("C:\\Users\\nivdu\\Documents\\GitHub\\IR_Project\\resources"));
+//            System.out.println(tempFile);//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+        int temp=0;
+    }
+
+    private void copyPostingIntoArrayList(HashMap<String,String[]> dictionaryPosting) {
     }
 
     /**
@@ -82,7 +139,18 @@ public class Indexer {
                 dfPosting[0]="1";
                 dfPosting[1]=currDoc.getDocumentID()+","+dicDoc.get(term);
                 dictionaryPosting.put(term,dfPosting);
+
             }
         }
     }
+
+
+
+
+
+
+
+
+
+
 }

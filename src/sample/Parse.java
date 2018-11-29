@@ -17,12 +17,15 @@ public class Parse {
     //stop Word Path
     String stopWordPath;
     //true if stem is needed.
-    boolean stemmer;
+    boolean toStem;
+    //Stemmer class
+    Stemmer stemmer;
     /**
      * Parse Constructor.
      */
-    public Parse(boolean stemmer, String stopWordPath) {
-        this.stemmer=stemmer;
+    public Parse(boolean toStem, String stopWordPath) {
+        this.stemmer = new Stemmer();
+        this.toStem=toStem;
         this.stopWordPath = stopWordPath;
         this.stopWords = new HashSet<String>();
         getStopWordsIntoHastSet();
@@ -96,6 +99,11 @@ public class Parse {
             if (splitedDoc[currDocIndex].equals("") || splitedDoc[currDocIndex].equals("\n"))
                 continue;
             String currToken = splitedDoc[currDocIndex];
+            if(toStem){
+                stemmer.setTerm(currToken);
+                stemmer.stem();
+                currToken = stemmer.getTerm();
+            }
             //continue to next token when it stop Word
             if (deleteStopWords(currToken))
                 continue;
