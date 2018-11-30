@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -87,6 +88,8 @@ public class Parse {
 
     public document parseDoc(String[] splitedDoc, String city, String docId) {
         int jump = 0;
+        //locations in the doc of appearances of the city
+        ArrayList<Integer> locationsOfCity = new ArrayList<>();
         //temporary dictionary to find the max tf in current doc.
         HashMap<String, Integer> dicDoc = new HashMap<>();//todo at the end of the loop check the tf and everything
         //loop over all the tokens in current doc.
@@ -99,14 +102,18 @@ public class Parse {
             if (splitedDoc[currDocIndex].equals("") || splitedDoc[currDocIndex].equals("\n"))
                 continue;
             String currToken = splitedDoc[currDocIndex];
+            //continue to next token when it stop Word
+            if (deleteStopWords(currToken))
+                continue;
+            if(city != null && city.equals(currToken)){
+                locationsOfCity.add(currDocIndex);
+            }
             if(toStem){
                 stemmer.setTerm(currToken);
                 stemmer.stem();
                 currToken = stemmer.getTerm();
             }
-            //continue to next token when it stop Word
-            if (deleteStopWords(currToken))
-                continue;
+
             //get prev and next tokens if there isn't next token (the end of the array) return nextToken="", if index==0 return prevToken="".
             String nextToken = getNextToken(splitedDoc, currDocIndex);
             String nextNextToken = getNextToken(splitedDoc, currDocIndex + 1);
@@ -117,7 +124,6 @@ public class Parse {
                 currDocIndex += jump;
                 continue;
             }
-
             //check DollarTerm function less than miliion.
             jump = DollarTermLessThanMillion(currToken, nextNextToken, nextNextToken, dicDoc);
             if (jump != -1) {
@@ -162,8 +168,8 @@ public class Parse {
                 addToDicDoc(dicDoc, currToken);
 
             //cases like word/word or word/word/word or word.word or word.[word].
-//            String[] toAdd = currToken.split("[?!:;#@^+&{}*|<=/>\"\\.]");
-            String[] toAdd = currToken.split(" |\\/|\\.");
+            String[] toAdd = currToken.split("[?!:;#@^+&{}*|<=/>\"\\.]");
+//            String[] toAdd = currToken.split(" |\\/|\\.");
             if(toAdd.length>1)
                 for (String s:toAdd){
                 s = deletePunctutations(s);
@@ -178,7 +184,7 @@ public class Parse {
         }
         int tf = getMaxTF(dicDoc);
         int maxUnique = getMaxUnique(dicDoc);
-        return new document(docId, tf, maxUnique, city, dicDoc);
+        return new document(docId, tf, maxUnique, city, dicDoc, locationsOfCity);
     }
 
     /**
@@ -231,16 +237,12 @@ public class Parse {
         StringBuilder contentBuilder = new StringBuilder();
         {
             String content = "";
-
-            try
-            {
+            try {
                 content = new String ( Files.readAllBytes( Paths.get(file.toPath().toString()) ) );
             }
-            catch (IOException e)
-            {
+            catch (IOException e) {
                 e.printStackTrace();
             }
-
             return content;
         }
     }
@@ -262,7 +264,6 @@ public class Parse {
                 stopWords.add(SW);
         }
     }
-
 
     /**
      * Deletes initial and final characters if they are punctuation marks
@@ -304,7 +305,6 @@ public class Parse {
      * @param token - the curr token to check in the curr doc.
      * @return - -1 if not added to the dic else return the number of words used from the doc
      */
-
     private int percentageTerm(String nextT, String token, HashMap dicDoc) {//todo check for %-number
         if (token == null || token.length() <= 0)//todo what to do if the token is null?
             return -1;
@@ -338,14 +338,14 @@ public class Parse {
      */
     private int DateTerm(String nextT, String token, HashMap dicDoc) {
         //todo check if token is empty null and shit
-        if (checkIfOnlyDigitsDotsComma(token) && token.length()<4 && months.containsKey(nextT)) {//todo maby check if only numbers without digits and dots.
+        if (checkIfOnlyDigitsDotsComma(token) && token.length()<4 && months.containsKey(nextT)) {
             if(token.length()==1)
                 token = "0" + token;
             String toAdd = months.get(nextT) + "-" + token;
             addToDicDoc(dicDoc,toAdd);
             return 1;
         }
-        else if(checkIfOnlyDigitsDotsComma(nextT) && token.length()<4 && months.containsKey(token)){//todo maby check if only numbers without digits and dots.
+        else if(checkIfOnlyDigitsDotsComma(nextT) && token.length()<4 && months.containsKey(token)){
             if(nextT.length()==1)
                 nextT = "0" + nextT;
             String toAdd = months.get(token) + "-" + nextT;
@@ -358,7 +358,6 @@ public class Parse {
         }
         return -1;
     }
-
 
     /**
      * check if a string is a legal fraction
@@ -586,7 +585,6 @@ public class Parse {
         return ans;
     }
 
-
     /**
      * check wether a string is a number bigger then one million
      * @param token - string to check
@@ -646,7 +644,6 @@ public class Parse {
         return "";
     }
 
-
     /**
      * split the number to two parts - before dot and after dot
      * @param token - the token in the document
@@ -664,7 +661,6 @@ public class Parse {
         }
         return -1;
     }
-
 
     private String regularNumberTerms2(String token, String nextToken) {
         String number = "";
@@ -831,7 +827,6 @@ public class Parse {
             return true;
         return false;
     }
-
 
     /**
      * Ranges / expressions with hyphen will be added to the dictionary as a single term.

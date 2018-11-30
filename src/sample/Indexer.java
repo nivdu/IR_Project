@@ -3,47 +3,98 @@ package sample;
 import org.omg.SendingContext.RunTime;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.regex.Pattern;
 
 public class Indexer {
 
     //list of all the documents
-    ArrayList<document> docList;
+    private ArrayList<document> docList;
     //readFile class
-    ReadFile readFile;
+    private ReadFile readFile;
     //parse Class
-    Parse parse;
+    private Parse parse;
     //dictionary contain all the terms from the docs
-    HashSet<String> dictionary;
+    private HashSet<String> dictionary;
     //dictionary contain all the terms from the docs -  term ; tf,posting
-    private HashMap<String,String[]> dictionaryPosting;
+    private HashMap<String, String[]> dictionaryPosting;
+    private int tempPostingCounter;
+    private int filesPostedCounter;
 
     /**
      * Constructor
      */
     Indexer(ReadFile rf, Parse p) {
+        this.filesPostedCounter = 0;
         readFile = rf;
         parse = p;
         docList = new ArrayList<>();
-        dictionaryPosting=new HashMap<>();
+        dictionaryPosting = new HashMap<>();
+        tempPostingCounter = 0;
     }
 
 
     public void createPostingAndDic(String corpusPath) {
+        File theDir = new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham");
+        // if the directory does not exist, create it
+        if (!theDir.exists()) {
+            try {
+                theDir.mkdir();
+            } catch (SecurityException se) {
+                //handle it
+            }
+        }
         ArrayList<String> allFilesPaths = readFile.readCorpus(corpusPath);
         for (String path : allFilesPaths) {
             parseFile(readFile.spiltFileIntoSeparateDocs2(path));
-            //todo separate the for contents into another function and run it by multi threads
         }
+        unitAllTempPostingsToOnePostingInDisk();
+    }
+
+//    class compareLexicographically implements Comparator<String> {
+//        // Overriding compare()method of Comparator
+//        // compare string lexicographically.
+//        public int compare(String s1, String s2) {
+//            s1 = cutTheTerm(s1);
+//            s2 = cutTheTerm(s2);
+//            int comp = s1.compareTo(s2);
+//            if (comp < 0)
+//                return -1;
+//            if (comp > 0)
+//                return 1;
+//            else return 0;
+//        }
+//    }
+
+    class compareLexicographically2 implements Comparator<String[]>{
+        // Overriding compare()method of Comparator
+        // compare string lexicographically.
+        public int compare(String[] s1, String[] s2) {
+            return compareLexicographically.compare(s1[0],s2[0]);
+        }
+    }
+
+    /**
+     * cut the term from string (cut the chars before the first ":" and return it by its lower case
+     * @param s - string to cut the term from
+     * @return - String of the term (lower case of the term).
+     */
+    private String cutTheTerm(String s){
+        String term = "";
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if(c!=':')
+                term += c;
+            else break;
+        }
+        return term.toLowerCase();
     }
 
     public void parseFile(ArrayList<String[]> filesToParse) {
         String city = "";
         String docId = "";
         int index = 0;
+        filesPostedCounter++;
         for (String[] currentDoc : filesToParse) {
             if (currentDoc != null && currentDoc.length > 0) {
                 if (index % 3 == 0)
@@ -54,9 +105,12 @@ public class Indexer {
                     document currDoc = parse.parseDoc(currentDoc, city, docId);
                     Long freeMemory = Runtime.getRuntime().freeMemory();
                     Long totalMemory = Runtime.getRuntime().totalMemory();
-                    double minMemory = totalMemory*0.3;
-                    if(freeMemory<=minMemory)//todo check
+                    double minMemory = totalMemory*0.1;
+//                    if(freeMemory<=minMemory){//todo check
+                    if(filesPostedCounter==40){
+                        filesPostedCounter=0;
                         saveAndDeletePosition(dictionaryPosting);
+                    }
                     combineDicDocAndDictionary(currDoc);
                     docList.add(currDoc);
                     currDoc.removeDic();
@@ -65,56 +119,86 @@ public class Indexer {
             }
         }
         filesToParse.clear();
+//        unitAllTempPostingsToOnePostingInDisk();
     }
 
     private void saveAndDeletePosition(HashMap<String,String[]> dictionaryPosting) {
-        int number = 0;
-        copyPostingIntoArrayList(dictionaryPosting);
         try {
-        File f = new File("resources/posting"+ number +".txt");//todo counter for number
-        if(!f.exists()) {
+            File f = new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham/posting" + tempPostingCounter + ".txt");//todo counter for number
+            if (!f.exists())
                 f.createNewFile();
             FileWriter fw = new FileWriter(f);
-            fw.write("loren");
+            PriorityQueue<String> tempPosting = copyPostingIntoString(dictionaryPosting);
+            int PQsize= tempPosting.size();
+            for (int i = 0; i < PQsize; i++) {
+                fw.write(tempPosting.remove());
+            }
             fw.flush();
             fw.close();
-        }}
+            tempPostingCounter++;
+        }
         catch (IOException e) {
             System.out.println("problem in saveanddeletefunction indexer");//todo delete this
             e.printStackTrace();
         }
-
-
-        /*byte[] data = "loran atafa".getBytes();
-        int number =0;
-
-        OutputStream out = null;
-        try {
-            out = new FileOutputStream(new File("resources/posting" +number+ ".txt"));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        try {
-            out.write(data);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            out.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-*/
-        //        try {
-//            File tempFile = File.createTempFile("post" + number,"txt",new File("C:\\Users\\nivdu\\Documents\\GitHub\\IR_Project\\resources"));
-//            System.out.println(tempFile);//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-        int temp=0;
     }
 
-    private void copyPostingIntoArrayList(HashMap<String,String[]> dictionaryPosting) {
+    Comparator<String> compareLexicographically = new Comparator<String>() {
+        //letters first (ignoring differences in case), digits are second and marks (like &%^*%) are the last in priority.
+        @Override
+        public int compare(String s1, String s2) {
+            if (s1 == null || s1.equals("") || s2 == null || s2.equals(""))//todo check better
+                return 0;
+            for (int i = 0; i < s1.length() && i < s2.length(); i++) {
+                char c1 = s1.charAt(i);
+                char c2 = s2.charAt(i);
+                int n1 = letterIsBetter(c1);
+                int n2 = letterIsBetter(c2);
+                //if n1 should be first
+                if (n2 < n1)
+                    return 1;
+                //if n2 should be first
+                if (n2 > n1)
+                    return -1;
+            }
+            //case like : aa wins aaa (s1 is better)
+            if(s2.length() < s1.length())
+                return 1;
+            //case like : s2 is better
+            if(s2.length() > s1.length())
+                return -1;
+            //equals
+            return 0;
+
+        }
+        private int letterIsBetter(char c) {
+            if (Character.isLetter(c))
+                return Character.valueOf(Character.toLowerCase(c));
+            if (Character.isDigit(c))
+                return (Character.valueOf(c) + 75);
+            else return (Character.valueOf(Character.valueOf(c)) + 140);
+        }
+    };
+
+    /**
+     * takes all the postings of terms and create one long String and delete the postings from memory
+     * @param dictionaryPosting - dictionary of term and postings
+     * @return - string of all postings combined
+     */
+    private PriorityQueue<String> copyPostingIntoString(HashMap<String,String[]> dictionaryPosting) {
+//        sortIt(dictionaryPosting);
+    PriorityQueue<String> sortTermsQ = new PriorityQueue<>(compareLexicographically);
+        Set<String> keys = dictionaryPosting.keySet();
+        for(String term: keys){
+            //term already exists in dictionary
+            String[] dfAndPosting = dictionaryPosting.get(term);
+            if(dfAndPosting[1].equals(""))
+                continue;
+            sortTermsQ.add(term + ":" + dfAndPosting[1] + "\n");
+            dfAndPosting[1] = "";
+            dictionaryPosting.put(term, dfAndPosting);
+        }
+        return sortTermsQ;
     }
 
     /**
@@ -130,7 +214,10 @@ public class Indexer {
                 String[] dfPosting = dictionaryPosting.get(term);
                 int df = Integer.parseInt(dfPosting[0]);
                 dfPosting[0]=""+(df+1);
-                dfPosting[1]+=";"+currDoc.getDocumentID()+","+dicDoc.get(term);
+                if(dfPosting[1].equals(""))
+                    dfPosting[1]=currDoc.getDocumentID()+","+dicDoc.get(term);
+                else
+                    dfPosting[1]+=";"+currDoc.getDocumentID()+","+dicDoc.get(term);
                 dictionaryPosting.put(term,dfPosting);
             }
             //term doesn't exist in dictionary
@@ -139,18 +226,203 @@ public class Indexer {
                 dfPosting[0]="1";
                 dfPosting[1]=currDoc.getDocumentID()+","+dicDoc.get(term);
                 dictionaryPosting.put(term,dfPosting);
-
             }
         }
     }
 
+    /**
+     *
+     */
+    private void unitAllTempPostingsToOnePostingInDisk() {
+        int currDir = 0;
+        File unitedPosting;
+        //create file for each temp posting and insert to the temp posting array
+        PriorityQueue<String[]> linesPQ = new PriorityQueue<>(new compareLexicographically2());//todo repair the compare function
+        File[] tempPostingFiles = (new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham")).listFiles();
+        BufferedReader[] br = new BufferedReader[tempPostingFiles.length];
+        //create new text file for united posting
+        try{
+            unitedPosting = new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham/unitedPosting.txt");
+            unitedPosting.createNewFile();
+            BufferedWriter bw = new BufferedWriter(new FileWriter(unitedPosting));
+            int i = 0;
+            for (File f : tempPostingFiles) {
+                br[i] = new BufferedReader(new FileReader(f));
+                i++;
+            }
+            //insert one line from each temp posting to the PQ - "first init of the PQ"
+            for (int j = 0; j < tempPostingFiles.length; j++) {
+                insertLine2PQ(br,j,linesPQ);
+            }
+            //loop over the temp posting files and combine them into the united posting(to disk)
+            String insertToOnePostDisk=dequeueAndInsert2UnitedPosting(linesPQ, br);
+            while (!insertToOnePostDisk.equals("")) {
+                bw.write(insertToOnePostDisk);
+                insertToOnePostDisk = dequeueAndInsert2UnitedPosting(linesPQ, br);
+            }
+            bw.flush();
+            bw.close();
+        }
+        catch (IOException e) { }
 
 
+    }
+
+    /**
+     * dequeue the min line from pq and write the line to the united post file.
+     * @param linesPQ - pq of lines
+     * @param br - buffer reader for all the temp postings
+     * return- combined line.
+     */
+    private String dequeueAndInsert2UnitedPosting(PriorityQueue<String[]> linesPQ, BufferedReader[] br) {
+        if(linesPQ==null || br==null)
+            return "";
+        boolean equalTerms=true;
+        //indexes of the used posting, need to take another line from each br index in this array list
+        ArrayList<Integer> indexesOfUsedPostings= new ArrayList<>();
+        String newLine;
+        String nextLine;
+        String[]nextLineArr;
+        if(linesPQ.size()==0)
+            return "";
+        String[]newLineArr = linesPQ.remove();
+        if(newLineArr==null)
+            return "";
+        insertLine2PQ(br,Integer.parseInt(newLineArr[1]),linesPQ);
+        newLine = newLineArr[0];
+        while(equalTerms){
+            nextLineArr = linesPQ.peek();
+            if(nextLineArr==null)
+                return newLine +"\n";
+            nextLine = nextLineArr[0];
+            String temp1 = cutTheTerm(newLine);
+            String temp2 = cutTheTerm(nextLine);
+//            if(temp1.equals("loren") || temp1.equals("LOREN") || temp2.equals("LOREN") || temp2.equals("loren"))
+//                System.out.println("hi");
+            if(cutTheTerm(newLine).toLowerCase().equals(cutTheTerm(nextLine).toLowerCase())){
+                newLine = combineLines(newLine,nextLine);
+                insertLine2PQ(br,Integer.parseInt(nextLineArr[1]),linesPQ);
+                linesPQ.remove();//remove the peeked one after the combine.
+            }
+            else equalTerms=false;
+        }
+        return newLine + "\n";
+    }
+
+    /**
+     * combine 2 string of posting into one posting
+     * @param l1 - first line
+     * @param l2 - second line
+     */
+    private String combineLines(String l1, String l2) {
+        if(l1==null||l2==null||l1.equals("")||l2.equals(""))
+            return "";//todo at the call function handle ""
+        //remove the term from the posting line.
+        String T1 = cutTheTerm(l1);
+        String T2 = cutTheTerm(l2);
+
+        if(Pattern.matches("[a-zA-Z]+", T1) && Pattern.matches("[a-zA-Z]+", T2)){
+//            if((T1.charAt(0)<=122 && T1.charAt(0)>=97)){
+//                l2 = l2.substring(cutTheTerm(l2).length()+1);
+//                return l1 + ";" + l2;
+//            }
+            if((T2.charAt(0)<=122 && T2.charAt(0)>=97)){
+                l1 = l1.substring(cutTheTerm(l1).length()+1);
+                return l2 + ";" + l1;
+            }
+        }
+        l2 = l2.substring(cutTheTerm(l2).length()+1);//todo check
+        return l1 + ";" + l2;
+    }
+
+    /**
+     * insert to the PQ the line from the br array at index (index).
+     * @param br - array of buffer readers
+     * @param index -
+     */
+    private boolean insertLine2PQ(BufferedReader[] br, int index, PriorityQueue<String[]> linesPQ) {
+        String line=null;
+        try { line = br[index].readLine(); } catch (IOException e) { e.printStackTrace(); }
+        if(line!=null){
+            String [] ans = new String[2];
+            ans[0] = line;
+            ans[1] = ""+index;
+            linesPQ.add(ans);
+            return true;
+        }
+        return false;
+    }
 
 
+    public static void main(String[] args){
+        Comparator<String> compareLexicographically1 = new Comparator<String>() {
+            //letters first (ignoring differences in case), digits are second and marks (like &%^*%) are the last in priority.
+            @Override
+            public int compare(String s1, String s2) {
+                if (s1 == null || s1.equals("") || s2 == null || s2.equals(""))//todo check better
+                    return 0;
+                for (int i = 0; i < s1.length() && i < s2.length(); i++) {
+                    char c1 = s1.charAt(i);
+                    char c2 = s2.charAt(i);
+                    int n1 = letterIsBetter(c1);
+                    int n2 = letterIsBetter(c2);
+                    //if n1 should be first
+                    if (n2 < n1)
+                        return 1;
+                    //if n2 should be first
+                    if (n2 > n1)
+                        return -1;
+                }
+                //case like : aa wins aaa (s1 is better)
+                if(s2.length() < s1.length())
+                    return 1;
+                //case like : s2 is better
+                if(s2.length() > s1.length())
+                    return -1;
+                //equals
+                return 0;
 
+            }
+            private int letterIsBetter(char c) {
+                if (Character.isLetter(c))
+                    return Character.valueOf(Character.toLowerCase(c));
+                if (Character.isDigit(c))
+                    return (Character.valueOf(c) + 75);
+                else return (Character.valueOf(Character.valueOf(c)) + 140);
+            }
+        };
 
+        ReadFile readFile = new ReadFile("C:\\Users\\nivdu\\Desktop\\אחזור\\פרוייקט גוגל\\cor");
+        Parse parse = new Parse(false, "C:\\Users\\nivdu\\Desktop\\StopWords");//todo change to boolean stemmer and stop word path from the user
+        Indexer indexer = new Indexer(readFile, parse);
+        PriorityQueue<String> pq = new PriorityQueue<>(compareLexicographically1);
+        String s2 = "abolish";
+        String s1 = "abolishing";
+        String s3 = "abolishingfdf";
+        String s4 = "abolishingfd";
+        String s5 = "abolishingfdf2";
+        String s6 = "ab";
+        String s7 = "a";
+        String s8 = "abolis";
+//        String s4 = "ba";
+//        String s5 = "12";
+//        String s6 = "1";
+//        String s7 = "*";
+        pq.add(s1);
+        pq.add(s2);
+        pq.add(s3);
+        pq.add(s4);
+        pq.add(s5);
+        pq.add(s6);
+        pq.add(s7);
+        pq.add(s8);
+        int size = pq.size();
+        for (int i = 0; i < size ; i++) {
+            System.out.println(pq.peek());
+            System.out.println(pq.remove());
+        }
 
+    }
 
 
 }

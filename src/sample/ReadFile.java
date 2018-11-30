@@ -97,7 +97,7 @@ public class ReadFile {
             //if there is a city in doc
             else{
                 String[] splitByEndCity = splitByCity[1].split("</F>");
-                String city = splitByCity[0];
+                String city = splitByEndCity[0];
                 city = deleteSpaces(city);
                 String[] splitCityBySpaces=city.split(" ");
                 //if city contains mor than one word
@@ -156,7 +156,9 @@ public class ReadFile {
      * @return - string without spaces.
      */
     private String deleteSpaces(String string) {
-        while(string.charAt(0)==' '){
+        if(string==null || string.equals(""))
+            return "";
+        while(string.length()>0 && string.charAt(0)==' '){
             string = string.substring(1);
         }
         while (string.charAt(string.length()-1)==' '){
@@ -176,7 +178,6 @@ public class ReadFile {
         StringBuilder contentBuilder = new StringBuilder();
         {
             String content = "";
-
             try
             {
                 content = new String ( Files.readAllBytes( Paths.get(path) ) );
@@ -185,7 +186,6 @@ public class ReadFile {
             {
                 e.printStackTrace();
             }
-
             return content;
         }
     }
