@@ -65,11 +65,13 @@ public class Model {
 
 
     public static void main(String[] args){
-        String pathFrom = "C:\\Users\\user\\Desktop\\אוניברסיטה\\שנה ג\\שנה ג - סמסטר א\\אחזור\\עבודות\\מנוע חלק א";
-        String pathTo = "C:\\Users\\user\\Desktop\\אוניברסיטה\\שנה ג\\שנה ג - סמסטר א\\אחזור\\עבודות\\מנוע חלק א\\output";
+        long Stime = System.currentTimeMillis();
+        String pathFrom = "C:\\Users\\nivdu\\Desktop\\אחזור\\פרוייקט גוגל";
+        String pathTo = "C:\\Users\\nivdu\\Desktop\\bimbamtirasham";
         Model model = new Model(pathFrom,pathTo,false);
-        model.reset();
+//        model.reset();
         model.generateInvertedIndex();
-
+        long Ftime = System.currentTimeMillis();
+        System.out.println(Ftime-Stime);
     }
 }

@@ -395,11 +395,12 @@ public class Parse {
      * @return - true if contain only numbers else false.
      */
 
+    //check if a number combine only from digits, dots, commas and slash only.
     private boolean checkIfOnlyDigitsDotsComma(String number) {
         if(number==null || number.equals(""))
             return false;
         for (Character c : number.toCharArray()) {
-            if (!Character.isDigit(c) && !(c.equals('.')) && !(c.equals('-')) && !(c.equals('/')) && !(c.equals(',')))//todo check if its ok i added / and -
+            if (!Character.isDigit(c) && !(c.equals('.')) && !(c.equals('-')) && !(c.equals('/')) && !(c.equals(',')))
                 return false;
         }
         return true;

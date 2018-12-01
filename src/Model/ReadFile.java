@@ -57,7 +57,7 @@ public class ReadFile {
         }
         return citiesFromTags;
     }
-  
+    /*
      * Called from function "readCorpus". Insert file paths into array list from the given file, if the file is directory, open it and take the paths of the files inside it.
      * @param filePaths - current file/directory path
      */
@@ -141,7 +141,7 @@ public class ReadFile {
         return docsFromFile;
     }
 
-    //check if a number combine from digits dots commas and slash only.
+    //check if a number combine only from digits, dots, commas and slash only.
     private boolean checkIfOnlyDigitsDotsComma(String number) {
         if(number==null || number.equals(""))
             return false;
@@ -224,14 +224,7 @@ public class ReadFile {
         StringBuilder contentBuilder = new StringBuilder();
         {
             String content = "";
-            try
-            {
-                content = new String ( Files.readAllBytes( Paths.get(path) ) );
-            }
-            catch (IOException e)
-            {
-                e.printStackTrace();
-            }
+            try { content = new String ( Files.readAllBytes( Paths.get(path) ) ); } catch (IOException e) {}
             return content;
         }
     }
