@@ -164,18 +164,20 @@ public class Parse {
             }
 
             //add token that didn't match any case. (like f16 and a lot more cases).
-            if(currToken.length()>1)
+            if(currToken.length()>1) {
                 addToDicDoc(dicDoc, currToken);
+            }
 
             //cases like word/word or word/word/word or word.word or word.[word].
-            String[] toAdd = currToken.split("[?!:;#@^+&{}*|<=/>\"\\.]");
+//            String[] toAdd = currToken.split("[?!:;#@^+&{}*|<=/>\"\\.]");
 //            String[] toAdd = currToken.split(" |\\/|\\.");
-            if(toAdd.length>1)
-                for (String s:toAdd){
-                s = deletePunctutations(s);
-                if(s.length()>1)
-                    addToDicDoc(dicDoc,s);
-                }
+//            String[] toAdd = currToken.split(" |\\/|\\.|\\?|!|:|;|#|@|^|\\+|\\&|\\{\\}\\*|\\|\\>|\\=\\<|\\(|\\)|\\[|\\]");
+//            if(toAdd.length>1)
+//                for (String s:toAdd){
+//                    s = deletePunctutations(s);
+//                    if(s.length()>1)
+//                        addToDicDoc(dicDoc,s);
+//                }
 
 
 
@@ -215,8 +217,8 @@ public class Parse {
             if(temp > max)
                 max = temp;
 //            it.remove(); // avoids a ConcurrentModificationException
-            }
-            return max;
+        }
+        return max;
     }
 
     /**
@@ -275,12 +277,12 @@ public class Parse {
             if(toCheck.equals("U.S."))
                 return toCheck;
             int toCheckLength = toCheck.length() - 1;
-            if (toCheck.charAt(0) == '\n' || toCheck.charAt(0) == '"'|| toCheck.charAt(0) == '(' || toCheck.charAt(0) == ',' || toCheck.charAt(0) == ':' || toCheck.charAt(0) == '.' || toCheck.charAt(0) == '-' || toCheck.charAt(0) == '|' || toCheck.charAt(0) == '`' || toCheck.charAt(0) == '\'' || toCheck.charAt(0) == '[' || toCheck.charAt(0) == ']' || toCheck.charAt(0) == ';' || toCheck.charAt(0) == '?' || toCheck.charAt(0) == '/' || toCheck.charAt(0) == '<') {
+            if (toCheck.charAt(0) == '\n' || toCheck.charAt(0) == '"'|| toCheck.charAt(0) == '(' || toCheck.charAt(0) == ',' || toCheck.charAt(0) == ':' || toCheck.charAt(0) == '.' || (toCheck.charAt(0) == '-') && (!checkIfOnlyDigitsDotsComma(toCheck.substring(1))) || toCheck.charAt(0) == '|' || toCheck.charAt(0) == '`' || toCheck.charAt(0) == '\'' || toCheck.charAt(0) == '[' || toCheck.charAt(0) == ']' || toCheck.charAt(0) == ';' || toCheck.charAt(0) == '?' || toCheck.charAt(0) == '/' || toCheck.charAt(0) == '<' || toCheck.charAt(0) == '!' || toCheck.charAt(0) == '*' || toCheck.charAt(0) == '+') {
                 toCheck = toCheck.substring(1);
                 toCheck = deletePunctutations(toCheck);
             }
             toCheckLength = toCheck.length() - 1;
-            if (toCheck != "" && toCheck.length()>0 && (toCheck.charAt(toCheckLength) == ',' || toCheck.charAt(toCheckLength)=='"' ||  toCheck.charAt(toCheckLength) == ')' || toCheck.charAt(toCheckLength) == '.' || toCheck.charAt(toCheckLength) == ':' || toCheck.charAt(toCheckLength) == '"' || toCheck.charAt(toCheckLength) == '-' || toCheck.charAt(toCheckLength) == '|' || toCheck.charAt(toCheckLength) =='`' || toCheck.charAt(toCheckLength) ==']' || toCheck.charAt(toCheckLength) =='[' || toCheck.charAt(toCheckLength) =='\'' || toCheck.charAt(toCheckLength) ==';' || toCheck.charAt(toCheckLength) =='?' || toCheck.charAt(toCheckLength) =='/' || toCheck.charAt(toCheckLength) =='>')) {
+            if (toCheck != "" && toCheck.length()>0 && (toCheck.charAt(toCheckLength) == ',' || toCheck.charAt(toCheckLength)=='"' ||  toCheck.charAt(toCheckLength) == ')' || toCheck.charAt(toCheckLength) == '.' || toCheck.charAt(toCheckLength) == ':' || toCheck.charAt(toCheckLength) == '"' || toCheck.charAt(toCheckLength) == '-' || toCheck.charAt(toCheckLength) == '|' || toCheck.charAt(toCheckLength) =='`' || toCheck.charAt(toCheckLength) ==']' || toCheck.charAt(toCheckLength) =='[' || toCheck.charAt(toCheckLength) =='\'' || toCheck.charAt(toCheckLength) ==';' || toCheck.charAt(toCheckLength) =='?' || toCheck.charAt(toCheckLength) =='/' || toCheck.charAt(toCheckLength) =='>' || toCheck.charAt(toCheckLength) =='!' || toCheck.charAt(toCheckLength) =='+')) {
                 toCheck = toCheck.substring(0, toCheckLength);
                 toCheck = deletePunctutations(toCheck);
             }
@@ -397,7 +399,7 @@ public class Parse {
         if(number==null || number.equals(""))
             return false;
         for (Character c : number.toCharArray()) {
-            if (!Character.isDigit(c) && !(c.equals('.')) && !(c.equals(',')))
+            if (!Character.isDigit(c) && !(c.equals('.')) && !(c.equals('-')) && !(c.equals('/')) && !(c.equals(',')))//todo check if its ok i added / and -
                 return false;
         }
         return true;
@@ -494,7 +496,7 @@ public class Parse {
         if(tokenIsNumber)
             tokenIsMoreThanMillion=isMoreThanMillion(token);
         String term = "";
-        //cases like _____ Dollars
+        //cases like ___ Dollars
         if(nextT.equals("Dollars")){
             //cases like 1000000 Dollars
             if(tokenIsNumber && tokenIsMoreThanMillion){
@@ -548,7 +550,7 @@ public class Parse {
                 return 0;
             }
         }
-        //cases like number _____ U.S. dollars
+        //cases like number ___ U.S. dollars
         if(tokenIsNumber && nextNextT.equals("U.S.") && nextNextNextT.equals("dollars")){
             String tokenWithoutComma = deletingCommasFromNumbers(token);
             //cases like number million U.S. dollars
@@ -966,7 +968,7 @@ public class Parse {
 //        String ans = parse.convertingToMillionForDollars("12.3456B");
 //        System.out.println(ans);
 
-      //        String test="123";
+        //        String test="123";
 //        System.out.println(test.substring(0,2));
 //        parse.percentageTerm("percentage","6");
 //        parse.DateTerm("MAY","14");
@@ -1030,6 +1032,6 @@ public class Parse {
 //
 
 
-   
+
     }
 }

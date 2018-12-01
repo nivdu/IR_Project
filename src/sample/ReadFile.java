@@ -89,35 +89,34 @@ public class ReadFile {
                 continue;
             String[] splitByCity = currentDoc.split("<F P=104>");
             //if there isn't city in doc
-            if(splitByCity.length==1){
+            if (splitByCity.length == 1) {
                 String[] empty = new String[1];
-                empty[0]="";
+                empty[0] = "";
                 docsFromFile.add(empty);
             }
             //if there is a city in doc
-            else{
+            else {
                 String[] splitByEndCity = splitByCity[1].split("</F>");
                 String city = splitByEndCity[0];
                 city = deleteSpaces(city);
-                String[] splitCityBySpaces=city.split(" ");
+                String[] splitCityBySpaces = city.split(" ");
                 //if city contains mor than one word
-                if(splitCityBySpaces.length>1){
-                    String[] cityUpperCase=new String[1];
-                    cityUpperCase[0]=splitCityBySpaces[0].toUpperCase();
+                if (splitCityBySpaces.length > 1) {
+                    String[] cityUpperCase = new String[1];
+                    cityUpperCase[0] = splitCityBySpaces[0].toUpperCase();
                     docsFromFile.add(cityUpperCase);
                 }
                 //if city contains exactly one word
-                else if(splitCityBySpaces.length==1){
+                else if (splitCityBySpaces.length == 1) {
                     docsFromFile.add(splitByCity);
-                }
-                else{
+                } else {
                     String[] empty = new String[1];
-                    empty[0]="";
+                    empty[0] = "";
                     docsFromFile.add(empty);
                 }
             }
             String[] splitDocByDocID = currentDoc.split("<DOCNO>");
-            if(splitDocByDocID.length<2) {
+            if (splitDocByDocID.length < 2) {
                 System.out.println("problem in spiltFileIntoSeparateDocs2 function readfile");//todo delete it
             }
             String[] splitByEndDocID = splitDocByDocID[1].split("</DOCNO>");
@@ -129,10 +128,64 @@ public class ReadFile {
             if (splitByText.length < 2)
                 continue;
             String[] splitByEndText = splitBySpecificString(splitByText[1], "</TEXT>\n");
-            String docSplitBySpaces[] = splitByEndText[0].split(" |\\\n|\\--");
+            //change . and , into space if its not a number.
+//            String splitByspace[] = splitByEndText[0].split(" |\\\n");
+//            String s="";
+//            for (int i = 0; i < splitByspace.length; i++) {
+//                if((splitByspace[i].contains(".") || splitByspace[i].contains(",")) && !checkIfOnlyDigitsDotsComma(splitByspace[i])) {
+//                    for (int j = 0; j < splitByspace[i].length(); j++) {
+//                        char c = splitByspace[i].charAt(j);
+//                        if (c != '.' && c != ',')
+//                            s += c;
+//                    }
+//                    splitByspace[i]=s;
+//                }
+//            }
+            String docSplitBySpaces[] = splitByEndText[0].split(" |\\\n|\\--|\\(|\\)|\\[|\\]|\\)|\\(|\\}|\\{|\\&|\\}|\\:");
+            ArrayList<String> docSplit2Return = new ArrayList<>();
+            String s2 = "";
+            boolean containDot=false;
+            for (String s : docSplitBySpaces) {
+                containDot=false;
+                if ((s.contains(".") || s.contains(",") || s.contains("/")) && !checkIfOnlyDigitsDotsComma(s)) {
+                    containDot=true;
+                    for (int j = 0; j < s.length(); j++) {
+                        char c = s.charAt(j);
+                        if (c != '.' && c != ',' && c != '/')
+                            s2 += c;
+                        else {
+                            docSplit2Return.add(s2);
+                            s2 = "";
+                        }
+                    }
+                    if(!s2.equals(""))
+                        docSplit2Return.add(s2);
+                }
+                if(!containDot) {
+                    if (s.equals("") || s.equals(" ") || s.equals("\n"))
+                        continue;
+                    docSplit2Return.add(s);
+                }
+            }
+                docSplitBySpaces = new String[docSplit2Return.size()];
+                int i=0;
+                for (String s3:docSplit2Return){
+                    docSplitBySpaces[i]=s3;
+                    i++;
+            }
             docsFromFile.add(docSplitBySpaces);
         }
         return docsFromFile;
+    }
+
+    private boolean checkIfOnlyDigitsDotsComma(String number) {
+        if(number==null || number.equals(""))
+            return false;
+        for (Character c : number.toCharArray()) {
+            if (!Character.isDigit(c) && !(c.equals('.')) && !(c.equals('-')) && !(c.equals('/')) && !(c.equals(',')))
+                return false;
+        }
+        return true;
     }
 
     /**

@@ -417,9 +417,14 @@ public class Indexer {
         pq.add(s7);
         pq.add(s8);
         int size = pq.size();
-        for (int i = 0; i < size ; i++) {
-            System.out.println(pq.peek());
-            System.out.println(pq.remove());
+//        for (int i = 0; i < size ; i++) {
+//            System.out.println(pq.peek());
+//            System.out.println(pq.remove());
+//        }
+        String currToken = "sup]3[/]He:Ar:Xe";
+        String[] toAdd = currToken.split(" |\\/|\\.|\\?|!|:|;|#|@|^|\\+|\\&|\\{\\}\\*|\\|\\>|\\=\\<|\\(|\\)|\\[|\\]");
+        for (String s:toAdd){
+            System.out.println(s);
         }
 
     }
