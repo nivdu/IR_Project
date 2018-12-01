@@ -24,10 +24,10 @@ public class Parse {
     /**
      * Parse Constructor.
      */
-    public Parse(boolean toStem, String stopWordPath) {
+    public Parse(boolean toStem, String pathFrom) {
         this.stemmer = new Stemmer();
         this.toStem=toStem;
-        this.stopWordPath = stopWordPath;
+        this.stopWordPath = pathFrom;//todo check
         this.stopWords = new HashSet<String>();
         getStopWordsIntoHastSet();
         this.months = new HashMap<String, String>();
@@ -255,13 +255,12 @@ public class Parse {
     private void getStopWordsIntoHastSet() {
         //insert all the stop words from stop words file into HashSet.
         //scanner function from link: "https://stackoverflow.com/questions/30011400/splitting-textfile-at-whitespace"
-        String stopWordsPath = "C:\\Users\\nivdu\\Desktop\\StopWords";//todo what is the path for stopWords text file
-        File file = new File(stopWordsPath);
+        String stopWordsPath = stopWordPath;
+        File file = new File(stopWordsPath+"/stop-words.txt");
         String wholeFileString="";
-        for (final File fileOfDocs: file.listFiles())
-            wholeFileString = file2String(fileOfDocs);
+        wholeFileString = file2String(file);
         if(!wholeFileString.equals("")) {
-            String[] currStopWord = wholeFileString.split("\r\n");
+            String[] currStopWord = wholeFileString.split("\r\n|\\\n");
             for (String SW : currStopWord)
                 stopWords.add(SW);
         }
@@ -946,6 +945,21 @@ public class Parse {
     }
 
     public static void main(String[] args) {
+        String path ="C:\\Users\\user\\Desktop\\אוניברסיטה\\שנה ג\\שנה ג - סמסטר א\\אחזור\\עבודות\\מנוע חלק א";
+        File file=new File(path +"/temp.txt");
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        File file2=new File(path +"\\temp2.txt");
+        try {
+            file2.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("finish");
+
 //        Parse parse = new Parse();
 //        String[] text = new String[2];
 //        text[0]="-";

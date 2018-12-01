@@ -18,51 +18,76 @@ public class Indexer {
     private HashMap<String, String[]> dictionaryPosting;
     private int tempPostingCounter;
     private int filesPostedCounter;
+    private String pathFrom;
+    private String pathTo;
+
 
     /**
      * Constructor
      */
-    Indexer(ReadFile rf, Parse p) {
+    Indexer(String pathFrom, String pathTo ,boolean toStem) {
         this.filesPostedCounter = 0;
-        readFile = rf;
-        parse = p;
+        readFile = new ReadFile(pathFrom);
+        parse = new Parse(toStem,pathFrom);
         docList = new ArrayList<>();
         dictionaryPosting = new HashMap<>();
         tempPostingCounter = 0;
+        this.pathFrom = pathFrom;
+        this.pathTo = pathTo;
     }
 
 
-    public void createPostingAndDic(String corpusPath) {
-        File theDir = new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham");
+    public boolean createPostingAndDic(boolean toStem) {
+        String pathToCreate ="";
+        if(toStem) {
+            pathToCreate = pathTo + "\\WithStemming";
+        }
+        else pathToCreate =pathTo + "\\WithoutStemming";
+        File theDir = new File(pathToCreate);
         // if the directory does not exist, create it
         if (!theDir.exists()) {
             try {
                 theDir.mkdir();
+                ArrayList<String> allFilesPaths = readFile.readCorpus(pathFrom + "\\corpus");//todo check
+                for (String path : allFilesPaths) {
+                    parseFile(readFile.spiltFileIntoSeparateDocs2(path),pathToCreate);
+                }
+                unitAllTempPostingsToOnePostingInDisk(pathToCreate+"/Postings");
+                movingDictionaryToDisk(pathToCreate);
             } catch (SecurityException se) {
-                //handle it
+                return false;
+            } catch (Exception e) {
+                return false;
             }
         }
-        ArrayList<String> allFilesPaths = readFile.readCorpus(corpusPath);
-        for (String path : allFilesPaths) {
-            parseFile(readFile.spiltFileIntoSeparateDocs2(path));
-        }
-        unitAllTempPostingsToOnePostingInDisk();
+        return true;
     }
 
-//    class compareLexicographically implements Comparator<String> {
-//        // Overriding compare()method of Comparator
-//        // compare string lexicographically.
-//        public int compare(String s1, String s2) {
-//            s1 = cutTheTerm(s1);
-//            s2 = cutTheTerm(s2);
-//            int comp = s1.compareTo(s2);
-//            if (comp < 0)
-//                return -1;
-//            if (comp > 0)
-//                return 1;
-//            else return 0;
-//        }
-//    }
+    private void movingDictionaryToDisk(String pathToCreate) {
+        File dicOfDictionaries = new File(pathToCreate + "/Dictionaries");
+        if(!dicOfDictionaries.exists())
+            dicOfDictionaries.mkdir();
+        File fileOfDictionary = new File(pathToCreate + "/Dictionaries/Dictionary.txt");
+        if(!fileOfDictionary.exists()) {
+            try {
+                fileOfDictionary.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            PriorityQueue<String> dictionarySorted = copyDicIntoPQByAscii();
+            FileWriter fw = new FileWriter(fileOfDictionary);
+            Set<String> keys = dictionaryPosting.keySet();
+            for(String term: keys){
+                if(fw==null) break;
+                fw.write(dictionarySorted.remove());
+            }
+            fw.flush();
+            fw.close();
+        } catch (IOException e) { e.printStackTrace(); }
+    }
+
 
     class compareLexicographically2 implements Comparator<String[]>{
         // Overriding compare()method of Comparator
@@ -88,7 +113,7 @@ public class Indexer {
         return term.toLowerCase();
     }
 
-    public void parseFile(ArrayList<String[]> filesToParse) {
+    public void parseFile(ArrayList<String[]> filesToParse, String pathToCreate) {
         String city = "";
         String docId = "";
         int index = 0;
@@ -107,7 +132,7 @@ public class Indexer {
 //                    if(freeMemory<=minMemory){//todo check
                     if(filesPostedCounter==40){
                         filesPostedCounter=0;
-                        saveAndDeletePosition(dictionaryPosting);
+                        saveAndDeletePosition(dictionaryPosting,pathToCreate);
                     }
                     combineDicDocAndDictionary(currDoc);
                     docList.add(currDoc);
@@ -120,9 +145,12 @@ public class Indexer {
 //        unitAllTempPostingsToOnePostingInDisk();
     }
 
-    private void saveAndDeletePosition(HashMap<String,String[]> dictionaryPosting) {
+    private void saveAndDeletePosition(HashMap<String,String[]> dictionaryPosting, String pathToCreate) {
         try {
-            File f = new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham/posting" + tempPostingCounter + ".txt");//todo counter for number
+            File dirOfPostings = new File(pathToCreate + "\\Postings");//todo counter for number
+            if (!dirOfPostings.exists())
+                dirOfPostings.mkdir();
+            File f = new File(pathToCreate + "\\Postings\\posting" + tempPostingCounter + ".txt");//todo counter for number
             if (!f.exists())
                 f.createNewFile();
             FileWriter fw = new FileWriter(f);
@@ -185,7 +213,7 @@ public class Indexer {
      */
     private PriorityQueue<String> copyPostingIntoString(HashMap<String,String[]> dictionaryPosting) {
 //        sortIt(dictionaryPosting);
-    PriorityQueue<String> sortTermsQ = new PriorityQueue<>(compareLexicographically);
+        PriorityQueue<String> sortTermsQ = new PriorityQueue<>(compareLexicographically);
         Set<String> keys = dictionaryPosting.keySet();
         for(String term: keys){
             //term already exists in dictionary
@@ -195,6 +223,17 @@ public class Indexer {
             sortTermsQ.add(term + ":" + dfAndPosting[1] + "\n");
             dfAndPosting[1] = "";
             dictionaryPosting.put(term, dfAndPosting);
+        }
+        return sortTermsQ;
+    }
+
+    private PriorityQueue<String> copyDicIntoPQByAscii() {
+        PriorityQueue<String> sortTermsQ = new PriorityQueue<>();
+        Set<String> keys = dictionaryPosting.keySet();
+        for(String term: keys){
+            //term already exists in dictionary
+            String[] dfAndPosting = dictionaryPosting.get(term);
+            sortTermsQ.add(term+":"+dfAndPosting[0]+";"+dfAndPosting[2]);
         }
         return sortTermsQ;
     }
@@ -212,17 +251,22 @@ public class Indexer {
                 String[] dfPosting = dictionaryPosting.get(term);
                 int df = Integer.parseInt(dfPosting[0]);
                 dfPosting[0]=""+(df+1);
+                int tfInDoc = dicDoc.get(term);
                 if(dfPosting[1].equals(""))
-                    dfPosting[1]=currDoc.getDocumentID()+","+dicDoc.get(term);
+                    dfPosting[1]=currDoc.getDocumentID()+","+tfInDoc;
                 else
-                    dfPosting[1]+=";"+currDoc.getDocumentID()+","+dicDoc.get(term);
+                    dfPosting[1]+=";"+currDoc.getDocumentID()+","+tfInDoc;
+                int tfOverall = Integer.parseInt(dfPosting[2]);
+                dfPosting[2]=""+(tfOverall+tfInDoc);
                 dictionaryPosting.put(term,dfPosting);
             }
             //term doesn't exist in dictionary
             else{
-                String[] dfPosting = new String[2];
+                String[] dfPosting = new String[3];
                 dfPosting[0]="1";
-                dfPosting[1]=currDoc.getDocumentID()+","+dicDoc.get(term);
+                String tf=""+dicDoc.get(term);
+                dfPosting[1]=currDoc.getDocumentID()+","+tf;
+                dfPosting[2]=tf;
                 dictionaryPosting.put(term,dfPosting);
             }
         }
@@ -231,16 +275,16 @@ public class Indexer {
     /**
      *
      */
-    private void unitAllTempPostingsToOnePostingInDisk() {
+    private void unitAllTempPostingsToOnePostingInDisk(String pathToCreate) {
         int currDir = 0;
         File unitedPosting;
         //create file for each temp posting and insert to the temp posting array
         PriorityQueue<String[]> linesPQ = new PriorityQueue<>(new compareLexicographically2());//todo repair the compare function
-        File[] tempPostingFiles = (new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham")).listFiles();
+        File[] tempPostingFiles = (new File(pathToCreate)).listFiles();
         BufferedReader[] br = new BufferedReader[tempPostingFiles.length];
         //create new text file for united posting
         try{
-            unitedPosting = new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham/unitedPosting.txt");
+            unitedPosting = new File(pathToCreate+"/Postings/unitedPosting.txt");
             unitedPosting.createNewFile();
             BufferedWriter bw = new BufferedWriter(new FileWriter(unitedPosting));
             int i = 0;
@@ -351,6 +395,97 @@ public class Indexer {
         return false;
     }
 
+    /**
+     * reset the posting ,the dictionary file and the memory of the program
+     * @return true if the reset succeed' else return false
+     */
+    public boolean reset() {
+        File fileTo = new File(pathTo);
+        File[] filesInPathTo = fileTo.listFiles();
+        boolean succDelete = false;
+        for (File file : filesInPathTo) {
+            if (file.isDirectory() && file.listFiles().length>0)
+                recDelete(file.listFiles());
+            file.delete();
+        }
+        System.gc();
+        return true;
+    }
+
+
+    private void recDelete(File[] files) {
+        for (File f:files){
+            if(f.isDirectory() && f.listFiles().length>0)
+                recDelete(f.listFiles());
+            f.delete();
+        }
+    }
+
+
+    /**
+     * Dictionary of the terms : term, tf overall
+     * @return the dictionary of the terms
+     */
+    public Queue<String> displayDictionary(boolean toStem) {
+
+        Queue<String> dictionaryFromDisk = new LinkedList<>();
+        dictionaryFromDisk.add("Term:number of documents;number of instances");
+        String pathToCreate ="";
+        if(toStem) {
+            pathToCreate = pathTo + "\\WithStemming";
+        }
+        else pathToCreate =pathTo + "\\WithoutStemming";
+        File fileDictionary = new File(pathToCreate+"/Dictionaries/Dictionary.txt");
+        try {
+            String line="";
+            BufferedReader bf = new BufferedReader(new FileReader(fileDictionary));
+            line = bf.readLine();
+            while(line!=null && line!=""){
+                dictionaryFromDisk.add(line);
+                line = bf.readLine();
+            }
+            return dictionaryFromDisk;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * load the dictionary from the disk to the memory
+     * @return true if the loading succeed, else retutn false
+     */
+    public boolean loadDictionaryFromDiskToMemory(boolean toStem) {
+        String pathToCreate ="";
+        if(toStem) {
+            pathToCreate = pathTo + "\\WithStemming";
+        }
+        else pathToCreate =pathTo + "\\WithoutStemming";
+        File fileDictionary = new File(pathToCreate+"/Dictionaries/Dictionary.txt");
+        try {
+            String line="";
+            BufferedReader bf = new BufferedReader(new FileReader(fileDictionary));
+            line = bf.readLine();
+            while(line!=null && line!=""){
+                String[] splitedLineInDictionary = line.split(";");
+                if(splitedLineInDictionary==null) return false;
+                String[] dfPostingTF = new String[3];
+                dfPostingTF[0]=splitedLineInDictionary[1];
+                dfPostingTF[1]="";
+                dfPostingTF[2]=splitedLineInDictionary[2];
+                dictionaryPosting.put(splitedLineInDictionary[0],dfPostingTF);
+                line = bf.readLine();
+            }
+            return true;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 
     public static void main(String[] args){
         Comparator<String> compareLexicographically1 = new Comparator<String>() {
@@ -392,7 +527,7 @@ public class Indexer {
 
         ReadFile readFile = new ReadFile("C:\\Users\\nivdu\\Desktop\\אחזור\\פרוייקט גוגל\\cor");
         Parse parse = new Parse(false, "C:\\Users\\nivdu\\Desktop\\StopWords");//todo change to boolean stemmer and stop word path from the user
-        Indexer indexer = new Indexer(readFile, parse);
+        Indexer indexer = new Indexer("", "",false);
         PriorityQueue<String> pq = new PriorityQueue<>(compareLexicographically1);
         String s2 = "abolish";
         String s1 = "abolishing";
