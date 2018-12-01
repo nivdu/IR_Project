@@ -9,10 +9,10 @@ public class document {
     private int numOfUniqueWords;
     private String city;
     private HashMap<String,Integer> dicDoc;
-    ArrayList<Integer> locationOfCity;
+    private HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc;
 
-    public document(String documentID, int maxTf, int numOfUniqueWords, String city, HashMap<String,Integer> tempDic, ArrayList<Integer> locationOfCity) {
-        this.locationOfCity = new ArrayList<>(locationOfCity);
+    public document(String documentID, int maxTf, int numOfUniqueWords, String city, HashMap<String,Integer> tempDic, HashMap locationOfCitiesAtCurrDoc) {
+        this.locationOfCitiesAtCurrDoc = new HashMap<>(locationOfCitiesAtCurrDoc);
         this.maxTf = maxTf;
         this.numOfUniqueWords = numOfUniqueWords;
         this.city = city;
@@ -20,13 +20,12 @@ public class document {
         this.documentID=documentID;
     }
 
-    public ArrayList<Integer> getLocationOfWords() {
-        return locationOfCity;
+    public HashMap<String,ArrayList<Integer>> getLocationOfCities() {
+        return locationOfCitiesAtCurrDoc;
     }
 
-    public void removeDic(){
-        dicDoc.clear();
-    }
+    public void removeDic(){ dicDoc.clear(); }
+    public void removeLocationOfCities(){ locationOfCitiesAtCurrDoc.clear();}
 
     public int getMaxTf() {
         return maxTf;
