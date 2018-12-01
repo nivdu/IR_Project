@@ -1,6 +1,4 @@
-package sample;
-
-import org.omg.SendingContext.RunTime;
+package Model;
 
 import java.io.*;
 import java.util.*;
