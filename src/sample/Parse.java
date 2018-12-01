@@ -86,32 +86,51 @@ public class Parse {
     }
 
 
-    public document parseDoc(String[] splitedDoc, String city, String docId) {
+    public document parseDoc(String[] splitedDoc, String city, String docId, HashSet<String> citiesFromTags) {//todo delete String city from func
         int jump = 0;
         //locations in the doc of appearances of the city
-        ArrayList<Integer> locationsOfCity = new ArrayList<>();
+        ArrayList<Integer> locationsOfCity = new ArrayList<>();//pahot mahmir case//todo delete this if mahmir cases
+        //locations in the doc of appearances of the cities from tags , String - city name, ArrayList - locations indexes
+        HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc = new HashMap<>();
         //temporary dictionary to find the max tf in current doc.
         HashMap<String, Integer> dicDoc = new HashMap<>();//todo at the end of the loop check the tf and everything
-        //loop over all the tokens in current doc.
-        boolean isAddToDic = false;
         //delete start and end char punctutations from the terms.
         for (int j = 0; j < splitedDoc.length; j++) {
             splitedDoc[j] = deletePunctutations(splitedDoc[j]);
         }
+        //loop over all the tokens in current doc.
         for (int currDocIndex = 0; currDocIndex < splitedDoc.length; currDocIndex++) {
             if (splitedDoc[currDocIndex].equals("") || splitedDoc[currDocIndex].equals("\n"))
                 continue;
             String currToken = splitedDoc[currDocIndex];
             //continue to next token when it stop Word
-            if (deleteStopWords(currToken))
+            if (deleteStopWords(currToken.toLowerCase()))
                 continue;
-            if(city != null && city.equals(currToken)){
-                locationsOfCity.add(currDocIndex);
+            //todo choose one of the cases by the word laws - case one of cities (lo mahmir)
+//            if(city != null && city.equals(currToken.toLowerCase())){
+//                locationsOfCity.add(currDocIndex);
+//            }
+
+            //add the currdocindex to the array list of this city location at the this doc
+            String checkIfCityToken = currToken.toLowerCase();
+            if(citiesFromTags.contains(checkIfCityToken)){
+                //add the currdocindex to the array list of this city location at the this doc
+                if(locationOfCitiesAtCurrDoc.containsKey(checkIfCityToken)){
+                    locationOfCitiesAtCurrDoc.get(checkIfCityToken).add(currDocIndex);
+                }
+                else{
+                    ArrayList<Integer> locationList = new ArrayList<>();
+                    locationOfCitiesAtCurrDoc.put(checkIfCityToken,locationList);
+                    locationOfCitiesAtCurrDoc.get(checkIfCityToken).add(currDocIndex);
+                }
+                //add the currdocindex to the array list of this city location at the this doc
             }
+
             if(toStem){
                 stemmer.setTerm(currToken);
                 stemmer.stem();
                 currToken = stemmer.getTerm();
+                currToken = deletePunctutations(currToken);//todo do it or not?
             }
 
             //get prev and next tokens if there isn't next token (the end of the array) return nextToken="", if index==0 return prevToken="".
@@ -167,7 +186,6 @@ public class Parse {
             if(currToken.length()>1) {
                 addToDicDoc(dicDoc, currToken);
             }
-
             //cases like word/word or word/word/word or word.word or word.[word].
 //            String[] toAdd = currToken.split("[?!:;#@^+&{}*|<=/>\"\\.]");
 //            String[] toAdd = currToken.split(" |\\/|\\.");
@@ -186,7 +204,7 @@ public class Parse {
         }
         int tf = getMaxTF(dicDoc);
         int maxUnique = getMaxUnique(dicDoc);
-        return new document(docId, tf, maxUnique, city, dicDoc, locationsOfCity);
+        return new document(docId, tf, maxUnique, city, dicDoc, locationOfCitiesAtCurrDoc);
     }
 
     /**
@@ -277,12 +295,12 @@ public class Parse {
             if(toCheck.equals("U.S."))
                 return toCheck;
             int toCheckLength = toCheck.length() - 1;
-            if (toCheck.charAt(0) == '\n' || toCheck.charAt(0) == '"'|| toCheck.charAt(0) == '(' || toCheck.charAt(0) == ',' || toCheck.charAt(0) == ':' || toCheck.charAt(0) == '.' || (toCheck.charAt(0) == '-') && (!checkIfOnlyDigitsDotsComma(toCheck.substring(1))) || toCheck.charAt(0) == '|' || toCheck.charAt(0) == '`' || toCheck.charAt(0) == '\'' || toCheck.charAt(0) == '[' || toCheck.charAt(0) == ']' || toCheck.charAt(0) == ';' || toCheck.charAt(0) == '?' || toCheck.charAt(0) == '/' || toCheck.charAt(0) == '<' || toCheck.charAt(0) == '!' || toCheck.charAt(0) == '*' || toCheck.charAt(0) == '+') {
+            if (toCheck.charAt(0) == '\n' || toCheck.charAt(0) == '"'|| toCheck.charAt(0) == '(' || toCheck.charAt(0) == ',' || toCheck.charAt(0) == ':' || toCheck.charAt(0) == '.' || (toCheck.charAt(0) == '-') && (!checkIfOnlyDigitsDotsComma(toCheck.substring(1))) || toCheck.charAt(0) == '|' || toCheck.charAt(0) == '`' || toCheck.charAt(0) == '\'' || toCheck.charAt(0) == '[' || toCheck.charAt(0) == ']' || toCheck.charAt(0) == ';' || toCheck.charAt(0) == '?' || toCheck.charAt(0) == '/' || toCheck.charAt(0) == '<' || toCheck.charAt(0) == '!' || toCheck.charAt(0) == '*' || toCheck.charAt(0) == '+' || toCheck.charAt(0) == '\''){
                 toCheck = toCheck.substring(1);
                 toCheck = deletePunctutations(toCheck);
             }
             toCheckLength = toCheck.length() - 1;
-            if (toCheck != "" && toCheck.length()>0 && (toCheck.charAt(toCheckLength) == ',' || toCheck.charAt(toCheckLength)=='"' ||  toCheck.charAt(toCheckLength) == ')' || toCheck.charAt(toCheckLength) == '.' || toCheck.charAt(toCheckLength) == ':' || toCheck.charAt(toCheckLength) == '"' || toCheck.charAt(toCheckLength) == '-' || toCheck.charAt(toCheckLength) == '|' || toCheck.charAt(toCheckLength) =='`' || toCheck.charAt(toCheckLength) ==']' || toCheck.charAt(toCheckLength) =='[' || toCheck.charAt(toCheckLength) =='\'' || toCheck.charAt(toCheckLength) ==';' || toCheck.charAt(toCheckLength) =='?' || toCheck.charAt(toCheckLength) =='/' || toCheck.charAt(toCheckLength) =='>' || toCheck.charAt(toCheckLength) =='!' || toCheck.charAt(toCheckLength) =='+')) {
+            if (toCheck != "" && toCheck.length()>0 && (toCheck.charAt(toCheckLength) == ',' || toCheck.charAt(toCheckLength)=='"' ||  toCheck.charAt(toCheckLength) == ')' || toCheck.charAt(toCheckLength) == '.' || toCheck.charAt(toCheckLength) == ':' || toCheck.charAt(toCheckLength) == '"' || toCheck.charAt(toCheckLength) == '-' || toCheck.charAt(toCheckLength) == '|' || toCheck.charAt(toCheckLength) =='`' || toCheck.charAt(toCheckLength) ==']' || toCheck.charAt(toCheckLength) =='[' || toCheck.charAt(toCheckLength) =='\'' || toCheck.charAt(toCheckLength) ==';' || toCheck.charAt(toCheckLength) =='?' || toCheck.charAt(toCheckLength) =='/' || toCheck.charAt(toCheckLength) =='>' || toCheck.charAt(toCheckLength) =='!' || toCheck.charAt(toCheckLength) =='+' || toCheck.charAt(toCheckLength) =='\'')){
                 toCheck = toCheck.substring(0, toCheckLength);
                 toCheck = deletePunctutations(toCheck);
             }

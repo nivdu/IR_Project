@@ -20,6 +20,11 @@ public class Indexer {
     private HashMap<String, String[]> dictionaryPosting;
     private int tempPostingCounter;
     private int filesPostedCounter;
+    //contain all the cities from tags <F P=104> (if the city have two words, save the first one.
+    private HashSet<String> citiesFromTags;
+    private HashMap<String,String[]> dictionaryCities;
+//    private int tempCitiesPostingCounter;
+
 
     /**
      * Constructor
@@ -31,24 +36,39 @@ public class Indexer {
         docList = new ArrayList<>();
         dictionaryPosting = new HashMap<>();
         tempPostingCounter = 0;
+        citiesFromTags = new HashSet<>();
+        dictionaryCities = new HashMap<>();
     }
 
 
     public void createPostingAndDic(String corpusPath) {
-        File theDir = new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham");
+        File theDirTerms = new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham\\termsPosting");
+        File theDirCities = new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham\\citiesPosting");
         // if the directory does not exist, create it
-        if (!theDir.exists()) {
+        if (!theDirTerms.exists() || !theDirCities.exists()) {
             try {
-                theDir.mkdir();
+                if(!theDirCities.exists())
+                    theDirCities.mkdir();
+                if(!theDirTerms.exists())
+                    theDirTerms.mkdir();
             } catch (SecurityException se) {
                 //handle it
             }
         }
         ArrayList<String> allFilesPaths = readFile.readCorpus(corpusPath);
         for (String path : allFilesPaths) {
+            HashSet<String> currDocCities = readFile.generateSetOfCities(path);
+            if(currDocCities.size()>0)
+                //add all the city names from current doc into the full(from all the corpus) HashSet of cities.
+                for (String city:currDocCities){
+                    citiesFromTags.add(city);
+                }
+        }
+        for (String path : allFilesPaths) {
             parseFile(readFile.spiltFileIntoSeparateDocs2(path));
         }
         unitAllTempPostingsToOnePostingInDisk();
+        unitAllTempCityPostingsToOnePostingInDisk();
     }
 
 //    class compareLexicographically implements Comparator<String> {
@@ -102,29 +122,48 @@ public class Indexer {
                 else if (index % 3 == 1)
                     docId = currentDoc[0];
                 else {
-                    document currDoc = parse.parseDoc(currentDoc, city, docId);
-                    Long freeMemory = Runtime.getRuntime().freeMemory();
-                    Long totalMemory = Runtime.getRuntime().totalMemory();
-                    double minMemory = totalMemory*0.1;
-//                    if(freeMemory<=minMemory){//todo check
+                    document currDoc = parse.parseDoc(currentDoc, city, docId, citiesFromTags);
                     if(filesPostedCounter==40){
                         filesPostedCounter=0;
                         saveAndDeletePosition(dictionaryPosting);
+                        saveAndDeleteCitiesPosition(dictionaryCities);
+                        tempPostingCounter++;
                     }
                     combineDicDocAndDictionary(currDoc);
-                    docList.add(currDoc);
+                    combineCitiesFromDoc(currDoc);
                     currDoc.removeDic();
+                    currDoc.removeLocationOfCities();
+                    docList.add(currDoc);
                 }
                 index++;
             }
         }
         filesToParse.clear();
-//        unitAllTempPostingsToOnePostingInDisk();
+    }
+
+    private void saveAndDeleteCitiesPosition(HashMap<String,String[]> dictionaryCities) {
+        try {
+            File f = new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham\\citiesPosting/postingCities" + tempPostingCounter + ".txt");//todo counter for number
+            if (!f.exists())
+                f.createNewFile();
+            FileWriter fw = new FileWriter(f);
+            PriorityQueue<String> tempCitiesPosting = copyCityPostingIntoString(dictionaryCities);
+            int PQsize= tempCitiesPosting.size();
+            for (int i = 0; i < PQsize; i++) {
+                fw.write(tempCitiesPosting.remove());
+            }
+            fw.flush();
+            fw.close();
+        }
+        catch (IOException e) {
+            System.out.println("problem in saveanddeletefunction indexer");//todo delete this
+            e.printStackTrace();
+        }
     }
 
     private void saveAndDeletePosition(HashMap<String,String[]> dictionaryPosting) {
         try {
-            File f = new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham/posting" + tempPostingCounter + ".txt");//todo counter for number
+            File f = new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham\\termsPosting/posting" + tempPostingCounter + ".txt");//todo counter for number
             if (!f.exists())
                 f.createNewFile();
             FileWriter fw = new FileWriter(f);
@@ -135,7 +174,6 @@ public class Indexer {
             }
             fw.flush();
             fw.close();
-            tempPostingCounter++;
         }
         catch (IOException e) {
             System.out.println("problem in saveanddeletefunction indexer");//todo delete this
@@ -186,12 +224,13 @@ public class Indexer {
      * @return - string of all postings combined
      */
     private PriorityQueue<String> copyPostingIntoString(HashMap<String,String[]> dictionaryPosting) {
-//        sortIt(dictionaryPosting);
-    PriorityQueue<String> sortTermsQ = new PriorityQueue<>(compareLexicographically);
+        PriorityQueue<String> sortTermsQ = new PriorityQueue<>(compareLexicographically);
         Set<String> keys = dictionaryPosting.keySet();
         for(String term: keys){
             //term already exists in dictionary
             String[] dfAndPosting = dictionaryPosting.get(term);
+            if(dfAndPosting.length<2)
+                System.out.println("hi");
             if(dfAndPosting[1].equals(""))
                 continue;
             sortTermsQ.add(term + ":" + dfAndPosting[1] + "\n");
@@ -200,6 +239,28 @@ public class Indexer {
         }
         return sortTermsQ;
     }
+
+    /**
+     * takes all the postings of cities and create one long String and delete the postings from memory
+     * @param dictionaryCities - dictionary of cities and locations
+     * @return - string of all postings combined
+     */
+    private PriorityQueue<String> copyCityPostingIntoString(HashMap<String,String[]> dictionaryCities) {
+        PriorityQueue<String> sortCityQ = new PriorityQueue<>(compareLexicographically);
+        Set<String> keys = dictionaryCities.keySet();
+        for(String city: keys){
+            //term already exists in dictionary
+            String[] cityPosting = dictionaryCities.get(city);
+            if(cityPosting[0].equals(""))
+                continue;
+            sortCityQ.add(city + ":" + cityPosting[0] + "\n");
+            cityPosting[0] = "";
+            dictionaryCities.put(city, cityPosting);
+        }
+        return sortCityQ;
+    }
+
+
 
     /**
      * combine the dictionary of document with the general dictionary
@@ -231,6 +292,40 @@ public class Indexer {
     }
 
     /**
+     * combine the location of cities with the general dictionaryCities.
+     * @param currDoc - the document which his dictionary will be combined.
+     */
+    private void combineCitiesFromDoc(document currDoc) {
+        HashMap<String,ArrayList<Integer>> citiesFromDoc = currDoc.getLocationOfCities();
+        Set<String> keys = citiesFromDoc.keySet();
+        for(String term: keys){
+            if(dictionaryCities.containsKey(term)) {
+                String[] cityLocation = dictionaryCities.get(term);
+                if (cityLocation[0].equals("")) {
+                    cityLocation[0] = currDoc.getDocumentID();
+                    for (int location : citiesFromDoc.get(term)) {
+                        cityLocation[0] += "," + location;
+                    }
+                } else {
+                    cityLocation[0] += ";" + currDoc.getDocumentID();
+                    for (int location: citiesFromDoc.get(term)){
+                        cityLocation[0] += "," + location;
+                    }
+                }
+                dictionaryCities.put(term, cityLocation);
+            }
+            else{
+                String[] cityLocation = new String[1];
+                cityLocation[0]=currDoc.getDocumentID();
+                for (int location : citiesFromDoc.get(term)) {
+                    cityLocation[0] += "," + location;
+                }
+                dictionaryCities.put(term,cityLocation);
+            }
+        }
+    }
+
+    /**
      *
      */
     private void unitAllTempPostingsToOnePostingInDisk() {
@@ -238,11 +333,49 @@ public class Indexer {
         File unitedPosting;
         //create file for each temp posting and insert to the temp posting array
         PriorityQueue<String[]> linesPQ = new PriorityQueue<>(new compareLexicographically2());//todo repair the compare function
-        File[] tempPostingFiles = (new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham")).listFiles();
+        File[] tempPostingFiles = (new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham\\termsPosting")).listFiles();
         BufferedReader[] br = new BufferedReader[tempPostingFiles.length];
         //create new text file for united posting
         try{
-            unitedPosting = new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham/unitedPosting.txt");
+            unitedPosting = new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham\\termsPosting/unitedPosting.txt");
+            unitedPosting.createNewFile();
+            BufferedWriter bw = new BufferedWriter(new FileWriter(unitedPosting));
+            int i = 0;
+            for (File f : tempPostingFiles) {
+                br[i] = new BufferedReader(new FileReader(f));
+                i++;
+            }
+            //insert one line from each temp posting to the PQ - "first init of the PQ"
+            for (int j = 0; j < tempPostingFiles.length; j++) {
+                insertLine2PQ(br,j,linesPQ);
+            }
+            //loop over the temp posting files and combine them into the united posting(to disk)
+            String insertToOnePostDisk=dequeueAndInsert2UnitedPosting(linesPQ, br);
+            while (!insertToOnePostDisk.equals("")) {
+                bw.write(insertToOnePostDisk);
+                insertToOnePostDisk = dequeueAndInsert2UnitedPosting(linesPQ, br);
+            }
+            bw.flush();
+            bw.close();
+        }
+        catch (IOException e) { }
+
+
+    }
+
+    /**
+     *
+     */
+    private void unitAllTempCityPostingsToOnePostingInDisk() {
+        int currDir = 0;
+        File unitedPosting;
+        //create file for each temp posting and insert to the temp posting array
+        PriorityQueue<String[]> linesPQ = new PriorityQueue<>(new compareLexicographically2());//todo repair the compare function
+        File[] tempPostingFiles = (new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham\\citiesPosting")).listFiles();
+        BufferedReader[] br = new BufferedReader[tempPostingFiles.length];
+        //create new text file for united posting
+        try{
+            unitedPosting = new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham\\citiesPosting/unitedPosting.txt");
             unitedPosting.createNewFile();
             BufferedWriter bw = new BufferedWriter(new FileWriter(unitedPosting));
             int i = 0;
@@ -396,14 +529,12 @@ public class Indexer {
         Parse parse = new Parse(false, "C:\\Users\\nivdu\\Desktop\\StopWords");//todo change to boolean stemmer and stop word path from the user
         Indexer indexer = new Indexer(readFile, parse);
         PriorityQueue<String> pq = new PriorityQueue<>(compareLexicographically1);
-        String s2 = "abolish";
-        String s1 = "abolishing";
-        String s3 = "abolishingfdf";
-        String s4 = "abolishingfd";
-        String s5 = "abolishingfdf2";
-        String s6 = "ab";
-        String s7 = "a";
-        String s8 = "abolis";
+        String s2 = "sup]3[/]He:Ar:Xe";
+        String s1 = "HaW";
+        String s3 = "$@%#$%";
+        String s4 = ".";
+        String s5 = " ";
+        String s6 = "FGF23fdfdcf%#Ttrh!'";
 //        String s4 = "ba";
 //        String s5 = "12";
 //        String s6 = "1";
@@ -414,18 +545,16 @@ public class Indexer {
         pq.add(s4);
         pq.add(s5);
         pq.add(s6);
-        pq.add(s7);
-        pq.add(s8);
         int size = pq.size();
-//        for (int i = 0; i < size ; i++) {
-//            System.out.println(pq.peek());
-//            System.out.println(pq.remove());
-//        }
-        String currToken = "sup]3[/]He:Ar:Xe";
-        String[] toAdd = currToken.split(" |\\/|\\.|\\?|!|:|;|#|@|^|\\+|\\&|\\{\\}\\*|\\|\\>|\\=\\<|\\(|\\)|\\[|\\]");
-        for (String s:toAdd){
-            System.out.println(s);
+        for (int i = 0; i < size ; i++) {
+            System.out.println(pq.remove().toLowerCase());
         }
+//        String currToken = "sup]3[/]He:Ar:Xe";
+//        currToken.toLowerCase();
+//        String[] toAdd = currToken.split(" |\\/|\\.|\\?|!|:|;|#|@|^|\\+|\\&|\\{\\}\\*|\\|\\>|\\=\\<|\\(|\\)|\\[|\\]");
+//        for (String s:toAdd){
+//            System.out.println(s);
+//        }
 
     }
 
