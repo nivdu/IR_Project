@@ -1,5 +1,5 @@
-package sample;
-import java.io.*;
+package Model;
+
 class Stemmer
 {  private char[] b;
     private int i,     /* offset into b */
