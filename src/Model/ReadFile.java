@@ -57,8 +57,7 @@ public class ReadFile {
         }
         return citiesFromTags;
     }
-
-    /**
+  
      * Called from function "readCorpus". Insert file paths into array list from the given file, if the file is directory, open it and take the paths of the files inside it.
      * @param filePaths - current file/directory path
      */
@@ -72,7 +71,7 @@ public class ReadFile {
         }
     }
 
-    /**
+        /**
      * Open file from the given path, split it by Docs tags, by Text tags and split by spaces and \n.
      * @param path - path of text file from the corpus.
      */

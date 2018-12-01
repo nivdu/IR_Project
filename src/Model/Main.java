@@ -21,9 +21,9 @@ public class Main extends Application {
 //            System.out.println(string + " is not a number");
         long Stime = System.currentTimeMillis();
         ReadFile readFile = new ReadFile("C:\\Users\\nivdu\\Desktop\\אחזור\\פרוייקט גוגל\\corpus");
-        Parse parse = new Parse(true, "C:\\Users\\nivdu\\Desktop\\StopWords");//todo change to boolean stemmer and stop word path from the user
-        Indexer indexer = new Indexer(readFile, parse);
-        indexer.createPostingAndDic("C:\\Users\\nivdu\\Desktop\\אחזור\\פרוייקט גוגל\\corpus");//todo take from the user the corpus path.
+        Parse parse = new Parse(false, "C:\\Users\\nivdu\\Desktop\\StopWords");//todo change to boolean stemmer and stop word path from the user
+//        Indexer indexer = new Indexer(readFile, parse);
+//        indexer.createPostingAndDic("C:\\Users\\nivdu\\Desktop\\אחזור\\פרוייקט גוגל\\corpus");//todo take from the user the corpus path.
         Parent root = FXMLLoader.load(getClass().getResource("sample.fxml"));
         primaryStage.setTitle("Hello World");
         primaryStage.setScene(new Scene(root, 300, 275));
