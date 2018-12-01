@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -87,6 +88,8 @@ public class Parse {
 
     public document parseDoc(String[] splitedDoc, String city, String docId) {
         int jump = 0;
+        //locations in the doc of appearances of the city
+        ArrayList<Integer> locationsOfCity = new ArrayList<>();
         //temporary dictionary to find the max tf in current doc.
         HashMap<String, Integer> dicDoc = new HashMap<>();//todo at the end of the loop check the tf and everything
         //loop over all the tokens in current doc.
@@ -99,14 +102,18 @@ public class Parse {
             if (splitedDoc[currDocIndex].equals("") || splitedDoc[currDocIndex].equals("\n"))
                 continue;
             String currToken = splitedDoc[currDocIndex];
+            //continue to next token when it stop Word
+            if (deleteStopWords(currToken))
+                continue;
+            if(city != null && city.equals(currToken)){
+                locationsOfCity.add(currDocIndex);
+            }
             if(toStem){
                 stemmer.setTerm(currToken);
                 stemmer.stem();
                 currToken = stemmer.getTerm();
             }
-            //continue to next token when it stop Word
-            if (deleteStopWords(currToken))
-                continue;
+
             //get prev and next tokens if there isn't next token (the end of the array) return nextToken="", if index==0 return prevToken="".
             String nextToken = getNextToken(splitedDoc, currDocIndex);
             String nextNextToken = getNextToken(splitedDoc, currDocIndex + 1);
@@ -117,7 +124,6 @@ public class Parse {
                 currDocIndex += jump;
                 continue;
             }
-
             //check DollarTerm function less than miliion.
             jump = DollarTermLessThanMillion(currToken, nextNextToken, nextNextToken, dicDoc);
             if (jump != -1) {
@@ -158,18 +164,20 @@ public class Parse {
             }
 
             //add token that didn't match any case. (like f16 and a lot more cases).
-            if(currToken.length()>1)
+            if(currToken.length()>1) {
                 addToDicDoc(dicDoc, currToken);
+            }
 
             //cases like word/word or word/word/word or word.word or word.[word].
 //            String[] toAdd = currToken.split("[?!:;#@^+&{}*|<=/>\"\\.]");
-            String[] toAdd = currToken.split(" |\\/|\\.");
-            if(toAdd.length>1)
-                for (String s:toAdd){
-                s = deletePunctutations(s);
-                if(s.length()>1)
-                    addToDicDoc(dicDoc,s);
-                }
+//            String[] toAdd = currToken.split(" |\\/|\\.");
+//            String[] toAdd = currToken.split(" |\\/|\\.|\\?|!|:|;|#|@|^|\\+|\\&|\\{\\}\\*|\\|\\>|\\=\\<|\\(|\\)|\\[|\\]");
+//            if(toAdd.length>1)
+//                for (String s:toAdd){
+//                    s = deletePunctutations(s);
+//                    if(s.length()>1)
+//                        addToDicDoc(dicDoc,s);
+//                }
 
 
 
@@ -178,7 +186,7 @@ public class Parse {
         }
         int tf = getMaxTF(dicDoc);
         int maxUnique = getMaxUnique(dicDoc);
-        return new document(docId, tf, maxUnique, city, dicDoc);
+        return new document(docId, tf, maxUnique, city, dicDoc, locationsOfCity);
     }
 
     /**
@@ -209,8 +217,8 @@ public class Parse {
             if(temp > max)
                 max = temp;
 //            it.remove(); // avoids a ConcurrentModificationException
-            }
-            return max;
+        }
+        return max;
     }
 
     /**
@@ -231,16 +239,12 @@ public class Parse {
         StringBuilder contentBuilder = new StringBuilder();
         {
             String content = "";
-
-            try
-            {
+            try {
                 content = new String ( Files.readAllBytes( Paths.get(file.toPath().toString()) ) );
             }
-            catch (IOException e)
-            {
+            catch (IOException e) {
                 e.printStackTrace();
             }
-
             return content;
         }
     }
@@ -263,7 +267,6 @@ public class Parse {
         }
     }
 
-
     /**
      * Deletes initial and final characters if they are punctuation marks
      * @param toCheck - string to check
@@ -274,12 +277,12 @@ public class Parse {
             if(toCheck.equals("U.S."))
                 return toCheck;
             int toCheckLength = toCheck.length() - 1;
-            if (toCheck.charAt(0) == '\n' || toCheck.charAt(0) == '"'|| toCheck.charAt(0) == '(' || toCheck.charAt(0) == ',' || toCheck.charAt(0) == ':' || toCheck.charAt(0) == '.' || toCheck.charAt(0) == '-' || toCheck.charAt(0) == '|' || toCheck.charAt(0) == '`' || toCheck.charAt(0) == '\'' || toCheck.charAt(0) == '[' || toCheck.charAt(0) == ']' || toCheck.charAt(0) == ';' || toCheck.charAt(0) == '?' || toCheck.charAt(0) == '/' || toCheck.charAt(0) == '<') {
+            if (toCheck.charAt(0) == '\n' || toCheck.charAt(0) == '"'|| toCheck.charAt(0) == '(' || toCheck.charAt(0) == ',' || toCheck.charAt(0) == ':' || toCheck.charAt(0) == '.' || (toCheck.charAt(0) == '-') && (!checkIfOnlyDigitsDotsComma(toCheck.substring(1))) || toCheck.charAt(0) == '|' || toCheck.charAt(0) == '`' || toCheck.charAt(0) == '\'' || toCheck.charAt(0) == '[' || toCheck.charAt(0) == ']' || toCheck.charAt(0) == ';' || toCheck.charAt(0) == '?' || toCheck.charAt(0) == '/' || toCheck.charAt(0) == '<' || toCheck.charAt(0) == '!' || toCheck.charAt(0) == '*' || toCheck.charAt(0) == '+') {
                 toCheck = toCheck.substring(1);
                 toCheck = deletePunctutations(toCheck);
             }
             toCheckLength = toCheck.length() - 1;
-            if (toCheck != "" && toCheck.length()>0 && (toCheck.charAt(toCheckLength) == ',' || toCheck.charAt(toCheckLength)=='"' ||  toCheck.charAt(toCheckLength) == ')' || toCheck.charAt(toCheckLength) == '.' || toCheck.charAt(toCheckLength) == ':' || toCheck.charAt(toCheckLength) == '"' || toCheck.charAt(toCheckLength) == '-' || toCheck.charAt(toCheckLength) == '|' || toCheck.charAt(toCheckLength) =='`' || toCheck.charAt(toCheckLength) ==']' || toCheck.charAt(toCheckLength) =='[' || toCheck.charAt(toCheckLength) =='\'' || toCheck.charAt(toCheckLength) ==';' || toCheck.charAt(toCheckLength) =='?' || toCheck.charAt(toCheckLength) =='/' || toCheck.charAt(toCheckLength) =='>')) {
+            if (toCheck != "" && toCheck.length()>0 && (toCheck.charAt(toCheckLength) == ',' || toCheck.charAt(toCheckLength)=='"' ||  toCheck.charAt(toCheckLength) == ')' || toCheck.charAt(toCheckLength) == '.' || toCheck.charAt(toCheckLength) == ':' || toCheck.charAt(toCheckLength) == '"' || toCheck.charAt(toCheckLength) == '-' || toCheck.charAt(toCheckLength) == '|' || toCheck.charAt(toCheckLength) =='`' || toCheck.charAt(toCheckLength) ==']' || toCheck.charAt(toCheckLength) =='[' || toCheck.charAt(toCheckLength) =='\'' || toCheck.charAt(toCheckLength) ==';' || toCheck.charAt(toCheckLength) =='?' || toCheck.charAt(toCheckLength) =='/' || toCheck.charAt(toCheckLength) =='>' || toCheck.charAt(toCheckLength) =='!' || toCheck.charAt(toCheckLength) =='+')) {
                 toCheck = toCheck.substring(0, toCheckLength);
                 toCheck = deletePunctutations(toCheck);
             }
@@ -304,7 +307,6 @@ public class Parse {
      * @param token - the curr token to check in the curr doc.
      * @return - -1 if not added to the dic else return the number of words used from the doc
      */
-
     private int percentageTerm(String nextT, String token, HashMap dicDoc) {//todo check for %-number
         if (token == null || token.length() <= 0)//todo what to do if the token is null?
             return -1;
@@ -338,14 +340,14 @@ public class Parse {
      */
     private int DateTerm(String nextT, String token, HashMap dicDoc) {
         //todo check if token is empty null and shit
-        if (checkIfOnlyDigitsDotsComma(token) && token.length()<4 && months.containsKey(nextT)) {//todo maby check if only numbers without digits and dots.
+        if (checkIfOnlyDigitsDotsComma(token) && token.length()<4 && months.containsKey(nextT)) {
             if(token.length()==1)
                 token = "0" + token;
             String toAdd = months.get(nextT) + "-" + token;
             addToDicDoc(dicDoc,toAdd);
             return 1;
         }
-        else if(checkIfOnlyDigitsDotsComma(nextT) && token.length()<4 && months.containsKey(token)){//todo maby check if only numbers without digits and dots.
+        else if(checkIfOnlyDigitsDotsComma(nextT) && token.length()<4 && months.containsKey(token)){
             if(nextT.length()==1)
                 nextT = "0" + nextT;
             String toAdd = months.get(token) + "-" + nextT;
@@ -358,7 +360,6 @@ public class Parse {
         }
         return -1;
     }
-
 
     /**
      * check if a string is a legal fraction
@@ -398,7 +399,7 @@ public class Parse {
         if(number==null || number.equals(""))
             return false;
         for (Character c : number.toCharArray()) {
-            if (!Character.isDigit(c) && !(c.equals('.')) && !(c.equals(',')))
+            if (!Character.isDigit(c) && !(c.equals('.')) && !(c.equals('-')) && !(c.equals('/')) && !(c.equals(',')))//todo check if its ok i added / and -
                 return false;
         }
         return true;
@@ -495,7 +496,7 @@ public class Parse {
         if(tokenIsNumber)
             tokenIsMoreThanMillion=isMoreThanMillion(token);
         String term = "";
-        //cases like _____ Dollars
+        //cases like ___ Dollars
         if(nextT.equals("Dollars")){
             //cases like 1000000 Dollars
             if(tokenIsNumber && tokenIsMoreThanMillion){
@@ -549,7 +550,7 @@ public class Parse {
                 return 0;
             }
         }
-        //cases like number _____ U.S. dollars
+        //cases like number ___ U.S. dollars
         if(tokenIsNumber && nextNextT.equals("U.S.") && nextNextNextT.equals("dollars")){
             String tokenWithoutComma = deletingCommasFromNumbers(token);
             //cases like number million U.S. dollars
@@ -585,7 +586,6 @@ public class Parse {
         }
         return ans;
     }
-
 
     /**
      * check wether a string is a number bigger then one million
@@ -646,7 +646,6 @@ public class Parse {
         return "";
     }
 
-
     /**
      * split the number to two parts - before dot and after dot
      * @param token - the token in the document
@@ -664,7 +663,6 @@ public class Parse {
         }
         return -1;
     }
-
 
     private String regularNumberTerms2(String token, String nextToken) {
         String number = "";
@@ -832,7 +830,6 @@ public class Parse {
         return false;
     }
 
-
     /**
      * Ranges / expressions with hyphen will be added to the dictionary as a single term.
      * @param nextT
@@ -971,7 +968,7 @@ public class Parse {
 //        String ans = parse.convertingToMillionForDollars("12.3456B");
 //        System.out.println(ans);
 
-      //        String test="123";
+        //        String test="123";
 //        System.out.println(test.substring(0,2));
 //        parse.percentageTerm("percentage","6");
 //        parse.DateTerm("MAY","14");
@@ -1035,6 +1032,6 @@ public class Parse {
 //
 
 
-   
+
     }
 }
