@@ -87,7 +87,6 @@ public class Parse {
 
     public document parseDoc(String[] splitedDoc, String city, String docId, HashSet<String> citiesFromTags) {//todo delete String city from func
         int jump = 0;
-
         //locations in the doc of appearances of the city
         ArrayList<Integer> locationsOfCity = new ArrayList<>();//pahot mahmir case//todo delete this if mahmir cases
         //locations in the doc of appearances of the cities from tags , String - city name, ArrayList - locations indexes

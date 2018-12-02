@@ -65,6 +65,8 @@ public class Indexer {
                 }
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/Postings", pathToCreate + "/Dictionaries", true);
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/citiesPosting", pathToCreate + "/Dictionaries", false);
+                dictionaryPosting.clear();
+                System.out.println("clear dictionary");
 //                movingDictionaryToDisk(pathToCreate);
             } catch (SecurityException se) {
                 return false;
@@ -74,33 +76,6 @@ public class Indexer {
         }
 
         return true;
-    }
-
-    private void movingDictionaryToDisk(String pathToCreate) {
-        File dicOfDictionaries = new File(pathToCreate + "/Dictionaries");
-        if (!dicOfDictionaries.exists())
-            dicOfDictionaries.mkdir();
-        File fileOfDictionary = new File(pathToCreate + "/Dictionaries/Dictionary.txt");
-        if (!fileOfDictionary.exists()) {
-            try {
-                fileOfDictionary.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        try {
-            PriorityQueue<String> dictionarySorted = copyDicIntoPQByAscii();
-            FileWriter fw = new FileWriter(fileOfDictionary);
-            Set<String> keys = dictionaryPosting.keySet();
-            for (String term : keys) {
-                if (fw == null) break;
-                fw.write(dictionarySorted.remove());
-            }
-            fw.flush();
-            fw.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
 
@@ -408,7 +383,7 @@ public class Indexer {
                 else{
                     String[] city = dictionaryCities.get(term);
                     String cityCoinCiv = ApiCity(term);//todo country;coin;civil
-                    bwOfDic.write(term + ":" + cityCoinCiv + city[0] + "\n");
+                    bwOfDic.write(term + ":" + cityCoinCiv + locationIndex+  "\n");
 //                    bwOfDic.write(term + ":" + "\n");
                     bw.write(insertToOnePostDisk);
                 }
@@ -611,15 +586,17 @@ public class Indexer {
             BufferedReader bf = new BufferedReader(new FileReader(fileDictionary));
             line = bf.readLine();
             while (line != null && line != "") {
-                String[] splitedLineInDictionary = line.split(";");
+                String[] splitedLineInDictionaryByTerm = line.split(":");
+                String[] splitedLineInDictionary = splitedLineInDictionaryByTerm[1].split(";");
                 if (splitedLineInDictionary == null) return false;
                 String[] dfPostingTF = new String[3];
-                dfPostingTF[0] = splitedLineInDictionary[1];
+                dfPostingTF[0] = splitedLineInDictionary[0];
                 dfPostingTF[1] = "";
                 dfPostingTF[2] = splitedLineInDictionary[2];
-                dictionaryPosting.put(splitedLineInDictionary[0], dfPostingTF);
+                dictionaryPosting.put(splitedLineInDictionaryByTerm[0], dfPostingTF);
                 line = bf.readLine();
             }
+            System.out.println("load dictionary");
             return true;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
