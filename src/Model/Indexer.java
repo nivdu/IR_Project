@@ -18,17 +18,15 @@ public class Indexer {
     private HashMap<String, String[]> dictionaryPosting;
     private int tempPostingCounter;
     private int filesPostedCounter;
-    //contain all the cities from tags <F P=104> (if the city have two words, save the first one.
+    //contain all the cities from tags <F P=104> (if the city have two words, save the first one).
     private HashSet<String> citiesFromTags;
     private HashMap<String, String[]> dictionaryCities;
     private String pathFrom;
     private String pathTo;
 
-
     /**
      * Constructor
      */
-
     Indexer(String pathFrom, String pathTo, boolean toStem) {
         this.filesPostedCounter = 0;
         readFile = new ReadFile(pathFrom + "\\cor");
@@ -74,7 +72,7 @@ public class Indexer {
                 return false;
             }
         }
-        System.out.println();
+
         return true;
     }
 
@@ -368,39 +366,6 @@ public class Indexer {
         }
     }
 
-//    private void unitAllTempCityPostingsToOnePostingInDisk(String pathToCreate) {
-//        int currDir = 0;
-//        File unitedPosting;
-//        //create file for each temp posting and insert to the temp posting array
-//        PriorityQueue<String[]> linesPQ = new PriorityQueue<>(new compareLexicographically2());//todo repair the compare function
-//        File[] tempPostingFiles = (new File(pathToCreate)).listFiles();
-//        BufferedReader[] br = new BufferedReader[tempPostingFiles.length];
-//        //create new text file for united posting
-//        try {
-//            unitedPosting = new File(pathToCreate + "/unitedPosting.txt");
-//            unitedPosting.createNewFile();
-//            BufferedWriter bw = new BufferedWriter(new FileWriter(unitedPosting));
-//            int i = 0;
-//            for (File f : tempPostingFiles) {
-//                br[i] = new BufferedReader(new FileReader(f));
-//                i++;
-//            }
-//            //insert one line from each temp posting to the PQ - "first init of the PQ"
-//            for (int j = 0; j < tempPostingFiles.length; j++) {
-//                insertLine2PQ(br, j, linesPQ);
-//            }
-//            //loop over the temp posting files and combine them into the united posting(to disk)
-//            String insertToOnePostDisk = dequeueAndInsert2UnitedPosting(linesPQ, br);
-//            while (!insertToOnePostDisk.equals("")) {
-//                bw.write(insertToOnePostDisk);
-//                insertToOnePostDisk = dequeueAndInsert2UnitedPosting(linesPQ, br);
-//            }
-//            bw.flush();
-//            bw.close();
-//        } catch (IOException e) {
-//        }
-//    }
-
     private void unitAllTempPostingsToOnePostingInDisk(String pathToCreate, String pathOfDic, boolean termOrNot) {
         String temp="";
         if(termOrNot) {
@@ -429,10 +394,10 @@ public class Indexer {
             }
             //insert one line from each temp posting to the PQ - "first init of the PQ"
             for (int j = 0; j < tempPostingFiles.length; j++) {
-                insertLine2PQ(br, j, linesPQ);
+                insertLine2PQ(br, j, linesPQ, tempPostingFiles);
             }
             //loop over the temp posting files and combine them into the united posting(to disk)
-            String insertToOnePostDisk = dequeueAndInsert2UnitedPosting(linesPQ, br);
+            String insertToOnePostDisk = dequeueAndInsert2UnitedPosting(linesPQ, br, tempPostingFiles);
             while (!insertToOnePostDisk.equals("")) {
                 String term= cutTheTerm(insertToOnePostDisk);
                 if(termOrNot) {
@@ -448,7 +413,7 @@ public class Indexer {
                     bw.write(insertToOnePostDisk);
                 }
                 locationIndex+=insertToOnePostDisk.getBytes().length;
-                insertToOnePostDisk = dequeueAndInsert2UnitedPosting(linesPQ, br);
+                insertToOnePostDisk = dequeueAndInsert2UnitedPosting(linesPQ, br, tempPostingFiles);
             }
             bwOfDic.flush();
             bwOfDic.close();
@@ -464,7 +429,6 @@ public class Indexer {
     private String ApiCity(String term) {//todo
         return "";
     }
-
 
     private BufferedWriter initDirsForDictionary(String pathOfDic, String cityOrNot) {
         File dicOfDictionaries = new File(pathOfDic);
@@ -490,7 +454,7 @@ public class Indexer {
      * @param br      - buffer reader for all the temp postings
      *                return- combined line.
      */
-    private String dequeueAndInsert2UnitedPosting(PriorityQueue<String[]> linesPQ, BufferedReader[] br) {
+    private String dequeueAndInsert2UnitedPosting(PriorityQueue<String[]> linesPQ, BufferedReader[] br, File[] postings) {
         if (linesPQ == null || br == null)
             return "";
         boolean equalTerms = true;
@@ -504,7 +468,7 @@ public class Indexer {
         String[] newLineArr = linesPQ.remove();
         if (newLineArr == null)
             return "";
-        insertLine2PQ(br, Integer.parseInt(newLineArr[1]), linesPQ);
+        insertLine2PQ(br, Integer.parseInt(newLineArr[1]), linesPQ, postings);
         newLine = newLineArr[0];
         while (equalTerms) {
             nextLineArr = linesPQ.peek();
@@ -513,7 +477,7 @@ public class Indexer {
             nextLine = nextLineArr[0];
             if (cutTheTerm(newLine).toLowerCase().equals(cutTheTerm(nextLine).toLowerCase())) {
                 newLine = combineLines(newLine, nextLine);
-                insertLine2PQ(br, Integer.parseInt(nextLineArr[1]), linesPQ);
+                insertLine2PQ(br, Integer.parseInt(nextLineArr[1]), linesPQ, postings);
                 linesPQ.remove();//remove the peeked one after the combine.
             } else equalTerms = false;
         }
@@ -537,7 +501,7 @@ public class Indexer {
 //                l2 = l2.substring(cutTheTerm(l2).length()+1);
 //                return l1 + ";" + l2;
 //            }
-            if ((T2.charAt(0) <= 122 && T2.charAt(0) >= 97)) {
+            if ((((T1.length()+1)<l1.length()) && T2.charAt(0) <= 122 && T2.charAt(0) >= 97)) {
                 l1 = l1.substring(T1.length() + 1);
                 return l2 + ";" + l1;
             }
@@ -553,10 +517,14 @@ public class Indexer {
      * @param br    - array of buffer readers
      * @param index -
      */
-    private boolean insertLine2PQ(BufferedReader[] br, int index, PriorityQueue<String[]> linesPQ) {
+    private boolean insertLine2PQ(BufferedReader[] br, int index, PriorityQueue<String[]> linesPQ, File[] postings) {
         String line = null;
         try {
             line = br[index].readLine();
+            if(line==null) {
+                br[index].close();
+                postings[index].delete();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -588,7 +556,6 @@ public class Indexer {
         return true;
     }
 
-
     private void recDelete(File[] files) {
         for (File f : files) {
             if (f.isDirectory() && f.listFiles().length > 0)
@@ -596,7 +563,6 @@ public class Indexer {
             f.delete();
         }
     }
-
 
     /**
      * Dictionary of the terms : term, tf overall

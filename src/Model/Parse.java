@@ -32,6 +32,7 @@ public class Parse {
         this.months = new HashMap<String, String>();
         createMonthHS();
     }
+
     /**
      * add to the month HS all the months names.
      */
@@ -84,9 +85,9 @@ public class Parse {
         months.put("DEC", "12");
     }
 
-
     public document parseDoc(String[] splitedDoc, String city, String docId, HashSet<String> citiesFromTags) {//todo delete String city from func
         int jump = 0;
+
         //locations in the doc of appearances of the city
         ArrayList<Integer> locationsOfCity = new ArrayList<>();//pahot mahmir case//todo delete this if mahmir cases
         //locations in the doc of appearances of the cities from tags , String - city name, ArrayList - locations indexes
@@ -113,7 +114,6 @@ public class Parse {
 //            if(city != null && city.equals(currToken.toLowerCase())){
 //                locationsOfCity.add(currDocIndex);
 //            }
-
             //add the currdocindex to the array list of this city location at the this doc
             String checkIfCityToken = currToken.toLowerCase();
             if(citiesFromTags.contains(checkIfCityToken)){
