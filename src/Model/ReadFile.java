@@ -161,25 +161,25 @@ public class ReadFile {
         //if there isn't city in doc
         if (splitByCity.length == 1)
             return "";
-        //if there is a city in doc
+            //if there is a city in doc
         else {
             String[] splitByEndCity = splitByCity[1].split("</F>");
+            if(splitByEndCity[0].equals(""))
+                return "";
             String city = splitByEndCity[0];
             city = deleteSpaces(city);
             String[] splitCityBySpaces = city.split(" ");
             //if city contains mor than one word
             if (splitCityBySpaces.length > 1) {
-                String[] cityUpperCase = new String[1];
                 return splitCityBySpaces[0].toUpperCase();
-
             }
             //if city contains exactly one word
             else if (splitCityBySpaces.length == 1) {
                 return splitByCity[0];
             } else return "";
         }
-
     }
+
     /**
      * check whether a string is legale doc
      * @param doc - doc to check
@@ -206,7 +206,7 @@ public class ReadFile {
         while(string.length()>0 && string.charAt(0)==' '){
             string = string.substring(1);
         }
-        while (string.charAt(string.length()-1)==' '){
+        while (string.length() >0 && string.charAt(string.length()-1)==' '){
             string = string.substring(0,string.length()-1);
         }
         return string;
