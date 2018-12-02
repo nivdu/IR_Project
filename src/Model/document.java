@@ -8,10 +8,11 @@ public class document {
     private int maxTf;
     private int numOfUniqueWords;
     private String city;
-    private HashMap<String,Integer> dicDoc;
+    private String publishDate;
+    private HashMap<String,int[]> dicDoc;
     private HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc;
 
-    public document(String documentID, int maxTf, int numOfUniqueWords, String city, HashMap<String,Integer> tempDic, HashMap locationOfCitiesAtCurrDoc) {
+    public document(String documentID, int maxTf, int numOfUniqueWords, String city, HashMap<String,int[]> tempDic, HashMap locationOfCitiesAtCurrDoc) {
         this.locationOfCitiesAtCurrDoc = new HashMap<>(locationOfCitiesAtCurrDoc);
         this.maxTf = maxTf;
         this.numOfUniqueWords = numOfUniqueWords;
@@ -39,11 +40,13 @@ public class document {
         return city;
     }
 
-    public HashMap<String, Integer> getDicDoc() {
+    public HashMap<String, int[]> getDicDoc() {
         return dicDoc;
     }
 
     public String getDocumentID() {
         return documentID;
     }
+
+    public void setPublishDate(String date) { this.publishDate = date; }
 }

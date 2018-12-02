@@ -85,9 +85,9 @@ public class Parse {
         months.put("DEC", "12");
     }
 
-    public document parseDoc(String[] splitedDoc, String city, String docId, HashSet<String> citiesFromTags) {//todo delete String city from func
+    public document parseDoc(String[] splitedDoc, String city, String docId, HashSet<String> citiesFromTags, String docTitle) {//todo delete String city from func
         int jump = 0;
-
+        String [] splitDocTitle = docTitle.split(" ");
         //locations in the doc of appearances of the city
         ArrayList<Integer> locationsOfCity = new ArrayList<>();//pahot mahmir case//todo delete this if mahmir cases
         //locations in the doc of appearances of the cities from tags , String - city name, ArrayList - locations indexes
@@ -98,7 +98,14 @@ public class Parse {
             locationOfCitiesAtCurrDoc.put(city.toLowerCase(),locationArray);
         }
         //temporary dictionary to find the max tf in current doc.
-        HashMap<String, Integer> dicDoc = new HashMap<>();//todo at the end of the loop check the tf and everything
+        HashMap<String, int[]> dicDoc = new HashMap<>();//todo at the end of the loop check the tf and everything
+
+        for (String titleTerm:splitDocTitle){
+            int[] dicdicintarr = new int[2];
+            dicdicintarr[0] = 1;
+            dicdicintarr[1] = 1;
+            dicDoc.put(docTitle,dicdicintarr);
+        }
         //delete start and end char punctutations from the terms.
         for (int j = 0; j < splitedDoc.length; j++) {
             splitedDoc[j] = deletePunctutations(splitedDoc[j]);
@@ -215,7 +222,7 @@ public class Parse {
      * @param dicDoc - the dictionary of the document
      * @return - int 1 if add to dictionary or -1 if didn't.
      */
-    private int ourLaw1(String currToken, String nextT, HashMap<String,Integer> dicDoc) {
+    private int ourLaw1(String currToken, String nextT, HashMap<String,int[]> dicDoc) {
         if(nextT == null || nextT.equals("") || currToken == null || currToken.equals(""))
             return -1;
         //if the next token is kg and the current one is number. save them as 1 term number-kg
@@ -238,7 +245,7 @@ public class Parse {
      * @param dicDoc - the dictionary
      * @return - int of the number of tokens combined to one term, (the number of used tokens from the document. if didn't use any of them return -1.
      */
-    private int ourLaw2(String currToken, String nextT, String nextnextT, HashMap<String,Integer> dicDoc) {
+    private int ourLaw2(String currToken, String nextT, String nextnextT, HashMap<String,int[]> dicDoc) {
         if( nextT == null || nextT.equals("") || currToken == null || currToken.equals(""))
             return -1;
         if(checkIfOnlyDigitsDotsComma(currToken)){
@@ -274,28 +281,24 @@ public class Parse {
      * @param dicDoc - doc dictionary
      * @param term - term to add to dicDoc
      */
-    private void addToDicDoc(HashMap<String,Integer> dicDoc, String term){
-        if(dicDoc.containsKey(term)){
-            int tf = dicDoc.get(term);
-            dicDoc.put(term,tf+1);
-        }
-        else{
-            dicDoc.put(term,1);
-        }
+    private void addToDicDoc(HashMap<String,int[]> dicDoc, String term) {
+        int[] dicIntArr = dicDoc.get(term);
+        dicIntArr[0]++;
+        dicDoc.put(term, dicIntArr);
     }
 
     /**
      * iterator over the dicDoc hashmap and find the max tf.
      * Link : https://stackoverflow.com/questions/1066589/iterate-through-a-hashmap
      */
-    private int getMaxTF(HashMap<String,Integer> dicDoc){//todo check this function
+    private int getMaxTF(HashMap<String,int[]> dicDoc){//todo check this function
         int max = 0;
         Iterator it = dicDoc.entrySet().iterator();
         while (it.hasNext()) {
             HashMap.Entry pair = (HashMap.Entry)it.next();
-            int temp = (int)pair.getValue();
-            if(temp > max)
-                max = temp;
+            int []temp = (int[])pair.getValue();
+            if(temp[0] > max)
+                max = temp[0];
 //            it.remove(); // avoids a ConcurrentModificationException
         }
         return max;
@@ -304,7 +307,7 @@ public class Parse {
     /**
      * return the size of dicDoc - the number of unique words from current dictionary of document.
      */
-    private int getMaxUnique(HashMap<String, Integer> dicDoc){
+    private int getMaxUnique(HashMap<String, int[]> dicDoc){
         return dicDoc.size();
     }
 

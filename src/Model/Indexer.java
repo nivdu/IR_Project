@@ -1,6 +1,8 @@
 package Model;
 
 import java.io.*;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -133,17 +135,24 @@ public class Indexer {
     public void parseFile(ArrayList<String[]> filesToParse, String pathToCreate) {
         String city = "";
         String docId = "";
+        String docPublishDate = "";
+        String docTitle = "";
         int index = 0;
         filesPostedCounter++;
         for (String[] currentDoc : filesToParse) {
             if (currentDoc != null && currentDoc.length > 0) {
-                if (index % 3 == 0)
+                if (index % 5 == 0)
                     city = currentDoc[0];
-                else if (index % 3 == 1)
+                else if (index % 5 == 1)
                     docId = currentDoc[0];
+                else if (index % 5 == 2)
+                    docPublishDate = currentDoc[0];
+                else if (index % 5 == 3)
+                    docTitle = currentDoc[0];
                 else {
-                    document currDoc = parse.parseDoc(currentDoc, city, docId, citiesFromTags);
-                    if (filesPostedCounter==2) {
+                    document currDoc = parse.parseDoc(currentDoc, city, docId, citiesFromTags, docTitle);
+                    currDoc.setPublishDate(docPublishDate);
+                        if (filesPostedCounter==2) {
                         filesPostedCounter = 0;
                         saveAndDeletePosition(dictionaryPosting, pathToCreate);
                         saveAndDeleteCitiesPosition(dictionaryCities, pathToCreate);
@@ -302,7 +311,7 @@ public class Indexer {
      * @param currDoc - the document which his dictionary will be combined
      */
     private void combineDicDocAndDictionary(document currDoc) {
-        HashMap<String, Integer> dicDoc = currDoc.getDicDoc();
+        HashMap<String, int[]> dicDoc = currDoc.getDicDoc();
         Set<String> keys = dicDoc.keySet();
         for (String term : keys) {
             //term already exists in dictionary
@@ -310,7 +319,7 @@ public class Indexer {
                 String[] dfPosting = dictionaryPosting.get(term);
                 int df = Integer.parseInt(dfPosting[0]);
                 dfPosting[0] = "" + (df + 1);
-                int tfInDoc = dicDoc.get(term);
+                int tfInDoc = dicDoc.get(term)[0];
                 if (dfPosting[1].equals(""))
                     dfPosting[1] = currDoc.getDocumentID() + "," + tfInDoc;
                 else
@@ -323,7 +332,7 @@ public class Indexer {
             else {
                 String[] dfPosting = new String[4];
                 dfPosting[0] = "1";
-                String tf = "" + dicDoc.get(term);
+                String tf = "" + dicDoc.get(term)[0];
                 dfPosting[1] = currDoc.getDocumentID() + "," + tf;
                 dfPosting[2] = tf;
                 dfPosting[3] = "";
@@ -408,7 +417,7 @@ public class Indexer {
                 else{
                     String[] city = dictionaryCities.get(term);
                     String cityCoinCiv = ApiCity(term);//todo country;coin;civil
-                    bwOfDic.write(term + ":" + cityCoinCiv + city[0] + "\n");
+                    bwOfDic.write(term + ":" + cityCoinCiv + locationIndex + "\n");
 //                    bwOfDic.write(term + ":" + "\n");
                     bw.write(insertToOnePostDisk);
                 }
@@ -426,8 +435,50 @@ public class Indexer {
 
     }
 
+    /**
+     *
+     * @param term - term represent the city to api for
+     * @return - string contain the given term(city) (country + ";" + coin + ";" + population).
+     */
     private String ApiCity(String term) {//todo
-        return "";
+        String dataForCity = "";
+        URL url;
+            try {
+                url = new URL("http://getcitydetails.geobytes.com/GetCityDetails?fqcn=" + term);
+
+                //make connection
+                URLConnection urlc = url.openConnection();
+
+                //use post mode
+                urlc.setDoOutput(true);
+                urlc.setAllowUserInteraction(false);
+
+                //get result
+                BufferedReader br = new BufferedReader(new InputStreamReader(urlc.getInputStream()));
+                String l = br.readLine();
+                if (l != null) {
+                    int countryStartIndex = l.indexOf("geobytescountry") + 18;
+                    int countryFinishIndex = l.indexOf("\"",countryStartIndex);
+                    String country = "";
+                    if (countryFinishIndex - countryStartIndex != 0)
+                        country = l.substring(countryStartIndex, countryFinishIndex);
+                    int coinStartIndex = l.indexOf("geobytescurrencycode") + 23;
+                    int coinFinishIndex = l.indexOf("\"",coinStartIndex);
+                    String coin = "";
+                    if (coinFinishIndex - coinStartIndex != 0)
+                        coin = l.substring(coinStartIndex, coinFinishIndex);
+                    int populationStartIndex = l.indexOf("geobytespopulation") + 21;
+                    int populationFinishIndex = l.indexOf("\"",populationStartIndex);
+                    String population = "";
+                    if (populationFinishIndex - populationStartIndex != 0)
+                        population = l.substring(populationStartIndex, populationFinishIndex);
+                    dataForCity = country + ";" + coin + ";" + population;
+                }
+                br.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        return dataForCity;
     }
 
     private BufferedWriter initDirsForDictionary(String pathOfDic, String cityOrNot) {
