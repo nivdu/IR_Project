@@ -97,6 +97,17 @@ public class ReadFile {
             String[] docNO = new String[1];
             docNO[0] = docIDWithoutSpaces;
             docsFromFile.add(docNO);
+
+            //add the date in tag <DATE1>
+            String date = cutTheDate1Tag(currentDoc);
+            String[] dateAtArr = {date};
+            docsFromFile.add(dateAtArr);
+
+            //add the title in tag <TI>
+            String title = cutTheTitleTag(currentDoc);
+            String[] titleAtArr = {title};
+            docsFromFile.add(titleAtArr);
+
             String[] splitByText = splitBySpecificString(currentDoc, "<TEXT>\n");
             if (splitByText.length < 2)
                 continue;
@@ -140,6 +151,46 @@ public class ReadFile {
         return docsFromFile;
     }
 
+
+    /**
+     * cut the date that is in the tag <TI> </TI>
+     * @param currentDoc - the document which we will cut the title from
+     * @return string of the title
+     */
+    private String cutTheTitleTag(String currentDoc) {
+        if(!isDocLegal(currentDoc))
+            return "";
+        String title="";
+        String[] docSplitByTitle = currentDoc.split("<TI>");
+        if(docSplitByTitle==null || docSplitByTitle.length<=1 || (docSplitByTitle.length>1 && docSplitByTitle[1].equals("")))
+            return "";
+        String[] docSplitByEndTitle = docSplitByTitle[1].split("</TI>");
+        if(docSplitByEndTitle==null || docSplitByEndTitle.length==1 || docSplitByEndTitle[0].equals(""))
+            return "";
+        else title = deleteSpaces(docSplitByEndTitle[0]);
+        return title;
+    }
+
+
+    /**
+     * cut the date that is in the tag <DATE1> </DATE1>
+     * @param currentDoc - the document which we will cut the date from
+     * @return string of the date
+     */
+    private String cutTheDate1Tag(String currentDoc) {
+        if(!isDocLegal(currentDoc))
+            return "";
+        String date="";
+        String[] docSplitByDate = currentDoc.split("<DATE1>");
+        if(docSplitByDate==null || docSplitByDate.length<=1 || (docSplitByDate.length>1 && docSplitByDate[1].equals("")))
+            return "";
+        String[] docSplitByEndDate = docSplitByDate[1].split("</DATE1>");
+        if(docSplitByEndDate==null || docSplitByEndDate.length==1 || docSplitByEndDate[0].equals(""))
+            return "";
+        else date = deleteSpaces(docSplitByEndDate[0]);
+        return date;
+    }
+
     //check if a number combine only from digits, dots, commas and slash only.
     private boolean checkIfOnlyDigitsDotsComma(String number) {
         if(number==null || number.equals(""))
@@ -171,11 +222,11 @@ public class ReadFile {
             String[] splitCityBySpaces = city.split(" ");
             //if city contains mor than one word
             if (splitCityBySpaces.length > 1) {
-                return splitCityBySpaces[0].toUpperCase();
+                return deleteSpaces(splitCityBySpaces[0]).toUpperCase();
             }
             //if city contains exactly one word
             else if (splitCityBySpaces.length == 1) {
-                return splitByCity[0];
+                return deleteSpaces(splitByCity[0]);
             } else return "";
         }
     }
@@ -203,10 +254,10 @@ public class ReadFile {
     private String deleteSpaces(String string) {
         if(string==null || string.equals(""))
             return "";
-        while(string.length()>0 && string.charAt(0)==' '){
+        while(string.length()>0 && (string.charAt(0)==' ' || string.charAt(0)=='(' )){
             string = string.substring(1);
         }
-        while (string.length() >0 && string.charAt(string.length()-1)==' '){
+        while (string.length() >0 && (string.charAt(string.length()-1)==' ' || string.charAt(string.length()-1)==')' )){
             string = string.substring(0,string.length()-1);
         }
         return string;
