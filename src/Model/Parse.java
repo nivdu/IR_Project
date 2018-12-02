@@ -1,7 +1,6 @@
 package Model;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -92,6 +91,11 @@ public class Parse {
         ArrayList<Integer> locationsOfCity = new ArrayList<>();//pahot mahmir case//todo delete this if mahmir cases
         //locations in the doc of appearances of the cities from tags , String - city name, ArrayList - locations indexes
         HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc = new HashMap<>();
+        if(!city.equals("")) {
+            ArrayList<Integer> locationArray = new ArrayList<>();
+            locationArray.add(-1);
+            locationOfCitiesAtCurrDoc.put(city.toLowerCase(),locationArray);
+        }
         //temporary dictionary to find the max tf in current doc.
         HashMap<String, Integer> dicDoc = new HashMap<>();//todo at the end of the loop check the tf and everything
         //delete start and end char punctutations from the terms.
@@ -166,6 +170,20 @@ public class Parse {
                 continue;
             }
 
+            //our law1
+            jump = ourLaw1(currToken, nextToken, dicDoc);
+            if (jump != -1) {
+                currDocIndex+=jump;
+                continue;
+            }
+
+            //our law2
+            jump = ourLaw2(currToken, nextToken, nextNextToken, dicDoc);
+            if (jump != -1) {
+                currDocIndex+=jump;
+                continue;
+            }
+
             //check regularNumberTerms function.
             jump = regularNumberTerms(currToken, nextToken, dicDoc);
             if (jump != -1) {
@@ -189,6 +207,67 @@ public class Parse {
         int maxUnique = getMaxUnique(dicDoc);
         return new document(docId, tf, maxUnique, city, dicDoc, locationOfCitiesAtCurrDoc);
     }
+
+    /**
+     * combine two token into one term with "-" between them and add them to the dictionary if the first one is legal number and the second is kg, kilogram or kilograms
+     * @param currToken - the current token
+     * @param nextT - the next token in the doc
+     * @param dicDoc - the dictionary of the document
+     * @return - int 1 if add to dictionary or -1 if didn't.
+     */
+    private int ourLaw1(String currToken, String nextT, HashMap<String,Integer> dicDoc) {
+        if(nextT == null || nextT.equals("") || currToken == null || currToken.equals(""))
+            return -1;
+        //if the next token is kg and the current one is number. save them as 1 term number-kg
+        if(nextT.toLowerCase().equals("kg") || nextT.toLowerCase().equals("kilogram") || nextT.toLowerCase().equals("kilograms")){
+            if(checkIfOnlyDigitsDotsComma(currToken)){
+                String newTerm = currToken + "-kg";
+                addToDicDoc(dicDoc, newTerm);
+                return 1;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * 1. in cases like number kilometer/kilometers/km/mile/miles combine the tokens into 1 term number-km/mile
+     * 2. in cases like number square kilometer/kilometers/km/mile/miles combine the tokens into 1 term number-square-km/mile
+     * @param currToken - current token from the document
+     * @param nextT - next token from the document
+     * @param nextnextT - next next token from the document
+     * @param dicDoc - the dictionary
+     * @return - int of the number of tokens combined to one term, (the number of used tokens from the document. if didn't use any of them return -1.
+     */
+    private int ourLaw2(String currToken, String nextT, String nextnextT, HashMap<String,Integer> dicDoc) {
+        if( nextT == null || nextT.equals("") || currToken == null || currToken.equals(""))
+            return -1;
+        if(checkIfOnlyDigitsDotsComma(currToken)){
+            nextT = nextT.toLowerCase();
+            boolean isSquare = false;
+            int jump = 0;
+            String newTerm="";
+            String square = "";
+            if(nextnextT != null && !nextnextT.equals("") && nextT.equals("square")){
+                jump++;
+                isSquare = true;
+                nextT = nextnextT;
+                square = "-square";
+            }
+            if(nextT.equals("kilometers") || nextT.equals("kilometer") || nextT.equals("km")){
+                newTerm = currToken + square + "-km";
+                addToDicDoc(dicDoc, newTerm);
+                return jump+1;
+            }
+            if(nextT.equals("miles") || nextT.equals("mile")){
+                newTerm = currToken + square + "-mile";
+                addToDicDoc(dicDoc, newTerm);
+                return jump+1;
+            }
+        }
+        return -1;
+    }
+
+
 
     /**
      * add term into the current document dictionary and increase by 1 the tf value in dicDoc.
@@ -947,21 +1026,34 @@ public class Parse {
     }
 
     public static void main(String[] args) {
-        String path ="C:\\Users\\user\\Desktop\\אוניברסיטה\\שנה ג\\שנה ג - סמסטר א\\אחזור\\עבודות\\מנוע חלק א";
-        File file=new File(path +"/temp.txt");
-        try {
-            file.createNewFile();
-        } catch (IOException e) {
+
+        //test for the posting pointer todo delete this
+        File dic = new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham\\WithoutStemming\\Postings\\unitedPosting.txt");
+        try { BufferedReader br = new BufferedReader(new FileReader(dic));
+            RandomAccessFile rc = new RandomAccessFile(dic, "r");
+            rc.seek(4849017);
+            System.out.println(rc.readLine());
+
+
+        } catch (FileNotFoundException e) { e.printStackTrace();} catch (IOException e) {
             e.printStackTrace();
         }
-        File file2=new File(path +"\\temp2.txt");
-        try {
-            file2.createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        System.out.println("finish");
-//        Parse parse = new Parse();
+
+//        String path ="C:\\Users\\user\\Desktop\\אוניברסיטה\\שנה ג\\שנה ג - סמסטר א\\אחזור\\עבודות\\מנוע חלק א";
+//        File file=new File(path +"/temp.txt");
+//        try {
+//            file.createNewFile();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        File file2=new File(path +"\\temp2.txt");
+//        try {
+//            file2.createNewFile();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        System.out.println("finish");
+////        Parse parse = new Parse();
 //        String[] text = new String[2];
 //        text[0]="-";
 //        text[1]="";

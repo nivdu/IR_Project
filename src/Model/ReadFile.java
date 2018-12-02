@@ -21,10 +21,9 @@ public class ReadFile {
 
     /**
      * Read All file from corpus and return path to each file isn't a directory
-     * @param corpusPath - path of the corpus directory
      * @return - array list of Strings, each String is a path to Text File
      */
-    public ArrayList<String> readCorpus(String corpusPath){
+    public ArrayList<String> readCorpus(){
         ArrayList<String> filePaths = new ArrayList<>();
         File corpusFolder = new File(corpusPath);
         File[] corpusFiles = corpusFolder.listFiles();
@@ -103,7 +102,7 @@ public class ReadFile {
                 continue;
             String[] splitByEndText = splitBySpecificString(splitByText[1], "</TEXT>\n");
 
-            String docSplitBySpaces[] = splitByEndText[0].split(" |\\\n|\\--|\\(|\\)|\\[|\\]|\\)|\\(|\\}|\\{|\\&|\\}|\\:|\\|");
+            String docSplitBySpaces[] = splitByEndText[0].split(" |\\\n|\\--|\\(|\\)|\\[|\\]|\\)|\\(|\\}|\\{|\\&|\\}|\\:|\\||\\<|\\>|\\?|\\!");
             ArrayList<String> docSplit2Return = new ArrayList<>();
             String s2 = "";
             boolean containDot=false;
