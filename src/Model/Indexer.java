@@ -31,7 +31,7 @@ public class Indexer {
 
     Indexer(String pathFrom, String pathTo, boolean toStem) {
         this.filesPostedCounter = 0;
-        readFile = new ReadFile(pathFrom);
+        readFile = new ReadFile(pathFrom + "\\cor");
         parse = new Parse(toStem, pathFrom);
         docList = new ArrayList<>();
         dictionaryPosting = new HashMap<>();
@@ -53,8 +53,7 @@ public class Indexer {
         if (!theDir.exists()) {
             try {
                 theDir.mkdir();
-
-                ArrayList<String> allFilesPaths = readFile.readCorpus(pathFrom + "\\corpus");
+                ArrayList<String> allFilesPaths = readFile.readCorpus();
                 for (String path : allFilesPaths) {
                     HashSet<String> currDocCities = readFile.generateSetOfCities(path);
                     if (currDocCities.size() > 0)
@@ -66,15 +65,16 @@ public class Indexer {
                 for (String path : allFilesPaths) {
                     parseFile(readFile.spiltFileIntoSeparateDocs2(path), pathToCreate);
                 }
-                unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/Postings");
-                unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/citiesPosting");
-                movingDictionaryToDisk(pathToCreate);
+                unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/Postings", pathToCreate + "/Dictionaries", true);
+                unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/citiesPosting", pathToCreate + "/Dictionaries", false);
+//                movingDictionaryToDisk(pathToCreate);
             } catch (SecurityException se) {
                 return false;
             } catch (Exception e) {
                 return false;
             }
         }
+        System.out.println();
         return true;
     }
 
@@ -116,11 +116,12 @@ public class Indexer {
 
     /**
      * cut the term from string (cut the chars before the first ":" and return it by its lower case
-     *
      * @param s - string to cut the term from
      * @return - String of the term (lower case of the term).
      */
     private String cutTheTerm(String s) {
+        if(s==null)
+            return "";
         String term = "";
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
@@ -128,7 +129,7 @@ public class Indexer {
                 term += c;
             else break;
         }
-        return term.toLowerCase();
+        return term;
     }
 
     public void parseFile(ArrayList<String[]> filesToParse, String pathToCreate) {
@@ -144,7 +145,7 @@ public class Indexer {
                     docId = currentDoc[0];
                 else {
                     document currDoc = parse.parseDoc(currentDoc, city, docId, citiesFromTags);
-                    if (filesPostedCounter==40) {
+                    if (filesPostedCounter==2) {
                         filesPostedCounter = 0;
                         saveAndDeletePosition(dictionaryPosting, pathToCreate);
                         saveAndDeleteCitiesPosition(dictionaryCities, pathToCreate);
@@ -155,8 +156,6 @@ public class Indexer {
                     currDoc.removeDic();
                     currDoc.removeLocationOfCities();
                     docList.add(currDoc);
-//                    if(docList.size()%50==0)
-//                        System.out.println(docList.size());
                 }
                 index++;
             }
@@ -324,11 +323,12 @@ public class Indexer {
             }
             //term doesn't exist in dictionary
             else {
-                String[] dfPosting = new String[3];
+                String[] dfPosting = new String[4];
                 dfPosting[0] = "1";
                 String tf = "" + dicDoc.get(term);
                 dfPosting[1] = currDoc.getDocumentID() + "," + tf;
                 dfPosting[2] = tf;
+                dfPosting[3] = "";
                 dictionaryPosting.put(term, dfPosting);
             }
         }
@@ -401,7 +401,16 @@ public class Indexer {
 //        }
 //    }
 
-    private void unitAllTempPostingsToOnePostingInDisk(String pathToCreate) {
+    private void unitAllTempPostingsToOnePostingInDisk(String pathToCreate, String pathOfDic, boolean termOrNot) {
+        String temp="";
+        if(termOrNot) {
+            temp= "\\Dictionary";
+        }
+        else temp= "\\cityDictionary";
+        BufferedWriter bwOfDic = initDirsForDictionary(pathOfDic, temp);//write to the correct dictionary txt
+        if(bwOfDic == null)
+            System.out.println("balagan");
+        long locationIndex = 0;
         int currDir = 0;
         File unitedPosting;
         //create file for each temp posting and insert to the temp posting array
@@ -412,7 +421,7 @@ public class Indexer {
         try {
             unitedPosting = new File(pathToCreate + "/unitedPosting.txt");
             unitedPosting.createNewFile();
-            BufferedWriter bw = new BufferedWriter(new FileWriter(unitedPosting));
+            BufferedWriter bw = new BufferedWriter(new FileWriter(unitedPosting));//write to the correct united posting txt
             int i = 0;
             for (File f : tempPostingFiles) {
                 br[i] = new BufferedReader(new FileReader(f));
@@ -425,15 +434,53 @@ public class Indexer {
             //loop over the temp posting files and combine them into the united posting(to disk)
             String insertToOnePostDisk = dequeueAndInsert2UnitedPosting(linesPQ, br);
             while (!insertToOnePostDisk.equals("")) {
-                bw.write(insertToOnePostDisk);
+                String term= cutTheTerm(insertToOnePostDisk);
+                if(termOrNot) {
+                    String[] valueOfTerm = dictionaryPosting.get(term);
+                    bwOfDic.write(term + ":" + valueOfTerm[0] + ";" + valueOfTerm[2] + ";" + locationIndex + "\n");
+                    bw.write(insertToOnePostDisk);
+                }
+                else{
+                    String[] city = dictionaryCities.get(term);
+                    String cityCoinCiv = ApiCity(term);//todo country;coin;civil
+                    bwOfDic.write(term + ":" + cityCoinCiv + city[0] + "\n");
+//                    bwOfDic.write(term + ":" + "\n");
+                    bw.write(insertToOnePostDisk);
+                }
+                locationIndex+=insertToOnePostDisk.getBytes().length;
                 insertToOnePostDisk = dequeueAndInsert2UnitedPosting(linesPQ, br);
             }
+            bwOfDic.flush();
+            bwOfDic.close();
             bw.flush();
             bw.close();
-        } catch (IOException e) {
+        } catch (Exception e) {
+            System.out.println("boom");
         }
 
 
+    }
+
+    private String ApiCity(String term) {//todo
+        return "";
+    }
+
+
+    private BufferedWriter initDirsForDictionary(String pathOfDic, String cityOrNot) {
+        File dicOfDictionaries = new File(pathOfDic);
+        BufferedWriter bf = null;
+        if (!dicOfDictionaries.exists())
+            dicOfDictionaries.mkdir();
+        File fileOfDictionary = new File(pathOfDic + cityOrNot +".txt");
+        if (!fileOfDictionary.exists()) {
+            try {
+                fileOfDictionary.createNewFile();
+                bf = new BufferedWriter(new FileWriter(fileOfDictionary));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return bf;
     }
 
     /**
@@ -464,8 +511,6 @@ public class Indexer {
             if (nextLineArr == null)
                 return newLine + "\n";
             nextLine = nextLineArr[0];
-            String temp1 = cutTheTerm(newLine);
-            String temp2 = cutTheTerm(nextLine);
             if (cutTheTerm(newLine).toLowerCase().equals(cutTheTerm(nextLine).toLowerCase())) {
                 newLine = combineLines(newLine, nextLine);
                 insertLine2PQ(br, Integer.parseInt(nextLineArr[1]), linesPQ);
@@ -485,20 +530,20 @@ public class Indexer {
         if (l1 == null || l2 == null || l1.equals("") || l2.equals(""))
             return "";//todo at the call function handle ""
         //remove the term from the posting line.
-        String T1 = cutTheTerm(l1);
-        String T2 = cutTheTerm(l2);
-
+        String T1 = cutTheTerm(l1).toLowerCase();
+        String T2 = cutTheTerm(l2).toLowerCase();
         if (Pattern.matches("[a-zA-Z]+", T1) && Pattern.matches("[a-zA-Z]+", T2)) {
 //            if((T1.charAt(0)<=122 && T1.charAt(0)>=97)){
 //                l2 = l2.substring(cutTheTerm(l2).length()+1);
 //                return l1 + ";" + l2;
 //            }
             if ((T2.charAt(0) <= 122 && T2.charAt(0) >= 97)) {
-                l1 = l1.substring(cutTheTerm(l1).length() + 1);
+                l1 = l1.substring(T1.length() + 1);
                 return l2 + ";" + l1;
             }
         }
-        l2 = l2.substring(cutTheTerm(l2).length() + 1);//todo check
+        if(T2.length()<(l2.length()-1))
+            l2 = l2.substring(T2.length() + 1);//todo check
         return l1 + ";" + l2;
     }
 
