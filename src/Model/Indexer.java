@@ -14,8 +14,6 @@ public class Indexer {
     private ReadFile readFile;
     //parse Class
     private Parse parse;
-    //dictionary contain all the terms from the docs
-    private HashSet<String> dictionary;
     //dictionary contain all the terms from the docs -  term ; tf,posting
     private HashMap<String, String[]> dictionaryPosting;
     private int tempPostingCounter;
@@ -23,14 +21,15 @@ public class Indexer {
     //contain all the cities from tags <F P=104> (if the city have two words, save the first one).
     private HashSet<String> citiesFromTags;
     private HashMap<String, String[]> dictionaryCities;
-    private String pathFrom;
     private String pathTo;
     private int filesNumber;
+    private int numberOfUniqueTerms;
 
     /**
      * Constructor
      */
     Indexer(String pathFrom, String pathTo, boolean toStem) {
+        this.numberOfUniqueTerms = 0;
         this.filesNumber=0;
         this.filesPostedCounter = 0;
         readFile = new ReadFile(pathFrom + "\\cor");
@@ -40,7 +39,6 @@ public class Indexer {
         tempPostingCounter = 0;
         citiesFromTags = new HashSet<>();
         dictionaryCities = new HashMap<>();
-        this.pathFrom = pathFrom;
         this.pathTo = pathTo;
     }
 
@@ -67,13 +65,11 @@ public class Indexer {
                 }
                 for (String path : allFilesPaths) {
                     ArrayList<String[]> docsToParse = readFile.spiltFileIntoSeparateDocs2(path);
-//                    long StimePars = System.currentTimeMillis();
                     parseFile(docsToParse, pathToCreate);
-//                    System.out.println((System.currentTimeMillis() - StimePars)/1000);
-
                 }
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/Postings", pathToCreate + "/Dictionaries", true);
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/citiesPosting", pathToCreate + "/Dictionaries", false);
+                setNumOfUniqueTerms();
                 dictionaryPosting.clear();
             } catch (SecurityException se) {
                 return false;
@@ -81,8 +77,30 @@ public class Indexer {
                 return false;
             }
         }
-
         return true;
+    }
+
+    /**
+     * Setter - set num of unique terms to the dictionaryPosting size.
+     */
+    private void setNumOfUniqueTerms() {
+        numberOfUniqueTerms = dictionaryPosting.size();
+    }
+
+    /**
+     * getter
+     * @return - the number of indexed doc.
+     */
+    public int getIndexedDocNumber() {
+        return docList.size();//todo check if its the right size.
+    }
+
+    /**
+     * getter
+     * @return - the number of unique terms from current file stock.
+     */
+    public int getUniqueTermsNumber() {
+        return numberOfUniqueTerms;//todo check if its the right size.
     }
 
 
@@ -254,7 +272,6 @@ public class Indexer {
 
     /**
      * takes all the postings of cities and create one long String and delete the postings from memory
-     *
      * @param dictionaryCities - dictionary of cities and locations
      * @return - string of all postings combined
      */
@@ -286,7 +303,6 @@ public class Indexer {
 
     /**
      * combine the dictionary of document with the general dictionary
-     *
      * @param currDoc - the document which his dictionary will be combined
      */
     private void combineDicDocAndDictionary(document currDoc) {
@@ -322,7 +338,6 @@ public class Indexer {
 
     /**
      * combine the location of cities with the general dictionaryCities.
-     *
      * @param currDoc - the document which his dictionary will be combined.
      */
     private void combineCitiesFromDoc(document currDoc) {
@@ -481,7 +496,6 @@ public class Indexer {
 
     /**
      * dequeue the min line from pq and write the line to the united post file.
-     *
      * @param linesPQ - pq of lines
      * @param br      - buffer reader for all the temp postings
      *                return- combined line.
@@ -529,10 +543,6 @@ public class Indexer {
         String T1 = cutTheTerm(l1).toLowerCase();
         String T2 = cutTheTerm(l2).toLowerCase();
         if (Pattern.matches("[a-zA-Z]+", T1) && Pattern.matches("[a-zA-Z]+", T2)) {
-//            if((T1.charAt(0)<=122 && T1.charAt(0)>=97)){
-//                l2 = l2.substring(cutTheTerm(l2).length()+1);
-//                return l1 + ";" + l2;
-//            }
             if ((((T1.length())<l1.length()-1) && T2.charAt(0) <= 122 && T2.charAt(0) >= 97)) {
                 l1 = l1.substring(T1.length() + 1);
                 return l2 + ";" + l1;
@@ -545,7 +555,6 @@ public class Indexer {
 
     /**
      * insert to the PQ the line from the br array at index (index).
-     *
      * @param br    - array of buffer readers
      * @param index -
      */
@@ -572,7 +581,6 @@ public class Indexer {
 
     /**
      * reset the posting ,the dictionary file and the memory of the program
-     *
      * @return true if the reset succeed' else return false
      */
     public boolean reset() {
@@ -598,7 +606,6 @@ public class Indexer {
 
     /**
      * Dictionary of the terms : term, tf overall
-     *
      * @return the dictionary of the terms
      */
     public Queue<String> displayDictionary(boolean toStem) {
@@ -629,7 +636,6 @@ public class Indexer {
 
     /**
      * load the dictionary from the disk to the memory
-     *
      * @return true if the loading succeed, else retutn false
      */
     public boolean loadDictionaryFromDiskToMemory(boolean toStem) {
@@ -653,7 +659,6 @@ public class Indexer {
                 dictionaryPosting.put(splitedLineInDictionaryByTerm[0], dfPostingTF);
                 line = bf.readLine();
             }
-            System.out.println("load dictionary");
             return true;
         } catch (FileNotFoundException e) {
             e.printStackTrace();

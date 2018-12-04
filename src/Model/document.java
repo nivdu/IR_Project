@@ -13,11 +13,12 @@ public class document {
     private HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc;
 
     public document(String documentID, int maxTf, int numOfUniqueWords, String city, HashMap<String,int[]> tempDic, HashMap locationOfCitiesAtCurrDoc) {
-        this.locationOfCitiesAtCurrDoc = new HashMap<>(locationOfCitiesAtCurrDoc);
+//        this.locationOfCitiesAtCurrDoc = new HashMap<>(locationOfCitiesAtCurrDoc);
+        this.locationOfCitiesAtCurrDoc = locationOfCitiesAtCurrDoc;
         this.maxTf = maxTf;
         this.numOfUniqueWords = numOfUniqueWords;
         this.city = city;
-        this.dicDoc = tempDic;
+        this.dicDoc = tempDic;//todo new hashmap
         this.documentID=documentID;
     }
 
