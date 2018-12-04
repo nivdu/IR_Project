@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 
 public class ReadFile {
 
@@ -70,7 +72,7 @@ public class ReadFile {
         }
     }
 
-        /**
+    /**
      * Open file from the given path, split it by Docs tags, by Text tags and split by spaces and \n.
      * @param path - path of text file from the corpus.
      */
@@ -93,7 +95,7 @@ public class ReadFile {
                 System.out.println("problem in spiltFileIntoSeparateDocs2 function readfile");//todo delete it
             }
             String[] splitByEndDocID = splitDocByDocID[1].split("</DOCNO>");
-            String docIDWithoutSpaces = deleteSpaces(splitByEndDocID[0]);
+            String docIDWithoutSpaces = deletePunctutations(splitByEndDocID[0]);
             String[] docNO = new String[1];
             docNO[0] = docIDWithoutSpaces;
             docsFromFile.add(docNO);
@@ -110,10 +112,15 @@ public class ReadFile {
 
             String[] splitByText = splitBySpecificString(currentDoc, "<TEXT>\n");
             if (splitByText.length < 2)
+            {
+                String[] splitBySpace = new String[1];
+                splitBySpace[0]="";
+                docsFromFile.add(splitBySpace);
                 continue;
+            }
             String[] splitByEndText = splitBySpecificString(splitByText[1], "</TEXT>\n");
 
-            String docSplitBySpaces[] = splitByEndText[0].split(" |\\\n|\\--|\\(|\\)|\\[|\\]|\\)|\\(|\\}|\\{|\\&|\\}|\\:|\\||\\<|\\>|\\?|\\!");
+            String docSplitBySpaces[] = splitByEndText[0].split(" |\\\n|\\--|\\(|\\)|\\[|\\]|\\)|\\(|\\}|\\{|\\&|\\}|\\:|\\||\\<|\\>|\\?|\\!|\\}");
             ArrayList<String> docSplit2Return = new ArrayList<>();
             String s2 = "";
             boolean containDot=false;
@@ -140,13 +147,21 @@ public class ReadFile {
                     docSplit2Return.add(s);
                 }
             }
+            if(docSplit2Return.size()>0) {
                 docSplitBySpaces = new String[docSplit2Return.size()];
-                int i=0;
-                for (String s3:docSplit2Return){
-                    docSplitBySpaces[i]=s3;
+                int i = 0;
+                for (String s3 : docSplit2Return) {
+                    docSplitBySpaces[i] = s3;
                     i++;
+                }
+                docsFromFile.add(docSplitBySpaces);
             }
-            docsFromFile.add(docSplitBySpaces);
+            else{
+                String[] s=new String[1];
+                s[0]="";
+                docsFromFile.add(s);
+
+            }
         }
         return docsFromFile;
     }
@@ -167,7 +182,7 @@ public class ReadFile {
         String[] docSplitByEndTitle = docSplitByTitle[1].split("</TI>");
         if(docSplitByEndTitle==null || docSplitByEndTitle.length==1 || docSplitByEndTitle[0].equals(""))
             return "";
-        else title = deleteSpaces(docSplitByEndTitle[0]);
+        else title = deletePunctutations(docSplitByEndTitle[0]);
         return title;
     }
 
@@ -187,18 +202,48 @@ public class ReadFile {
         String[] docSplitByEndDate = docSplitByDate[1].split("</DATE1>");
         if(docSplitByEndDate==null || docSplitByEndDate.length==1 || docSplitByEndDate[0].equals(""))
             return "";
-        else date = deleteSpaces(docSplitByEndDate[0]);
+        else date = deletePunctutations(docSplitByEndDate[0]);
         return date;
     }
 
     //check if a number combine only from digits, dots, commas and slash only.
     private boolean checkIfOnlyDigitsDotsComma(String number) {
+        int dot=0,slash = 0,minus=0,comma=0,digits=0;
+        boolean legalNumber = false;
         if(number==null || number.equals(""))
             return false;
         for (Character c : number.toCharArray()) {
             if (!Character.isDigit(c) && !(c.equals('.')) && !(c.equals('-')) && !(c.equals('/')) && !(c.equals(',')))
                 return false;
+            if (((c.equals('.')) || (c.equals('-')) || (c.equals('/'))) && !legalNumber)
+                return false;
+            if (Character.isDigit(c)) {
+                legalNumber = true;
+                digits++;
+            }
+            else if(c=='.') {
+                dot++;
+                legalNumber=false;
+            }
+            else if (c=='/') {
+                slash++;
+                legalNumber=false;
+            }
+            else if (c=='-') {
+                minus++;
+                legalNumber=false;
+            }
+            else if (c==',') {
+                comma++;
+                legalNumber=false;
+            }
+            if(dot>1 || slash>1 || minus>1)
+                return false;
         }
+        if(comma>0 && digits/comma<3)
+            return false;
+        if(!legalNumber)
+            return false;
         return true;
     }
 
@@ -218,15 +263,15 @@ public class ReadFile {
             if(splitByEndCity[0].equals(""))
                 return "";
             String city = splitByEndCity[0];
-            city = deleteSpaces(city);
+            city = deletePunctutations(city);
             String[] splitCityBySpaces = city.split(" ");
             //if city contains mor than one word
             if (splitCityBySpaces.length > 1) {
-                return deleteSpaces(splitCityBySpaces[0]).toUpperCase();
+                return deletePunctutations(splitCityBySpaces[0]).toUpperCase();
             }
             //if city contains exactly one word
             else if (splitCityBySpaces.length == 1) {
-                return deleteSpaces(splitByCity[0]);
+                return deletePunctutations(splitCityBySpaces[0]);
             } else return "";
         }
     }
@@ -251,24 +296,51 @@ public class ReadFile {
      * @param string - string to delete spaces from
      * @return - string without spaces.
      */
-    private String deleteSpaces(String string) {
+    private String deletePunctutations(String string) {
         if(string==null || string.equals(""))
             return "";
-        while(string.length()>0 && (string.charAt(0)==' ' || string.charAt(0)=='(' )){
+        while(string.length()>0 && ((string.charAt(0)>=0 && string.charAt(0)<=47) || (string.charAt(0)>=58 && string.charAt(0)<=64) || (string.charAt(0)>=91 && string.charAt(0)<=96) || (string.charAt(0)>=123 && string.charAt(0)<=127))){
             string = string.substring(1);
         }
-        while (string.length() >0 && (string.charAt(string.length()-1)==' ' || string.charAt(string.length()-1)==')' )){
+        while (string.length() >0 && ((string.charAt(string.length()-1)>=0 && string.charAt(string.length()-1)<=47) || (string.charAt(string.length()-1)>=58 && string.charAt(string.length()-1)<=64) || (string.charAt(string.length()-1)>=91 && string.charAt(string.length()-1)<=96) || (string.charAt(string.length()-1)>=123 && string.charAt(string.length()-1)<=127))){
             string = string.substring(0,string.length()-1);
         }
         return string;
     }
+//    private String deletePunctutations(String toCheck){
+//        if(toCheck!=null && toCheck!="" && toCheck.length()>1) {
+//            if(toCheck.equals("U.S."))
+//                return toCheck;
+//            int toCheckLength;
+//            char char2Check = toCheck.charAt(0);
+//
+//            if((char2Check>=0 && char2Check<=47)  || (char2Check>=58 && char2Check<=64) || (char2Check>=91 && char2Check<=96) || (char2Check>=123 && char2Check<=127)) {
+//                toCheck = toCheck.substring(1);
+//                toCheck = deletePunctutations(toCheck);
+//            }
 
-        /**
-         * from url: https://howtodoinjava.com/java/io/java-read-file-to-string-examples/
-         * read file to String line by line
-         * @param path - The path of the file to read into String
-         * @return - String of the context of the file
-         */
+//            if (toCheck.charAt(0) == '\n' || toCheck.charAt(0) == '"'|| toCheck.charAt(0) == '(' || toCheck.charAt(0) == ',' || toCheck.charAt(0) == ':' || toCheck.charAt(0) == '.' ||( (toCheck.charAt(0) == '-') && !checkIfOnlyDigitsDotsComma(toCheck) )|| toCheck.charAt(0) == '|' || toCheck.charAt(0) == '`' || toCheck.charAt(0) == '\'' || toCheck.charAt(0) == '[' || toCheck.charAt(0) == ']' || toCheck.charAt(0) == ';' || toCheck.charAt(0) == '?' || toCheck.charAt(0) == '/' || toCheck.charAt(0) == '<' || toCheck.charAt(0) == '!' || toCheck.charAt(0) == '*' || toCheck.charAt(0) == '+' || toCheck.charAt(0) == '\'' || toCheck.charAt(0) == '{' || toCheck.charAt(0) == '}'){
+//                toCheck = toCheck.substring(1);
+//                toCheck = deletePunctutations(toCheck);
+//            }
+//            toCheckLength = toCheck.length() - 1;
+//            char2Check = toCheck.charAt(toCheckLength);
+////            if (toCheck != "" && toCheck.length()>0 && (toCheck.charAt(toCheckLength) == ',' || toCheck.charAt(toCheckLength)=='"' ||  toCheck.charAt(toCheckLength) == ')' || toCheck.charAt(toCheckLength) == '.' || toCheck.charAt(toCheckLength) == ':' || toCheck.charAt(toCheckLength) == '"' || toCheck.charAt(toCheckLength) == '-' || toCheck.charAt(toCheckLength) == '|' || toCheck.charAt(toCheckLength) =='`' || toCheck.charAt(toCheckLength) ==']' || toCheck.charAt(toCheckLength) =='[' || toCheck.charAt(toCheckLength) =='\'' || toCheck.charAt(toCheckLength) ==';' || toCheck.charAt(toCheckLength) =='?' || toCheck.charAt(toCheckLength) =='/' || toCheck.charAt(toCheckLength) =='>' || toCheck.charAt(toCheckLength) =='!' || toCheck.charAt(toCheckLength) =='+' || toCheck.charAt(toCheckLength) =='\'' || toCheck.charAt(toCheckLength) ==':')){
+//            if((char2Check>=0 && char2Check<=47) || (char2Check>=58 && char2Check<=64) || (char2Check>=91 && char2Check<=96) || (char2Check>=123 && char2Check<=127)) {
+////            if((char2Check>=0 && char2Check<=47) || (char2Check>=58 && char2Check<=64) || (char2Check>=91 && char2Check<=96) || (char2Check>=123 && char2Check<=127)){
+//                toCheck = toCheck.substring(0, toCheckLength);
+//                toCheck = deletePunctutations(toCheck);
+//            }
+//        }
+//        return toCheck;
+//    }
+
+    /**
+     * from url: https://howtodoinjava.com/java/io/java-read-file-to-string-examples/
+     * read file to String line by line
+     * @param path - The path of the file to read into String
+     * @return - String of the context of the file
+     */
     private String file2String(String path)
     {
         StringBuilder contentBuilder = new StringBuilder();
