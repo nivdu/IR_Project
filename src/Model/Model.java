@@ -66,20 +66,20 @@ public class Model {
 
     public static void main(String[] args){
         long Stime = System.currentTimeMillis();
-        String pathFrom = "C:\\Users\\user\\Desktop\\אוניברסיטה\\שנה ג\\שנה ג - סמסטר א\\אחזור\\עבודות\\מנוע חלק א";
-        String pathTo = "C:\\Users\\user\\Desktop\\אוניברסיטה\\שנה ג\\שנה ג - סמסטר א\\אחזור\\עבודות\\מנוע חלק א\\output";
+        String pathFrom = "C:\\Users\\nivdu\\Desktop\\אחזור\\פרוייקט גוגל";
+        String pathTo = "C:\\Users\\nivdu\\Desktop\\bimbamtirasham";
         Model model = new Model(pathFrom,pathTo,false);
 //        model.reset();
         model.generateInvertedIndex();
 //        model.loadDictionaryFromDiskToMemory(false);
-        Queue<String> queue = model.displayDictionary(false);
-        int size = queue.size();
-        for (int i = 0; i < size; i++)
-        {
+//        Queue<String> queue = model.displayDictionary(false);
+//        int size = queue.size();
+//        for (int i = 0; i < size; i++)
+//        {
 //            if(queue.peek().contains("morning"))
 //                System.out.println("blala");
-            System.out.println(queue.remove());
-        }
+//            System.out.println(queue.remove());
+//        }
         long Ftime = System.currentTimeMillis();
         System.out.println(Ftime-Stime);
     }
