@@ -85,6 +85,7 @@ public class Parse {
 
     public document parseDoc(String[] splitedDoc, String city, String docId, HashSet<String> citiesFromTags, String docTitle) {//todo delete String city from func
         //locations in the doc of appearances of the cities from tags , String - city name, ArrayList - locations indexes
+
         HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc = new HashMap<>();
         if (!city.equals("")) {
             ArrayList<Integer> locationArray = new ArrayList<>();
@@ -136,6 +137,7 @@ public class Parse {
             if (deleteStopWords(currToken.toLowerCase()))
                 continue;
             //add the currdocindex to the array list of this city location at the this doc
+
             checkIfCityToken(currToken.toLowerCase(), locationOfCitiesAtCurrDoc, citiesFromTags, currDocIndex);
             //stem if needed
             if (toStem) {
@@ -180,14 +182,14 @@ public class Parse {
                 currDocIndex += jump;
                 continue;
             }
-
+//
             //our law1
             jump = ourLaw1(currToken, nextToken, dicDoc);
             if (jump != -1) {
                 currDocIndex += jump;
                 continue;
             }
-
+//
             //our law2
             jump = ourLaw2(currToken, nextToken, nextNextToken, dicDoc);
             if (jump != -1) {
@@ -383,12 +385,12 @@ public class Parse {
         if (toCheck.equals("U.S."))
             return toCheck;
         char char2Check = toCheck.charAt(0);
-        while (toCheck.length() > 1 && ((char2Check >= 0 && char2Check <= 44) || char2Check == 46 || char2Check == 47 || (char2Check == 45 && !checkIfOnlyDigitsDotsComma(toCheck)) || (char2Check >= 58 && char2Check <= 64) || (char2Check >= 91 && char2Check <= 96) || (char2Check >= 123 && char2Check <= 127) || char2Check < 0)) {
+        while (toCheck.length() > 1 && ((char2Check >= 0 && char2Check <= 44) || char2Check == 46 || char2Check == 47 || (char2Check == 45 && !checkIfOnlyDigitsDotsComma(toCheck)) || (char2Check >= 58 && char2Check <= 64) || (char2Check >= 91 && char2Check <= 96) || (char2Check >= 123 && char2Check <= 127) || !(char2Check>=0 && char2Check<=127))) {
             toCheck = toCheck.substring(1);
             char2Check = toCheck.charAt(0);
         }
         char2Check = toCheck.charAt(toCheck.length() - 1);
-        while (toCheck.length() > 1 && ((char2Check >= 0 && char2Check <= 44) || char2Check == 46 || char2Check == 47 || (char2Check == 45 && !checkIfOnlyDigitsDotsComma(toCheck)) || (char2Check >= 58 && char2Check <= 64) || (char2Check >= 91 && char2Check <= 96) || (char2Check >= 123 && char2Check <= 127) || char2Check < 0)) {
+        while (toCheck.length() > 1 && ((char2Check >= 0 && char2Check <= 44) || char2Check == 46 || char2Check == 47 || (char2Check == 45 && !checkIfOnlyDigitsDotsComma(toCheck)) || (char2Check >= 58 && char2Check <= 64) || (char2Check >= 91 && char2Check <= 96) || (char2Check >= 123 && char2Check <= 127) || !(char2Check>=0 && char2Check<=127))) {
             toCheck = toCheck.substring(0, toCheck.length() - 1);
             char2Check = toCheck.charAt(toCheck.length() - 1);
         }
@@ -497,7 +499,6 @@ public class Parse {
         return false;
     }
 
-    /**
      * return the next token from currDoc
      *
      * @param currDoc - the curr doc
@@ -593,7 +594,7 @@ public class Parse {
             tokenIsMoreThanMillion = isMoreThanMillion(token);
         String term = "";
         //cases like _ Dollars
-        if (nextT.equals("Dollars")) {
+        if(nextT.equals("Dollars")){
             //cases like 1000000 Dollars
             if (tokenIsNumber && tokenIsMoreThanMillion) {
                 term = regularNumberTerms2(token, nextT);
@@ -647,7 +648,7 @@ public class Parse {
             }
         }
         //cases like number _ U.S. dollars
-        if (tokenIsNumber && nextNextT.equals("U.S.") && nextNextNextT.equals("dollars")) {
+        if(tokenIsNumber && nextNextT.equals("U.S.") && nextNextNextT.equals("dollars")){
             String tokenWithoutComma = deletingCommasFromNumbers(token);
             //cases like number million U.S. dollars
             if (nextT.equals("million")) {
@@ -841,19 +842,24 @@ public class Parse {
      * Only large. On the other hand, if a word appears sometimes with a large letter and sometimes without a large letter we will save it
      * With only lowercase letters.
      */
-    private int addOnlyLettersWords(String token, HashMap dicDoc) {
-        if (token != null && token != "" && (Pattern.matches("[a-zA-Z]+", token))) {
+    private int addOnlyLettersWords(String token, HashMap<String, int[]> dicDoc){
+        if (token!=null && token!="" && ((Pattern.matches("[a-zA-Z]+", token)) || ( token.length()>=2  && token.charAt(token.length()-2) == '\'' && (Pattern.matches("[a-zA-Z]+", token.substring(token.length()-2)) && Character.isLetter(token.charAt(token.length()-1)) )))){
             //if the first char of the token upper case.
             if (token.charAt(0) <= 90 && token.charAt(0) >= 65) {
                 if (!dicDoc.containsKey(token.toLowerCase())) {
                     addToDicDoc(dicDoc, token.toUpperCase());
                 }
+                else addToDicDoc(dicDoc, token.toLowerCase());
             }
-            else if (token.equals(token.toLowerCase()))
+            //if all chars in token are lower case
+            else if(token.charAt(0)>=97 && token.charAt(0)<=122) {
                 if (dicDoc.containsKey(token.toUpperCase())) {
+                    int[] valueOfTermInDicDoc = dicDoc.get(token.toUpperCase());
+                    valueOfTermInDicDoc[0]++;
+                    dicDoc.put(token.toLowerCase(), valueOfTermInDicDoc);
                     dicDoc.remove(token.toUpperCase());
-                    addToDicDoc(dicDoc, token);
-                } else addToDicDoc(dicDoc, token);
+                } else addToDicDoc(dicDoc, token.toLowerCase());
+            }
             return 0;
         }
         return -1;

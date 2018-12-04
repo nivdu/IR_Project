@@ -121,7 +121,6 @@ public class ReadFile {
                 continue;
             }
             String[] splitByEndText = splitBySpecificString(splitByText[1], "</TEXT>\n");
-
             String docSplitBySpaces[] = splitByEndText[0].split(" |\\\n|\\--|\\(|\\)|\\[|\\]|\\)|\\(|\\}|\\{|\\&|\\}|\\:|\\||\\<|\\>|\\?|\\!|\\}|\\_|\\@|\\'\'");
             ArrayList<String> docSplit2Return = new ArrayList<>();
             String s2 = "";
@@ -149,13 +148,20 @@ public class ReadFile {
                     docSplit2Return.add(s);
                 }
             }
-            docSplitBySpaces = new String[docSplit2Return.size()];
-            int i=0;
-            for (String s3:docSplit2Return){
-                docSplitBySpaces[i]=s3;
-                i++;
+            if(docSplit2Return.size()>0) {
+                docSplitBySpaces = new String[docSplit2Return.size()];
+                int i = 0;
+                for (String s3 : docSplit2Return) {
+                    docSplitBySpaces[i] = s3;
+                    i++;
+                }
+                docsFromFile.add(docSplitBySpaces);
             }
-            docsFromFile.add(docSplitBySpaces);
+            else{
+                String[] s=new String[1];
+                s[0]="";
+                docsFromFile.add(s);
+            }
         }
         return docsFromFile;
     }
@@ -293,10 +299,10 @@ public class ReadFile {
     private String deletePunctutations(String string) {
         if(string==null || string.equals(""))
             return "";
-        while(string.length()>0 && ((string.charAt(0)>=0 && string.charAt(0)<=47) || (string.charAt(0)>=58 && string.charAt(0)<=64) || (string.charAt(0)>=91 && string.charAt(0)<=96) || (string.charAt(0)>=123 && string.charAt(0)<=127))){
+        while(string.length()>0 && ((string.charAt(0)>=0 && string.charAt(0)<=47) || (string.charAt(0)>=58 && string.charAt(0)<=64) || (string.charAt(0)>=91 && string.charAt(0)<=96) || (string.charAt(0)>=123 && string.charAt(0)<=127) || (!(string.charAt(0)>=0 && string.charAt(0)<=127)))){
             string = string.substring(1);
         }
-        while (string.length() >0 && ((string.charAt(string.length()-1)>=0 && string.charAt(string.length()-1)<=47) || (string.charAt(string.length()-1)>=58 && string.charAt(string.length()-1)<=64) || (string.charAt(string.length()-1)>=91 && string.charAt(string.length()-1)<=96) || (string.charAt(string.length()-1)>=123 && string.charAt(string.length()-1)<=127))){
+        while (string.length() >0 && ((string.charAt(string.length()-1)>=0 && string.charAt(string.length()-1)<=47) || (string.charAt(string.length()-1)>=58 && string.charAt(string.length()-1)<=64) || (string.charAt(string.length()-1)>=91 && string.charAt(string.length()-1)<=96) || (string.charAt(string.length()-1)>=123 && string.charAt(string.length()-1)<=127) || (!(string.charAt(string.length()-1)>=0 && string.charAt(string.length()-1)<=127)))){
             string = string.substring(0,string.length()-1);
         }
         return string;
@@ -328,6 +334,4 @@ public class ReadFile {
         return docs;
     }
 }
-
-
 

@@ -24,6 +24,7 @@ public class Indexer {
     private String pathTo;
     private int filesNumber;
     private int numberOfUniqueTerms;
+
     /**
      * Constructor
      */
@@ -65,7 +66,6 @@ public class Indexer {
                 for (String path : allFilesPaths) {
                     ArrayList<String[]> docsToParse = readFile.spiltFileIntoSeparateDocs2(path);
                     parseFile(docsToParse, pathToCreate);
-
                 }
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/Postings", pathToCreate + "/Dictionaries", true);
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/citiesPosting", pathToCreate + "/Dictionaries", false);
@@ -136,10 +136,6 @@ public class Indexer {
         String docPublishDate = "";
         String docTitle = "";
         int index = 0;
-        long Stime = System.currentTimeMillis();
-        long totalParse;
-        long totalCombine;
-        long totalCombineCity;
         for (String[] currentDoc : docsToParse) {
             if (currentDoc != null && currentDoc.length > 0) {
                 if (index % 5 == 0)
@@ -151,19 +147,10 @@ public class Indexer {
                 else if (index % 5 == 3)
                     docTitle = currentDoc[0];
                 else {
-                    long StimePars = System.currentTimeMillis();
                     document currDoc = parse.parseDoc(currentDoc, city, docId, citiesFromTags, docTitle);
-                    long FtimePars = System.currentTimeMillis();
-                    totalParse = FtimePars-StimePars;
                     currDoc.setPublishDate(docPublishDate);
-                    long StimeCombine = System.currentTimeMillis();
                     combineDicDocAndDictionary(currDoc);
-                    long FtimeCombine = System.currentTimeMillis();
-                    totalCombine = FtimeCombine-StimeCombine;
-                    long StimeCombineCiry = System.currentTimeMillis();
                     combineCitiesFromDoc(currDoc);
-                    long FtimeCombineCity = System.currentTimeMillis();
-                    totalCombineCity = FtimeCombine-StimeCombine;
                     currDoc.removeDic();
                     currDoc.removeLocationOfCities();
                     docList.add(currDoc);
@@ -171,19 +158,12 @@ public class Indexer {
                 index++;
             }
         }
-        long Ftime = System.currentTimeMillis();
-        long totalFile = Ftime-Stime;
         filesPostedCounter++;
         if (filesPostedCounter%40==0 || filesPostedCounter == filesNumber) {
-//            filesPostedCounter = 0;
             saveAndDeletePosition(dictionaryPosting, pathToCreate);
             saveAndDeleteCitiesPosition(dictionaryCities, pathToCreate);
             tempPostingCounter++;
         }
-//        if(filesNumber==1) {
-//            saveAndDeletePosition(dictionaryPosting, pathToCreate);
-//            saveAndDeleteCitiesPosition(dictionaryCities, pathToCreate);
-//        }
         docsToParse.clear();
     }
 
@@ -334,23 +314,23 @@ public class Indexer {
                 String[] dfPosting = dictionaryPosting.get(term);
                 int df = Integer.parseInt(dfPosting[0]);
                 dfPosting[0] = "" + (df + 1);
-                int tfInDoc = dicDoc.get(term)[0];
+                int[] dicDocInt = dicDoc.get(term);//{tf,title}
                 if (dfPosting[1].equals(""))
-                    dfPosting[1] = currDoc.getDocumentID() + "," + tfInDoc;
+                    dfPosting[1] = currDoc.getDocumentID() + "," + dicDocInt[0] +"," + dicDocInt[1];
                 else
-                    dfPosting[1] += ";" + currDoc.getDocumentID() + "," + tfInDoc;
+                    dfPosting[1] += ";" + currDoc.getDocumentID() + "," + dicDocInt[0] +"," + dicDocInt[1];
                 int tfOverall = Integer.parseInt(dfPosting[2]);
-                dfPosting[2] = "" + (tfOverall + tfInDoc);
+                dfPosting[2] = "" + (tfOverall + dicDocInt[0]);
                 dictionaryPosting.put(term, dfPosting);
             }
             //term doesn't exist in dictionary
             else {
-                String[] dfPosting = new String[4];
+                String[] dfPosting = new String[3];
                 dfPosting[0] = "1";
                 String tf = "" + dicDoc.get(term)[0];
-                dfPosting[1] = currDoc.getDocumentID() + "," + tf;
+                //Posting-> DOCNO,tf,title
+                dfPosting[1] = currDoc.getDocumentID() + "," + tf +"," + dicDoc.get(term)[1];
                 dfPosting[2] = tf;
-                dfPosting[3] = "";
                 dictionaryPosting.put(term, dfPosting);
             }
         }
@@ -459,43 +439,41 @@ public class Indexer {
     private String ApiCity(String term) {//todo
         String currCityData = "";
         URL url;
-            try {
-                url = new URL("http://getcitydetails.geobytes.com/GetCityDetails?fqcn=" + term);
-                //make connection
-                URLConnection urlc = url.openConnection();
-                //use post mode
-                urlc.setDoOutput(true);
-                urlc.setAllowUserInteraction(false);
-                //get result
-                BufferedReader br = new BufferedReader(new InputStreamReader(urlc.getInputStream()));
-                String currLine = br.readLine();
-                if (currLine != null) {
-                    int startIndCountry = currLine.indexOf("geobytescountry") + 18;
-                    int endIndCountry = currLine.indexOf("\"", startIndCountry);
-                    String country = "";
-                    if (!(endIndCountry - startIndCountry== 0))
-                        country = currLine.substring(startIndCountry, endIndCountry);
-                    int startIndCoin = currLine.indexOf("geobytescurrencycode") + 23;
-                    int endIndCoin = currLine.indexOf("\"",startIndCoin);
-                    String coin = "";
-                    if (!(endIndCoin - startIndCoin == 0))
-                        coin = currLine.substring(startIndCoin, endIndCoin);
-                    int startIndPop= currLine.indexOf("geobytespopulation") + 21;
-                    int endIndPop = currLine.indexOf("\"",startIndPop);
-                    String population = "";
-                    if (!(endIndPop - startIndPop == 0))
-                        population = currLine.substring(startIndPop, endIndPop);
-                    if(!country.equals(""))
-                        currCityData += country + ";";
-                    if(!coin.equals(""))
-                        currCityData += coin + ";";
-                    if(!population.equals("")) {
-                        population = parse.regularNumberTerms2(population, "");
-                        currCityData += population + ";";
-                    }
-                }
-                br.close();
-            } catch (IOException e) { }
+        try {
+            url = new URL("http://getcitydetails.geobytes.com/GetCityDetails?fqcn=" + term);
+            //make connection
+            URLConnection urlc = url.openConnection();
+            //use post mode
+            urlc.setDoOutput(true);
+            urlc.setAllowUserInteraction(false);
+            //get result
+            BufferedReader br = new BufferedReader(new InputStreamReader(urlc.getInputStream()));
+            String currLine = br.readLine();
+            if (currLine != null) {
+                int startIndCountry = currLine.indexOf("geobytescountry") + 18;
+                int endIndCountry = currLine.indexOf("\"", startIndCountry);
+                String country = "";
+                if (!(endIndCountry - startIndCountry== 0))
+                    country = currLine.substring(startIndCountry, endIndCountry);
+                int startIndCoin = currLine.indexOf("geobytescurrencycode") + 23;
+                int endIndCoin = currLine.indexOf("\"",startIndCoin);
+                String coin = "";
+                if (!(endIndCoin - startIndCoin == 0))
+                    coin = currLine.substring(startIndCoin, endIndCoin);
+                int startIndPop= currLine.indexOf("geobytespopulation") + 21;
+                int endIndPop = currLine.indexOf("\"",startIndPop);
+                String population = "";
+                if (!(endIndPop - startIndPop == 0))
+                    population = currLine.substring(startIndPop, endIndPop);
+                if(!country.equals(""))
+                    currCityData += country + ";";
+                if(!coin.equals(""))
+                    currCityData += coin + ";";
+                if(!population.equals(""))
+                    currCityData += population + ";";
+            }
+            br.close();
+        } catch (IOException e) { }
         return currCityData;
     }
 
