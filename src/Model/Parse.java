@@ -87,10 +87,12 @@ public class Parse {
 
     public document parseDoc(String[] splitedDoc, String city, String docId, HashSet<String> citiesFromTags, String docTitle) {//todo delete String city from func
         int jump = 0;
-        String [] splitDocTitle = docTitle.split(" ");
+        long StimeCombineCiry = System.currentTimeMillis();
+        String [] splitDocTitle = docTitle.split(" |\\\n|\\--|\\(|\\)|\\[|\\]|\\)|\\(|\\}|\\{|\\&|\\}|\\:|\\||\\<|\\>|\\?|\\!|\\}");
         //locations in the doc of appearances of the city
         ArrayList<Integer> locationsOfCity = new ArrayList<>();//pahot mahmir case//todo delete this if mahmir cases
         //locations in the doc of appearances of the cities from tags , String - city name, ArrayList - locations indexes
+
         HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc = new HashMap<>();
         if(!city.equals("")) {
             ArrayList<Integer> locationArray = new ArrayList<>();
@@ -99,13 +101,20 @@ public class Parse {
         }
         //temporary dictionary to find the max tf in current doc.
         HashMap<String, int[]> dicDoc = new HashMap<>();//todo at the end of the loop check the tf and everything
-
+//        add the title to the dictionary.
         for (String titleTerm:splitDocTitle){
+            if(titleTerm.equals(""))
+                continue;
+
+            titleTerm = deletePunctutations(titleTerm);
+            if(titleTerm.equals(""))
+                continue;
             int[] dicdicintarr = new int[2];
             dicdicintarr[0] = 1;
             dicdicintarr[1] = 1;
-            dicDoc.put(docTitle,dicdicintarr);
+            dicDoc.put(titleTerm.toLowerCase(), dicdicintarr);
         }
+
         //delete start and end char punctutations from the terms.
         for (int j = 0; j < splitedDoc.length; j++) {
             splitedDoc[j] = deletePunctutations(splitedDoc[j]);
@@ -131,7 +140,7 @@ public class Parse {
                 else{
                     ArrayList<Integer> locationList = new ArrayList<>();
                     locationOfCitiesAtCurrDoc.put(checkIfCityToken,locationList);
-                    locationOfCitiesAtCurrDoc.get(checkIfCityToken).add(currDocIndex);
+//                    locationOfCitiesAtCurrDoc.get(checkIfCityToken).add(currDocIndex);
                 }
                 //add the currdocindex to the array list of this city location at the this doc
             }
@@ -176,14 +185,14 @@ public class Parse {
                 currDocIndex += jump;
                 continue;
             }
-
+//
             //our law1
             jump = ourLaw1(currToken, nextToken, dicDoc);
             if (jump != -1) {
                 currDocIndex+=jump;
                 continue;
             }
-
+//
             //our law2
             jump = ourLaw2(currToken, nextToken, nextNextToken, dicDoc);
             if (jump != -1) {
@@ -282,9 +291,17 @@ public class Parse {
      * @param term - term to add to dicDoc
      */
     private void addToDicDoc(HashMap<String,int[]> dicDoc, String term) {
-        int[] dicIntArr = dicDoc.get(term);
-        dicIntArr[0]++;
-        dicDoc.put(term, dicIntArr);
+        if(dicDoc.containsKey(term)){
+            int[] dicIntArr = dicDoc.get(term);
+            dicIntArr[0]++;
+            dicDoc.put(term, dicIntArr);
+        }
+        else{
+            int[] dicIntArr = new int[2];
+            dicIntArr[0]=1;
+            dicIntArr[1]=0;
+            dicDoc.put(term,dicIntArr);
+        }
     }
 
     /**
@@ -354,23 +371,52 @@ public class Parse {
      * @param toCheck - string to check
      * @return - string without the unneeded punctuation
      */
-    private String deletePunctutations(String toCheck){
-        if(toCheck!=null && toCheck!="" && toCheck.length()>1) {
-            if(toCheck.equals("U.S."))
-                return toCheck;
-            int toCheckLength = toCheck.length() - 1;
-            if (toCheck.charAt(0) == '\n' || toCheck.charAt(0) == '"'|| toCheck.charAt(0) == '(' || toCheck.charAt(0) == ',' || toCheck.charAt(0) == ':' || toCheck.charAt(0) == '.' || (toCheck.charAt(0) == '-') && (!checkIfOnlyDigitsDotsComma(toCheck.substring(1))) || toCheck.charAt(0) == '|' || toCheck.charAt(0) == '`' || toCheck.charAt(0) == '\'' || toCheck.charAt(0) == '[' || toCheck.charAt(0) == ']' || toCheck.charAt(0) == ';' || toCheck.charAt(0) == '?' || toCheck.charAt(0) == '/' || toCheck.charAt(0) == '<' || toCheck.charAt(0) == '!' || toCheck.charAt(0) == '*' || toCheck.charAt(0) == '+' || toCheck.charAt(0) == '\''){
-                toCheck = toCheck.substring(1);
-                toCheck = deletePunctutations(toCheck);
-            }
-            toCheckLength = toCheck.length() - 1;
-            if (toCheck != "" && toCheck.length()>0 && (toCheck.charAt(toCheckLength) == ',' || toCheck.charAt(toCheckLength)=='"' ||  toCheck.charAt(toCheckLength) == ')' || toCheck.charAt(toCheckLength) == '.' || toCheck.charAt(toCheckLength) == ':' || toCheck.charAt(toCheckLength) == '"' || toCheck.charAt(toCheckLength) == '-' || toCheck.charAt(toCheckLength) == '|' || toCheck.charAt(toCheckLength) =='`' || toCheck.charAt(toCheckLength) ==']' || toCheck.charAt(toCheckLength) =='[' || toCheck.charAt(toCheckLength) =='\'' || toCheck.charAt(toCheckLength) ==';' || toCheck.charAt(toCheckLength) =='?' || toCheck.charAt(toCheckLength) =='/' || toCheck.charAt(toCheckLength) =='>' || toCheck.charAt(toCheckLength) =='!' || toCheck.charAt(toCheckLength) =='+' || toCheck.charAt(toCheckLength) =='\'')){
-                toCheck = toCheck.substring(0, toCheckLength);
-                toCheck = deletePunctutations(toCheck);
-            }
+    private String deletePunctutations(String toCheck) {
+//        if (toCheck != null && toCheck != "" && toCheck.length() > 1) {
+//            if (toCheck.equals("U.S."))
+//                return toCheck;
+//        }
+
+        if (toCheck == null || toCheck.equals(""))
+            return "";
+        if (toCheck.equals("U.S."))
+            return toCheck;
+        char char2Check = toCheck.charAt(0);
+        while (toCheck.length() > 1 && ((char2Check >= 0 && char2Check <= 44) || char2Check == 46 || char2Check == 47 || (char2Check == 45 && !checkIfOnlyDigitsDotsComma(toCheck)) || (char2Check >= 58 && char2Check <= 64) || (char2Check >= 91 && char2Check <= 96) || (char2Check >= 123 && char2Check <= 127))) {
+            toCheck = toCheck.substring(1);
+            char2Check = toCheck.charAt(0);
+        }
+        char2Check = toCheck.charAt(toCheck.length() - 1);
+        while (toCheck.length() > 1 && ((char2Check >= 0 && char2Check <= 44) || char2Check == 46 || char2Check == 47 || (char2Check == 45 && !checkIfOnlyDigitsDotsComma(toCheck)) || (char2Check >= 58 && char2Check <= 64) || (char2Check >= 91 && char2Check <= 96) || (char2Check >= 123 && char2Check <= 127))) {
+            toCheck = toCheck.substring(0, toCheck.length() - 1);
+            char2Check = toCheck.charAt(toCheck.length() - 1);
         }
         return toCheck;
     }
+
+
+
+//            int toCheckLength;
+//            char char2Check = toCheck.charAt(0);
+//            if((char2Check>=0 && char2Check<=44) || char2Check==46 || char2Check==47 || (char2Check==45 && !checkIfOnlyDigitsDotsComma(toCheck)) || (char2Check>=58 && char2Check<=64) || (char2Check>=91 && char2Check<=96) || (char2Check>=123 && char2Check<=127)) {
+//                toCheck = toCheck.substring(1);
+//                toCheck = deletePunctutations(toCheck);
+//            }
+//
+////            if (toCheck.charAt(0) == '\n' || toCheck.charAt(0) == '"'|| toCheck.charAt(0) == '(' || toCheck.charAt(0) == ',' || toCheck.charAt(0) == ':' || toCheck.charAt(0) == '.' ||( (toCheck.charAt(0) == '-') && !checkIfOnlyDigitsDotsComma(toCheck) )|| toCheck.charAt(0) == '|' || toCheck.charAt(0) == '`' || toCheck.charAt(0) == '\'' || toCheck.charAt(0) == '[' || toCheck.charAt(0) == ']' || toCheck.charAt(0) == ';' || toCheck.charAt(0) == '?' || toCheck.charAt(0) == '/' || toCheck.charAt(0) == '<' || toCheck.charAt(0) == '!' || toCheck.charAt(0) == '*' || toCheck.charAt(0) == '+' || toCheck.charAt(0) == '\'' || toCheck.charAt(0) == '{' || toCheck.charAt(0) == '}'){
+////                toCheck = toCheck.substring(1);
+////                toCheck = deletePunctutations(toCheck);
+////            }
+//            toCheckLength = toCheck.length() - 1;
+//            char2Check = toCheck.charAt(toCheckLength);
+////            if (toCheck != "" && toCheck.length()>0 && (toCheck.charAt(toCheckLength) == ',' || toCheck.charAt(toCheckLength)=='"' ||  toCheck.charAt(toCheckLength) == ')' || toCheck.charAt(toCheckLength) == '.' || toCheck.charAt(toCheckLength) == ':' || toCheck.charAt(toCheckLength) == '"' || toCheck.charAt(toCheckLength) == '-' || toCheck.charAt(toCheckLength) == '|' || toCheck.charAt(toCheckLength) =='`' || toCheck.charAt(toCheckLength) ==']' || toCheck.charAt(toCheckLength) =='[' || toCheck.charAt(toCheckLength) =='\'' || toCheck.charAt(toCheckLength) ==';' || toCheck.charAt(toCheckLength) =='?' || toCheck.charAt(toCheckLength) =='/' || toCheck.charAt(toCheckLength) =='>' || toCheck.charAt(toCheckLength) =='!' || toCheck.charAt(toCheckLength) =='+' || toCheck.charAt(toCheckLength) =='\'' || toCheck.charAt(toCheckLength) ==':')){
+//            if((char2Check>=0 && char2Check<=44) || char2Check==46 || char2Check==47 || (char2Check==45 && !checkIfOnlyDigitsDotsComma (toCheck)) || (char2Check>=58 && char2Check<=64) || (char2Check>=91 && char2Check<=96) || (char2Check>=123 && char2Check<=127)) {
+////            if((char2Check>=0 && char2Check<=47) || (char2Check>=58 && char2Check<=64) || (char2Check>=91 && char2Check<=96) || (char2Check>=123 && char2Check<=127)){
+//                toCheck = toCheck.substring(0, toCheckLength);
+//                toCheck = deletePunctutations(toCheck);
+//            }
+//        }
+//        return toCheck;
 
     /**
      * the function check if a word is stop word or not from stopWords HastSet.
@@ -478,15 +524,15 @@ public class Parse {
      */
 
     //check if a number combine only from digits, dots, commas and slash only.
-    private boolean checkIfOnlyDigitsDotsComma(String number) {
-        if(number==null || number.equals(""))
-            return false;
-        for (Character c : number.toCharArray()) {
-            if (!Character.isDigit(c) && !(c.equals('.')) && !(c.equals('-')) && !(c.equals('/')) && !(c.equals(',')))
-                return false;
-        }
-        return true;
-    }
+//    private boolean checkIfOnlyDigitsDotsComma(String number) {
+//        if(number==null || number.equals(""))
+//            return false;
+//        for (Character c : number.toCharArray()) {
+//            if (!Character.isDigit(c) && !(c.equals('.')) && !(c.equals('-')) && !(c.equals('/')) && !(c.equals(',')))
+//                return false;
+//        }
+//        return true;
+//    }
 
     /**
      * return the next token from currDoc
@@ -579,7 +625,7 @@ public class Parse {
         if(tokenIsNumber)
             tokenIsMoreThanMillion=isMoreThanMillion(token);
         String term = "";
-        //cases like ___ Dollars
+        //cases like _ Dollars
         if(nextT.equals("Dollars")){
             //cases like 1000000 Dollars
             if(tokenIsNumber && tokenIsMoreThanMillion){
@@ -633,7 +679,7 @@ public class Parse {
                 return 0;
             }
         }
-        //cases like number ___ U.S. dollars
+        //cases like number _ U.S. dollars
         if(tokenIsNumber && nextNextT.equals("U.S.") && nextNextNextT.equals("dollars")){
             String tokenWithoutComma = deletingCommasFromNumbers(token);
             //cases like number million U.S. dollars
@@ -829,21 +875,24 @@ public class Parse {
      * Only large. On the other hand, if a word appears sometimes with a large letter and sometimes without a large letter we will save it
      * With only lowercase letters.
      */
-    private int addOnlyLettersWords(String token, HashMap dicDoc){
-        if (token!=null && token!="" && (Pattern.matches("[a-zA-Z]+", token))){
+    private int addOnlyLettersWords(String token, HashMap<String, int[]> dicDoc){
+        if (token!=null && token!="" && ((Pattern.matches("[a-zA-Z]+", token)) || ( token.length()>=2  && token.charAt(token.length()-2) == '\'' && (Pattern.matches("[a-zA-Z]+", token.substring(token.length()-2)) && Character.isLetter(token.charAt(token.length()-1)) )))){
             //if the first char of the token upper case.
             if(token.charAt(0)<=90 && token.charAt(0)>=65){
                 if(!dicDoc.containsKey(token.toLowerCase())) {
                     addToDicDoc(dicDoc, token.toUpperCase());
-
                 }
+                else addToDicDoc(dicDoc, token.toLowerCase());
             }
-            else if(token.equals(token.toLowerCase()))
-                if(dicDoc.containsKey(token.toUpperCase())) {
+            //if all chars in token are lower case
+            else if(token.charAt(0)>=97 && token.charAt(0)<=122) {
+                if (dicDoc.containsKey(token.toUpperCase())) {
+                    int[] valueOfTermInDicDoc = dicDoc.get(token.toUpperCase());
+                    valueOfTermInDicDoc[0]++;
+                    dicDoc.put(token.toLowerCase(), valueOfTermInDicDoc);
                     dicDoc.remove(token.toUpperCase());
-                    addToDicDoc(dicDoc, token) ;
-                }
-                else addToDicDoc(dicDoc, token);
+                } else addToDicDoc(dicDoc, token.toLowerCase());
+            }
             return 0;
         }
         return -1;
@@ -1028,118 +1077,48 @@ public class Parse {
         return true;
     }
 
+    //check if a number combine only from digits, dots, commas and slash only.
+    private boolean checkIfOnlyDigitsDotsComma(String number) {
+        int dot=0,slash = 0,minus=0,comma=0,digits=0;
+        boolean legalNumber = false;
+        if(number==null || number.equals(""))
+            return false;
+        for (Character c : number.toCharArray()) {
+            if (!Character.isDigit(c) && !(c.equals('.')) && !(c.equals('-')) && !(c.equals('/')) && !(c.equals(',')))
+                return false;
+            if (((c.equals('.')) || (c.equals('-')) || (c.equals('/'))) && !legalNumber)
+                return false;
+            if (Character.isDigit(c)) {
+                legalNumber = true;
+                digits++;
+            }
+            else if(c=='.') {
+                dot++;
+                legalNumber=false;
+            }
+            else if (c=='/') {
+                slash++;
+                legalNumber=false;
+            }
+            else if (c=='-') {
+                minus++;
+                legalNumber=false;
+            }
+            else if (c==',') {
+                comma++;
+                legalNumber=false;
+            }
+            if(dot>1 || slash>1 || minus>1)
+                return false;
+        }
+        if(comma>0 && digits/comma<3)
+            return false;
+        if(!legalNumber)
+            return false;
+        return true;
+    }
+
     public static void main(String[] args) {
-
-        //test for the posting pointer todo delete this
-        File dic = new File("C:\\Users\\nivdu\\Desktop\\bimbamtirasham\\WithoutStemming\\Postings\\unitedPosting.txt");
-        try { BufferedReader br = new BufferedReader(new FileReader(dic));
-            RandomAccessFile rc = new RandomAccessFile(dic, "r");
-            rc.seek(4849017);
-            System.out.println(rc.readLine());
-
-
-        } catch (FileNotFoundException e) { e.printStackTrace();} catch (IOException e) {
-            e.printStackTrace();
-        }
-
-//        String path ="C:\\Users\\user\\Desktop\\אוניברסיטה\\שנה ג\\שנה ג - סמסטר א\\אחזור\\עבודות\\מנוע חלק א";
-//        File file=new File(path +"/temp.txt");
-//        try {
-//            file.createNewFile();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        File file2=new File(path +"\\temp2.txt");
-//        try {
-//            file2.createNewFile();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        System.out.println("finish");
-////        Parse parse = new Parse();
-//        String[] text = new String[2];
-//        text[0]="-";
-//        text[1]="";
-//        parse.parseDoc(text);
-
-//        parse.DollarTermMoreThanMillion("1000000","Dollars","","");
-//        parse.DollarTermMoreThanMillion("20.6m","Dollars","","");
-//        parse.DollarTermMoreThanMillion("100bn","Dollars","","");
-//        parse.DollarTermMoreThanMillion("$4500000","Dollars","","");
-//        parse.DollarTermMoreThanMillion("$100","million","","");
-//        parse.DollarTermMoreThanMillion("$100","billion","","");
-//        parse.DollarTermMoreThanMillion("100","billion","U.S.","dollars");
-//        parse.DollarTermMoreThanMillion("320","million","U.S.","dollars");
-//        parse.DollarTermMoreThanMillion("1","trillion","U.S.","dollars");
-//        for (String term:parse.dictionary) {
-//            System.out.println(term);
-//        }
-//
-//        String ans = parse.convertingToMillionForDollars("12.3456B");
-//        System.out.println(ans);
-
-        //        String test="123";
-//        System.out.println(test.substring(0,2));
-//        parse.percentageTerm("percentage","6");
-//        parse.DateTerm("MAY","14");
-//        parse.DateTerm("May","4");
-//        parse.DateTerm("15","MAY");
-//        parse.DateTerm("1994","April");
-//        parse.addOnlyLettersWords("Loren");
-
-//        parse.addOnlyLettersWords("Loren");
-//
-//        String testSW = "``c-";
-//        testSW = parse.deletePunctutations(testSW);
-//        System.out.println(testSW);
-//        parse.getStopWordsIntoHastSet();
-//        parse.deleteStopWords(testSW);
-//        String[] currDoc = "Between 123 and 123 Thousand".split(" ");
-//        parse.expressionAndRangesTerm("126", "125-126", "Thousand", 0,currDoc);
-//        for (String s:parse.dictionary){
-//            System.out.println(s);
-//        }
-
-
-
-
-/*
-//        parse.regularNumberTerms("123","456/2345");
-        parse.DollarTermLessThanMillion("l","wer","$123");
-        parse.DollarTermLessThanMillion("Dollars","wer","123.2");
-        parse.DollarTermLessThanMillion("3/4","Dollars","123");
-        parse.DollarTermLessThanMillion("loren","Dollars","123");
-        for (String term:parse.dictionary) {
-            System.out.println(term);
-        }
-*/
-///    parse.numberKMB("1000","3/4");
-//        parse.numberKMB("-50","Thousand");
-//        parse.numberKMB("50.2","Thousand");
-//
-//
-//
-//        parse.numberKMB("123","loren");
-//        parse.numberKMB("123.23","loren");
-//        //check k
-//        System.out.println();
-//        parse.numberKMB("-1000","loren");
-//        parse.numberKMB("1234","loren");
-//        parse.numberKMB("-1234.56","loren");
-//        parse.numberKMB("1,234.56","loren");
-//        parse.numberKMB("123,456","loren");
-//        //check m
-//        System.out.println();
-//        parse.numberKMB("-1000000","loren");
-//        parse.numberKMB("123456789");
-//        parse.numberKMB("123,456,789");
-//        parse.numberKMB("123,456,789.12");
-//        parse.numberKMB("1,234,567.56");
-//        //check B
-//        System.out.println();
-//        parse.numberKMB("123456789123456");
-//        parse.numberKMB("1234567891.23");
-//
 
 
 

@@ -72,14 +72,14 @@ public class Model {
 //        model.reset();
         model.generateInvertedIndex();
 //        model.loadDictionaryFromDiskToMemory(false);
-        Queue<String> queue = model.displayDictionary(false);
-        int size = queue.size();
-        for (int i = 0; i < size; i++)
-        {
+//        Queue<String> queue = model.displayDictionary(false);
+//        int size = queue.size();
+//        for (int i = 0; i < size; i++)
+//        {
 //            if(queue.peek().contains("morning"))
 //                System.out.println("blala");
-            System.out.println(queue.remove());
-        }
+//            System.out.println(queue.remove());
+//        }
         long Ftime = System.currentTimeMillis();
         System.out.println(Ftime-Stime);
     }
