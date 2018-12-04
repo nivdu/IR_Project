@@ -122,7 +122,7 @@ public class ReadFile {
             }
             String[] splitByEndText = splitBySpecificString(splitByText[1], "</TEXT>\n");
 
-            String docSplitBySpaces[] = splitByEndText[0].split(" |\\\n|\\--|\\(|\\)|\\[|\\]|\\)|\\(|\\}|\\{|\\&|\\}|\\:|\\||\\<|\\>|\\?|\\!|\\}");
+            String docSplitBySpaces[] = splitByEndText[0].split(" |\\\n|\\--|\\(|\\)|\\[|\\]|\\)|\\(|\\}|\\{|\\&|\\}|\\:|\\||\\<|\\>|\\?|\\!|\\}|\\_|\\@|\\'\'");
             ArrayList<String> docSplit2Return = new ArrayList<>();
             String s2 = "";
             boolean containDot=false;
@@ -301,33 +301,6 @@ public class ReadFile {
         }
         return string;
     }
-//    private String deletePunctutations(String toCheck){
-//        if(toCheck!=null && toCheck!="" && toCheck.length()>1) {
-//            if(toCheck.equals("U.S."))
-//                return toCheck;
-//            int toCheckLength;
-//            char char2Check = toCheck.charAt(0);
-//
-//            if((char2Check>=0 && char2Check<=47)  || (char2Check>=58 && char2Check<=64) || (char2Check>=91 && char2Check<=96) || (char2Check>=123 && char2Check<=127)) {
-//                toCheck = toCheck.substring(1);
-//                toCheck = deletePunctutations(toCheck);
-//            }
-
-//            if (toCheck.charAt(0) == '\n' || toCheck.charAt(0) == '"'|| toCheck.charAt(0) == '(' || toCheck.charAt(0) == ',' || toCheck.charAt(0) == ':' || toCheck.charAt(0) == '.' ||( (toCheck.charAt(0) == '-') && !checkIfOnlyDigitsDotsComma(toCheck) )|| toCheck.charAt(0) == '|' || toCheck.charAt(0) == '`' || toCheck.charAt(0) == '\'' || toCheck.charAt(0) == '[' || toCheck.charAt(0) == ']' || toCheck.charAt(0) == ';' || toCheck.charAt(0) == '?' || toCheck.charAt(0) == '/' || toCheck.charAt(0) == '<' || toCheck.charAt(0) == '!' || toCheck.charAt(0) == '*' || toCheck.charAt(0) == '+' || toCheck.charAt(0) == '\'' || toCheck.charAt(0) == '{' || toCheck.charAt(0) == '}'){
-//                toCheck = toCheck.substring(1);
-//                toCheck = deletePunctutations(toCheck);
-//            }
-//            toCheckLength = toCheck.length() - 1;
-//            char2Check = toCheck.charAt(toCheckLength);
-////            if (toCheck != "" && toCheck.length()>0 && (toCheck.charAt(toCheckLength) == ',' || toCheck.charAt(toCheckLength)=='"' ||  toCheck.charAt(toCheckLength) == ')' || toCheck.charAt(toCheckLength) == '.' || toCheck.charAt(toCheckLength) == ':' || toCheck.charAt(toCheckLength) == '"' || toCheck.charAt(toCheckLength) == '-' || toCheck.charAt(toCheckLength) == '|' || toCheck.charAt(toCheckLength) =='`' || toCheck.charAt(toCheckLength) ==']' || toCheck.charAt(toCheckLength) =='[' || toCheck.charAt(toCheckLength) =='\'' || toCheck.charAt(toCheckLength) ==';' || toCheck.charAt(toCheckLength) =='?' || toCheck.charAt(toCheckLength) =='/' || toCheck.charAt(toCheckLength) =='>' || toCheck.charAt(toCheckLength) =='!' || toCheck.charAt(toCheckLength) =='+' || toCheck.charAt(toCheckLength) =='\'' || toCheck.charAt(toCheckLength) ==':')){
-//            if((char2Check>=0 && char2Check<=47) || (char2Check>=58 && char2Check<=64) || (char2Check>=91 && char2Check<=96) || (char2Check>=123 && char2Check<=127)) {
-////            if((char2Check>=0 && char2Check<=47) || (char2Check>=58 && char2Check<=64) || (char2Check>=91 && char2Check<=96) || (char2Check>=123 && char2Check<=127)){
-//                toCheck = toCheck.substring(0, toCheckLength);
-//                toCheck = deletePunctutations(toCheck);
-//            }
-//        }
-//        return toCheck;
-//    }
 
     /**
      * from url: https://howtodoinjava.com/java/io/java-read-file-to-string-examples/

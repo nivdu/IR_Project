@@ -15,7 +15,6 @@ public class document {
     public document(String documentID, int maxTf, int numOfUniqueWords, String city, HashMap<String,int[]> tempDic, HashMap locationOfCitiesAtCurrDoc) {
 //        this.locationOfCitiesAtCurrDoc = new HashMap<>(locationOfCitiesAtCurrDoc);
         this.locationOfCitiesAtCurrDoc = locationOfCitiesAtCurrDoc;
-
         this.maxTf = maxTf;
         this.numOfUniqueWords = numOfUniqueWords;
         this.city = city;

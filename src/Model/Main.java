@@ -29,7 +29,7 @@ public class Main extends Application {
         primaryStage.setScene(new Scene(root, 300, 275));
         primaryStage.show();
         long Ftime = System.currentTimeMillis();
-        System.out.println(Ftime-Stime);
+        System.out.println((Ftime-Stime)/60000);
 
     }
 
