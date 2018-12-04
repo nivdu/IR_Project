@@ -14,8 +14,6 @@ public class Indexer {
     private ReadFile readFile;
     //parse Class
     private Parse parse;
-    //dictionary contain all the terms from the docs
-    private HashSet<String> dictionary;
     //dictionary contain all the terms from the docs -  term ; tf,posting
     private HashMap<String, String[]> dictionaryPosting;
     private int tempPostingCounter;
@@ -23,13 +21,15 @@ public class Indexer {
     //contain all the cities from tags <F P=104> (if the city have two words, save the first one).
     private HashSet<String> citiesFromTags;
     private HashMap<String, String[]> dictionaryCities;
-    private String pathFrom;
     private String pathTo;
-
+    private int filesNumber;
+    private int numberOfUniqueTerms;
     /**
      * Constructor
      */
     Indexer(String pathFrom, String pathTo, boolean toStem) {
+        this.numberOfUniqueTerms = 0;
+        this.filesNumber=0;
         this.filesPostedCounter = 0;
         readFile = new ReadFile(pathFrom + "\\cor");
         parse = new Parse(toStem, pathFrom);
@@ -38,7 +38,6 @@ public class Indexer {
         tempPostingCounter = 0;
         citiesFromTags = new HashSet<>();
         dictionaryCities = new HashMap<>();
-        this.pathFrom = pathFrom;
         this.pathTo = pathTo;
     }
 
@@ -54,6 +53,7 @@ public class Indexer {
             try {
                 theDir.mkdir();
                 ArrayList<String> allFilesPaths = readFile.readCorpus();
+                filesNumber = allFilesPaths.size();
                 for (String path : allFilesPaths) {
                     HashSet<String> currDocCities = readFile.generateSetOfCities(path);
                     if (currDocCities.size() > 0)
@@ -63,21 +63,44 @@ public class Indexer {
                         }
                 }
                 for (String path : allFilesPaths) {
-                    parseFile(readFile.spiltFileIntoSeparateDocs2(path), pathToCreate);
+                    ArrayList<String[]> docsToParse = readFile.spiltFileIntoSeparateDocs2(path);
+                    parseFile(docsToParse, pathToCreate);
+
                 }
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/Postings", pathToCreate + "/Dictionaries", true);
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/citiesPosting", pathToCreate + "/Dictionaries", false);
+                setNumOfUniqueTerms();
                 dictionaryPosting.clear();
-                System.out.println("clear dictionary");
-//                movingDictionaryToDisk(pathToCreate);
             } catch (SecurityException se) {
                 return false;
             } catch (Exception e) {
                 return false;
             }
         }
-
         return true;
+    }
+
+    /**
+     * Setter - set num of unique terms to the dictionaryPosting size.
+     */
+    private void setNumOfUniqueTerms() {
+        numberOfUniqueTerms = dictionaryPosting.size();
+    }
+
+    /**
+     * getter
+     * @return - the number of indexed doc.
+     */
+    public int getIndexedDocNumber() {
+        return docList.size();//todo check if its the right size.
+    }
+
+    /**
+     * getter
+     * @return - the number of unique terms from current file stock.
+     */
+    public int getUniqueTermsNumber() {
+        return numberOfUniqueTerms;//todo check if its the right size.
     }
 
 
@@ -107,14 +130,17 @@ public class Indexer {
         return term;
     }
 
-    public void parseFile(ArrayList<String[]> filesToParse, String pathToCreate) {
+    public void parseFile(ArrayList<String[]> docsToParse, String pathToCreate) {
         String city = "";
         String docId = "";
         String docPublishDate = "";
         String docTitle = "";
         int index = 0;
-        filesPostedCounter++;
-        for (String[] currentDoc : filesToParse) {
+        long Stime = System.currentTimeMillis();
+        long totalParse;
+        long totalCombine;
+        long totalCombineCity;
+        for (String[] currentDoc : docsToParse) {
             if (currentDoc != null && currentDoc.length > 0) {
                 if (index % 5 == 0)
                     city = currentDoc[0];
@@ -125,16 +151,19 @@ public class Indexer {
                 else if (index % 5 == 3)
                     docTitle = currentDoc[0];
                 else {
+                    long StimePars = System.currentTimeMillis();
                     document currDoc = parse.parseDoc(currentDoc, city, docId, citiesFromTags, docTitle);
+                    long FtimePars = System.currentTimeMillis();
+                    totalParse = FtimePars-StimePars;
                     currDoc.setPublishDate(docPublishDate);
-                        if (filesPostedCounter==2) {
-                        filesPostedCounter = 0;
-                        saveAndDeletePosition(dictionaryPosting, pathToCreate);
-                        saveAndDeleteCitiesPosition(dictionaryCities, pathToCreate);
-                        tempPostingCounter++;
-                    }
+                    long StimeCombine = System.currentTimeMillis();
                     combineDicDocAndDictionary(currDoc);
+                    long FtimeCombine = System.currentTimeMillis();
+                    totalCombine = FtimeCombine-StimeCombine;
+                    long StimeCombineCiry = System.currentTimeMillis();
                     combineCitiesFromDoc(currDoc);
+                    long FtimeCombineCity = System.currentTimeMillis();
+                    totalCombineCity = FtimeCombine-StimeCombine;
                     currDoc.removeDic();
                     currDoc.removeLocationOfCities();
                     docList.add(currDoc);
@@ -142,7 +171,20 @@ public class Indexer {
                 index++;
             }
         }
-        filesToParse.clear();
+        long Ftime = System.currentTimeMillis();
+        long totalFile = Ftime-Stime;
+        filesPostedCounter++;
+        if (filesPostedCounter%40==0 || filesPostedCounter == filesNumber) {
+//            filesPostedCounter = 0;
+            saveAndDeletePosition(dictionaryPosting, pathToCreate);
+            saveAndDeleteCitiesPosition(dictionaryCities, pathToCreate);
+            tempPostingCounter++;
+        }
+//        if(filesNumber==1) {
+//            saveAndDeletePosition(dictionaryPosting, pathToCreate);
+//            saveAndDeleteCitiesPosition(dictionaryCities, pathToCreate);
+//        }
+        docsToParse.clear();
     }
 
     private void saveAndDeleteCitiesPosition(HashMap<String, String[]> dictionaryCities, String pathToCreate) {
@@ -250,7 +292,6 @@ public class Indexer {
 
     /**
      * takes all the postings of cities and create one long String and delete the postings from memory
-     *
      * @param dictionaryCities - dictionary of cities and locations
      * @return - string of all postings combined
      */
@@ -282,7 +323,6 @@ public class Indexer {
 
     /**
      * combine the dictionary of document with the general dictionary
-     *
      * @param currDoc - the document which his dictionary will be combined
      */
     private void combineDicDocAndDictionary(document currDoc) {
@@ -318,7 +358,6 @@ public class Indexer {
 
     /**
      * combine the location of cities with the general dictionaryCities.
-     *
      * @param currDoc - the document which his dictionary will be combined.
      */
     private void combineCitiesFromDoc(document currDoc) {
@@ -352,6 +391,7 @@ public class Indexer {
 
     private void unitAllTempPostingsToOnePostingInDisk(String pathToCreate, String pathOfDic, boolean termOrNot) {
         String temp="";
+        String insertToOnePostDisk="";
         if(termOrNot) {
             temp= "\\Dictionary";
         }
@@ -381,11 +421,13 @@ public class Indexer {
                 insertLine2PQ(br, j, linesPQ, tempPostingFiles);
             }
             //loop over the temp posting files and combine them into the united posting(to disk)
-            String insertToOnePostDisk = dequeueAndInsert2UnitedPosting(linesPQ, br, tempPostingFiles);
+            insertToOnePostDisk = dequeueAndInsert2UnitedPosting(linesPQ, br, tempPostingFiles);
             while (!insertToOnePostDisk.equals("")) {
                 String term= cutTheTerm(insertToOnePostDisk);
                 if(termOrNot) {
                     String[] valueOfTerm = dictionaryPosting.get(term);
+                    if(valueOfTerm==null)
+                        System.out.println("term isnt in dictionary");
                     bwOfDic.write(term + ":" + valueOfTerm[0] + ";" + valueOfTerm[2] + ";" + locationIndex + "\n");
                     bw.write(insertToOnePostDisk);
                 }
@@ -393,6 +435,7 @@ public class Indexer {
                     String[] city = dictionaryCities.get(term);
                     String cityCoinCiv = ApiCity(term);//todo country;coin;civil
                     bwOfDic.write(term + ":" + cityCoinCiv + locationIndex + "\n");
+//                    bwOfDic.write(term + ":" + locationIndex + "\n");
 //                    bwOfDic.write(term + ":" + "\n");
                     bw.write(insertToOnePostDisk);
                 }
@@ -406,8 +449,6 @@ public class Indexer {
         } catch (Exception e) {
             System.out.println("boom");
         }
-
-
     }
 
     /**
@@ -416,44 +457,46 @@ public class Indexer {
      * @return - string contain the given term(city) (country + ";" + coin + ";" + population).
      */
     private String ApiCity(String term) {//todo
-        String dataForCity = "";
+        String currCityData = "";
         URL url;
             try {
                 url = new URL("http://getcitydetails.geobytes.com/GetCityDetails?fqcn=" + term);
-
                 //make connection
                 URLConnection urlc = url.openConnection();
-
                 //use post mode
                 urlc.setDoOutput(true);
                 urlc.setAllowUserInteraction(false);
-
                 //get result
                 BufferedReader br = new BufferedReader(new InputStreamReader(urlc.getInputStream()));
-                String l = br.readLine();
-                if (l != null) {
-                    int countryStartIndex = l.indexOf("geobytescountry") + 18;
-                    int countryFinishIndex = l.indexOf("\"",countryStartIndex);
+                String currLine = br.readLine();
+                if (currLine != null) {
+                    int startIndCountry = currLine.indexOf("geobytescountry") + 18;
+                    int endIndCountry = currLine.indexOf("\"", startIndCountry);
                     String country = "";
-                    if (countryFinishIndex - countryStartIndex != 0)
-                        country = l.substring(countryStartIndex, countryFinishIndex);
-                    int coinStartIndex = l.indexOf("geobytescurrencycode") + 23;
-                    int coinFinishIndex = l.indexOf("\"",coinStartIndex);
+                    if (!(endIndCountry - startIndCountry== 0))
+                        country = currLine.substring(startIndCountry, endIndCountry);
+                    int startIndCoin = currLine.indexOf("geobytescurrencycode") + 23;
+                    int endIndCoin = currLine.indexOf("\"",startIndCoin);
                     String coin = "";
-                    if (coinFinishIndex - coinStartIndex != 0)
-                        coin = l.substring(coinStartIndex, coinFinishIndex);
-                    int populationStartIndex = l.indexOf("geobytespopulation") + 21;
-                    int populationFinishIndex = l.indexOf("\"",populationStartIndex);
+                    if (!(endIndCoin - startIndCoin == 0))
+                        coin = currLine.substring(startIndCoin, endIndCoin);
+                    int startIndPop= currLine.indexOf("geobytespopulation") + 21;
+                    int endIndPop = currLine.indexOf("\"",startIndPop);
                     String population = "";
-                    if (populationFinishIndex - populationStartIndex != 0)
-                        population = l.substring(populationStartIndex, populationFinishIndex);
-                    dataForCity = country + ";" + coin + ";" + population;
+                    if (!(endIndPop - startIndPop == 0))
+                        population = currLine.substring(startIndPop, endIndPop);
+                    if(!country.equals(""))
+                        currCityData += country + ";";
+                    if(!coin.equals(""))
+                        currCityData += coin + ";";
+                    if(!population.equals("")) {
+                        population = parse.regularNumberTerms2(population, "");
+                        currCityData += population + ";";
+                    }
                 }
                 br.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        return dataForCity;
+            } catch (IOException e) { }
+        return currCityData;
     }
 
     private BufferedWriter initDirsForDictionary(String pathOfDic, String cityOrNot) {
@@ -475,7 +518,6 @@ public class Indexer {
 
     /**
      * dequeue the min line from pq and write the line to the united post file.
-     *
      * @param linesPQ - pq of lines
      * @param br      - buffer reader for all the temp postings
      *                return- combined line.
@@ -523,11 +565,7 @@ public class Indexer {
         String T1 = cutTheTerm(l1).toLowerCase();
         String T2 = cutTheTerm(l2).toLowerCase();
         if (Pattern.matches("[a-zA-Z]+", T1) && Pattern.matches("[a-zA-Z]+", T2)) {
-//            if((T1.charAt(0)<=122 && T1.charAt(0)>=97)){
-//                l2 = l2.substring(cutTheTerm(l2).length()+1);
-//                return l1 + ";" + l2;
-//            }
-            if ((((T1.length()+1)<l1.length()) && T2.charAt(0) <= 122 && T2.charAt(0) >= 97)) {
+            if ((((T1.length())<l1.length()-1) && T2.charAt(0) <= 122 && T2.charAt(0) >= 97)) {
                 l1 = l1.substring(T1.length() + 1);
                 return l2 + ";" + l1;
             }
@@ -539,7 +577,6 @@ public class Indexer {
 
     /**
      * insert to the PQ the line from the br array at index (index).
-     *
      * @param br    - array of buffer readers
      * @param index -
      */
@@ -566,7 +603,6 @@ public class Indexer {
 
     /**
      * reset the posting ,the dictionary file and the memory of the program
-     *
      * @return true if the reset succeed' else return false
      */
     public boolean reset() {
@@ -592,7 +628,6 @@ public class Indexer {
 
     /**
      * Dictionary of the terms : term, tf overall
-     *
      * @return the dictionary of the terms
      */
     public Queue<String> displayDictionary(boolean toStem) {
@@ -623,7 +658,6 @@ public class Indexer {
 
     /**
      * load the dictionary from the disk to the memory
-     *
      * @return true if the loading succeed, else retutn false
      */
     public boolean loadDictionaryFromDiskToMemory(boolean toStem) {
@@ -647,7 +681,6 @@ public class Indexer {
                 dictionaryPosting.put(splitedLineInDictionaryByTerm[0], dfPostingTF);
                 line = bf.readLine();
             }
-            System.out.println("load dictionary");
             return true;
         } catch (FileNotFoundException e) {
             e.printStackTrace();

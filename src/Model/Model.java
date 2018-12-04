@@ -3,6 +3,7 @@ package Model;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.Timer;
 
 public class Model {
     private Indexer indexer;
@@ -28,10 +29,22 @@ public class Model {
      * creating the dictionary and the posting of the inverted index
      */
     public boolean generateInvertedIndex(){//todo verify paths + called from "play"
+        long Stime = System.currentTimeMillis();
         boolean succGenerate=indexer.createPostingAndDic(toStem);
+        long Ftime = System.currentTimeMillis();
+        if(succGenerate){
+            showWhenFinishIndexing(Ftime-Stime);
+        }
         return succGenerate;
     }
 
+    public void showWhenFinishIndexing(long indexRunTime){
+        int indexedDocNumber = indexer.getIndexedDocNumber();
+        int uniqueTermsNumber = indexer.getUniqueTermsNumber();
+        System.out.println("runtime by seconds: " + indexRunTime/1000);
+        System.out.println("number Indexed docs: " + indexedDocNumber);
+        System.out.println("number unique Terms: " + uniqueTermsNumber);
+    }
     /**
      * reset the posting ,the dictionary file and the memory of the program
      * @return true if the reset succeed' else return false
@@ -65,22 +78,20 @@ public class Model {
 
 
     public static void main(String[] args){
-        long Stime = System.currentTimeMillis();
-        String pathFrom = "C:\\Users\\user\\Desktop\\אוניברסיטה\\שנה ג\\שנה ג - סמסטר א\\אחזור\\עבודות\\מנוע חלק א";
-        String pathTo = "C:\\Users\\user\\Desktop\\אוניברסיטה\\שנה ג\\שנה ג - סמסטר א\\אחזור\\עבודות\\מנוע חלק א\\output";
+
+        String pathFrom = "C:\\Users\\nivdu\\Desktop\\אחזור\\פרוייקט גוגל";
+        String pathTo = "C:\\Users\\nivdu\\Desktop\\bimbamtirasham";
         Model model = new Model(pathFrom,pathTo,false);
 //        model.reset();
         model.generateInvertedIndex();
 //        model.loadDictionaryFromDiskToMemory(false);
-        Queue<String> queue = model.displayDictionary(false);
-        int size = queue.size();
-        for (int i = 0; i < size; i++)
-        {
+//        Queue<String> queue = model.displayDictionary(false);
+//        int size = queue.size();
+//        for (int i = 0; i < size; i++)
+//        {
 //            if(queue.peek().contains("morning"))
 //                System.out.println("blala");
-            System.out.println(queue.remove());
-        }
-        long Ftime = System.currentTimeMillis();
-        System.out.println(Ftime-Stime);
+//            System.out.println(queue.remove());
+//        }
     }
 }
