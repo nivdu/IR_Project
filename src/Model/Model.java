@@ -1,9 +1,8 @@
 package Model;
 
-import java.util.HashMap;
-import java.util.PriorityQueue;
-import java.util.Queue;
-import java.util.Timer;
+import javafx.scene.control.Alert;
+
+import java.util.*;
 
 public class Model {
     private Indexer indexer;
@@ -20,16 +19,29 @@ public class Model {
     /**
      * creating the dictionary and the posting of the inverted index
      */
-    public boolean generateInvertedIndex(String pathFrom,String pathTo,boolean toStem){//todo verify paths + called from "play"
+    public Alert generateInvertedIndex(String pathFrom,String pathTo,boolean toStem){//todo verify paths + called from "play"
         indexer = new Indexer(pathFrom,pathTo,toStem);
 
         long Stime = System.currentTimeMillis();
         boolean succGenerate=indexer.createPostingAndDic(toStem);
         long Ftime = System.currentTimeMillis();
+        Alert alert;
         if(succGenerate){
-            showWhenFinishIndexing(Ftime-Stime);
+            long indexRunTime = Ftime-Stime;
+            int indexedDocNumber = indexer.getIndexedDocNumber();
+            int uniqueTermsNumber = indexer.getUniqueTermsNumber();
+            alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setHeaderText("Commit succeed!");
+            alert.setContentText("runtime by seconds: " + indexRunTime/1000 + "\n" +
+                    "number Indexed docs: " + indexedDocNumber + "\n" +
+                    "number unique Terms: " + uniqueTermsNumber);
         }
-        return succGenerate;
+        else{
+            alert = new Alert(Alert.AlertType.ERROR);
+            alert.setHeaderText("Commit");
+            alert.setContentText("Commit Failed!");
+        }
+        return alert;
     }
 
     public void showWhenFinishIndexing(long indexRunTime){
@@ -52,10 +64,10 @@ public class Model {
      * take the dictionary of the terms from the indexer : term, tf overall
      * @return the dictionary of the terms
      */
-    public Queue<String> displayDictionary(boolean isStem){
+    public List<String> displayDictionary(boolean isStem){
         //todo take the dictionary from indexer
         //todo check that the dictionary isnwt empty
-        Queue<String> dictionary = indexer.displayDictionary(isStem);
+        List<String> dictionary = indexer.displayDictionary(isStem);
         if(dictionary == null)
             return null; //todo handke in the controller
         return dictionary;
@@ -78,7 +90,7 @@ public class Model {
         Model model = new Model();
 //        model.reset();
         model.generateInvertedIndex(pathFrom,pathTo,false);
-//        model.loadDictionaryFromDiskToMemory(false);
+        model.loadDictionaryFromDiskToMemory(false);
 //        Queue<String> queue = model.displayDictionary(false);
 //        int size = queue.size();
 //        for (int i = 0; i < size; i++)

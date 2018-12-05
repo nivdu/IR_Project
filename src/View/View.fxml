@@ -28,7 +28,7 @@
                 <Button fx:id="BrowseTo" layoutX="429.0" layoutY="75.0" mnemonicParsing="false" text="Browse" />
                 <CheckBox fx:id="stemming" layoutX="60.0" layoutY="146.0" mnemonicParsing="false" text="Stemming" />
                 <ComboBox fx:id="languages" layoutX="240.0" layoutY="140.0" prefWidth="150.0" promptText="Languages" />
-                <Button fx:id="display" layoutX="60.0" layoutY="196.0" mnemonicParsing="false" text="Display Dictionary" />
+                <Button fx:id="display" layoutX="60.0" layoutY="196.0" mnemonicParsing="false" onAction="#Display" text="Display Dictionary" />
                 <Button fx:id="load" layoutX="60.0" layoutY="251.0" mnemonicParsing="false" onAction="#Load" text="Load Dictionary" />
                 <Button fx:id="invertIndex" layoutX="315.0" layoutY="196.0" mnemonicParsing="false" onAction="#Commit" text="Commit" />
                 <Button fx:id="reset" layoutX="320.0" layoutY="251.0" mnemonicParsing="false" onAction="#Reset" text="Reset" />
