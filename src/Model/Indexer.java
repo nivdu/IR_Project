@@ -32,7 +32,7 @@ public class Indexer {
         this.numberOfUniqueTerms = 0;
         this.filesNumber=0;
         this.filesPostedCounter = 0;
-        readFile = new ReadFile(pathFrom + "\\corpus");
+        readFile = new ReadFile(pathFrom + "\\cor");
         parse = new Parse(toStem, pathFrom);
         docList = new ArrayList<>();
         dictionaryPosting = new HashMap<>();
