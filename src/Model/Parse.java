@@ -94,7 +94,7 @@ public class Parse {
         }
         //temporary dictionary to find the max tf in current doc.
         HashMap<String, int[]> dicDoc = new HashMap<>();//todo at the end of the loop check the tf and everything
-        String[] splitDocTitle = docTitle.split(" |\\\n|\\--|\\(|\\)|\\[|\\]|\\)|\\(|\\}|\\{|\\&|\\}|\\:|\\||\\<|\\>|\\?|\\!|\\}|\\_|\\@|\\'\'");
+        String[] splitDocTitle = docTitle.split(" |\\\n|\\--|\\(|\\)|\\[|\\]|\\)|\\(|\\}|\\{|\\&|\\}|\\:|\\||\\<|\\>|\\?|\\!|\\}|\\_|\\@|\\'\'|\\;");
         dicDoc = parseMainFunc(splitDocTitle, citiesFromTags, locationOfCitiesAtCurrDoc, dicDoc);
         //insert the title terms into the dicdoc dictionary - dicdicintarr[1] = 1; marks that that term comes from the title - > for the indexer posting function.
         Set<String> keys = dicDoc.keySet();
@@ -363,7 +363,7 @@ public class Parse {
         //insert all the stop words from stop words file into HashSet.
         //scanner function from link: "https://stackoverflow.com/questions/30011400/splitting-textfile-at-whitespace"
         String stopWordsPath = stopWordPath;
-        File file = new File(stopWordsPath + "/stop-words.txt");
+        File file = new File(stopWordsPath + "/stop_words.txt");
         String wholeFileString = "";
         wholeFileString = file2String(file);
         if (!wholeFileString.equals("")) {

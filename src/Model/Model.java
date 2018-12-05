@@ -22,6 +22,7 @@ public class Model {
      */
     public boolean generateInvertedIndex(String pathFrom,String pathTo,boolean toStem){//todo verify paths + called from "play"
         indexer = new Indexer(pathFrom,pathTo,toStem);
+
         long Stime = System.currentTimeMillis();
         boolean succGenerate=indexer.createPostingAndDic(toStem);
         long Ftime = System.currentTimeMillis();
@@ -76,7 +77,7 @@ public class Model {
         String pathTo = "C:\\Users\\user\\Desktop\\אוניברסיטה\\שנה ג\\שנה ג - סמסטר א\\אחזור\\עבודות\\מנוע חלק א\\output";
         Model model = new Model();
 //        model.reset();
-//        model.generateInvertedIndex();
+        model.generateInvertedIndex(pathFrom,pathTo,false);
 //        model.loadDictionaryFromDiskToMemory(false);
 //        Queue<String> queue = model.displayDictionary(false);
 //        int size = queue.size();

@@ -162,7 +162,7 @@ public class Indexer {
             }
         }
         filesPostedCounter++;
-        if (filesPostedCounter%10==0 || filesPostedCounter == filesNumber) {
+        if (filesPostedCounter%8==0 || filesPostedCounter == filesNumber) {
             saveAndDeletePosition(dictionaryPosting, pathToCreate);
             saveAndDeleteCitiesPosition(dictionaryCities, pathToCreate);
             tempPostingCounter++;
