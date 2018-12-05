@@ -30,7 +30,8 @@ public class ReadFile {
         File corpusFolder = new File(corpusPath);
         File[] corpusFiles = corpusFolder.listFiles();
         for (File f:corpusFiles){
-            addFilesPath(filePaths, f);
+            if(f.isDirectory())
+                addFilesPath(filePaths, f);
         }
         return filePaths;
     }
@@ -68,7 +69,9 @@ public class ReadFile {
         for (File fileFromF:f.listFiles()){
             if(fileFromF.isDirectory())
                 addFilesPath(filePaths, fileFromF);
-            else filePaths.add(fileFromF.getAbsolutePath());
+            else
+                    filePaths.add(fileFromF.getAbsolutePath());
+
         }
     }
 

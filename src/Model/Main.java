@@ -14,7 +14,6 @@ public class Main extends Application {
         primaryStage.setTitle("Inverted Index");
         primaryStage.setScene(new Scene(root, 500, 400));
         primaryStage.show();
-
     }
 
 
