@@ -611,10 +611,10 @@ public class Indexer {
      * Dictionary of the terms : term, tf overall
      * @return the dictionary of the terms
      */
-    public Queue<String> displayDictionary(boolean toStem) {
+    public List<String> displayDictionary(boolean toStem) {
 
-        Queue<String> dictionaryFromDisk = new LinkedList<>();
-        dictionaryFromDisk.add("Term:number of documents;number of instances");
+        List<String> dictionaryFromDisk = new LinkedList<String>();
+        dictionaryFromDisk.add("Term;number of instances");
         String pathToCreate = "";
         if (toStem) {
             pathToCreate = pathTo + "\\WithStemming";
@@ -625,7 +625,9 @@ public class Indexer {
             BufferedReader bf = new BufferedReader(new FileReader(fileDictionary));
             line = bf.readLine();
             while (line != null && line != "") {
-                dictionaryFromDisk.add(line);
+                String[] splitByTerm = line.split(":");
+                String[] splitByTF = splitByTerm[1].split(";");
+                dictionaryFromDisk.add(splitByTerm[0]+";"+splitByTF[1]);
                 line = bf.readLine();
             }
             return dictionaryFromDisk;
@@ -658,7 +660,7 @@ public class Indexer {
                 String[] dfPostingTF = new String[3];
                 dfPostingTF[0] = splitedLineInDictionary[0];
                 dfPostingTF[1] = "";
-                dfPostingTF[2] = splitedLineInDictionary[2];
+                dfPostingTF[2] = splitedLineInDictionary[1];
                 dictionaryPosting.put(splitedLineInDictionaryByTerm[0], dfPostingTF);
                 line = bf.readLine();
             }
