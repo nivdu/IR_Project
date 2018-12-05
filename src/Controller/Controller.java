@@ -3,10 +3,17 @@ package Controller;
 import Model.Model;
 
 public class Controller {
-    private Model model;
+    private Model model = new Model();
 
-    public void commit(String from, String to, boolean stem) {
-        model=new Model();
-        model.generateInvertedIndex(from,to,stem);
+    public boolean commit(String from, String to, boolean stem) {
+        return model.generateInvertedIndex(from,to,stem);
+    }
+
+    public boolean Reset() {
+        return model.reset();
+    }
+
+    public boolean Load(boolean stem) {
+        return model.loadDictionaryFromDiskToMemory(stem);
     }
 }

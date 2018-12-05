@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.RowConstraints?>
+
+<GridPane alignment="center" hgap="10" vgap="10" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="View.View">
+    <columnConstraints>
+        <ColumnConstraints />
+    </columnConstraints>
+    <rowConstraints>
+        <RowConstraints />
+    </rowConstraints>
+    <children>
+        <Pane prefHeight="392.0" prefWidth="518.0">
+            <children>
+                <Label layoutX="60.0" layoutY="37.0" text="Path to take from:" />
+                <Label layoutX="60.0" layoutY="81.0" text="Path to create to:" />
+                <TextField fx:id="pathFrom" layoutX="203.0" layoutY="31.0" />
+                <TextField fx:id="pathTo" layoutX="203.0" layoutY="75.0" />
+                <Button fx:id="BrowseFrom" layoutX="427.0" layoutY="31.0" mnemonicParsing="false" text="Browse" />
+                <Button fx:id="BrowseTo" layoutX="429.0" layoutY="75.0" mnemonicParsing="false" text="Browse" />
+                <CheckBox fx:id="stemming" layoutX="60.0" layoutY="146.0" mnemonicParsing="false" text="Stemming" />
+                <ComboBox fx:id="languages" layoutX="240.0" layoutY="140.0" prefWidth="150.0" promptText="Languages" />
+                <Button fx:id="display" layoutX="60.0" layoutY="196.0" mnemonicParsing="false" text="Display Dictionary" />
+                <Button fx:id="load" layoutX="60.0" layoutY="251.0" mnemonicParsing="false" onAction="#Load" text="Load Dictionary" />
+                <Button fx:id="invertIndex" layoutX="315.0" layoutY="196.0" mnemonicParsing="false" onAction="#Commit" text="Commit" />
+                <Button fx:id="reset" layoutX="320.0" layoutY="251.0" mnemonicParsing="false" onAction="#Reset" text="Reset" />
+            <Label layoutX="206.0" layoutY="312.0" />
+            </children>
+        </Pane>
+    </children>
+</GridPane>

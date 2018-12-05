@@ -28,22 +28,29 @@ public class View {
     @FXML
     private Button load;
     @FXML
-    private Button commit;
+    private Button invertIndex;
     @FXML
     private Button reset;
 
-    private Controller controller;//todo how to do??????
+    private Controller controller = new Controller();//todo how to do??????
 
 
     @FXML
     private void Commit(ActionEvent event) throws IOException {
-        controller = new Controller();
         String from = pathFrom.getText();
         String to = pathTo.getText();
         boolean stem = stemming.isSelected();
-        controller.commit(from,to,stem);
+        boolean isSucceed = controller.commit(from,to,stem);
 
     }
 
+    @FXML
+    private void Reset(ActionEvent event) throws IOException {
+        boolean isSucceed = controller.Reset();
+    }
 
+    @FXML
+    private void Load(ActionEvent event) throws IOException {
+        boolean isSucceed = controller.Load(stemming.isSelected());
+    }
 }

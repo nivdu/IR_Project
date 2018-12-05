@@ -121,7 +121,7 @@ public class ReadFile {
                 continue;
             }
             String[] splitByEndText = splitBySpecificString(splitByText[1], "</TEXT>\n");
-            String docSplitBySpaces[] = splitByEndText[0].split(" |\\\n|\\--|\\(|\\)|\\[|\\]|\\)|\\(|\\}|\\{|\\&|\\}|\\:|\\||\\<|\\>|\\?|\\!|\\}|\\_|\\@|\\'\'");
+            String docSplitBySpaces[] = splitByEndText[0].split(" |\\\n|\\--|\\(|\\)|\\[|\\]|\\)|\\(|\\}|\\{|\\&|\\}|\\:|\\||\\<|\\>|\\?|\\!|\\}|\\_|\\@|\\'\'|\\;");
             ArrayList<String> docSplit2Return = new ArrayList<>();
             String s2 = "";
             boolean containDot=false;
