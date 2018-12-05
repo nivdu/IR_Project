@@ -7,28 +7,21 @@ import java.util.Timer;
 
 public class Model {
     private Indexer indexer;
-    private String pathFrom;
-    private String pathTo;
     private boolean toStem;
 
 
     /**
      *constructor
-     * @param pathFrom - the path of the corpus and stop-words
-     * @param pathTo - save the posting and dictionary to this path
-     * @param toStem - if true do stemming, else don't
      */
-    public Model(String pathFrom,String pathTo,boolean toStem){
-        indexer = new Indexer(pathFrom,pathTo,toStem);
-        this.pathFrom=pathFrom;
-        this.pathTo=pathTo;
-        this.toStem=toStem;
+    public Model(){
+        this.toStem=false;
     }
 
     /**
      * creating the dictionary and the posting of the inverted index
      */
-    public boolean generateInvertedIndex(){//todo verify paths + called from "play"
+    public boolean generateInvertedIndex(String pathFrom,String pathTo,boolean toStem){//todo verify paths + called from "play"
+        indexer = new Indexer(pathFrom,pathTo,toStem);
         long Stime = System.currentTimeMillis();
         boolean succGenerate=indexer.createPostingAndDic(toStem);
         long Ftime = System.currentTimeMillis();
@@ -79,11 +72,11 @@ public class Model {
 
     public static void main(String[] args){
 
-        String pathFrom = "C:\\Users\\nivdu\\Desktop\\אחזור\\פרוייקט גוגל";
-        String pathTo = "C:\\Users\\nivdu\\Desktop\\bimbamtirasham";
-        Model model = new Model(pathFrom,pathTo,false);
+        String pathFrom = "C:\\Users\\user\\Desktop\\אוניברסיטה\\שנה ג\\שנה ג - סמסטר א\\אחזור\\עבודות\\מנוע חלק א";
+        String pathTo = "C:\\Users\\user\\Desktop\\אוניברסיטה\\שנה ג\\שנה ג - סמסטר א\\אחזור\\עבודות\\מנוע חלק א\\output";
+        Model model = new Model();
 //        model.reset();
-        model.generateInvertedIndex();
+//        model.generateInvertedIndex();
 //        model.loadDictionaryFromDiskToMemory(false);
 //        Queue<String> queue = model.displayDictionary(false);
 //        int size = queue.size();
