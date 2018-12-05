@@ -26,7 +26,7 @@ public class Parse {
     public Parse(boolean toStem, String pathFrom) {
         this.stemmer = new Stemmer();
         this.toStem = toStem;
-        this.stopWordPath = pathFrom;//todo check
+        this.stopWordPath = pathFrom;
         this.stopWords = new HashSet<String>();
         getStopWordsIntoHastSet();
         this.months = new HashMap<String, String>();
@@ -349,7 +349,7 @@ public class Parse {
         {
             String content = "";
             try {
-                content = new String(Files.readAllBytes(Paths.get(file.toPath().toString())));
+                content = new String(Files.readAllBytes(Paths.get(file.getAbsolutePath())));
             } catch (IOException e) {
                 Alert chooseFile = new Alert(Alert.AlertType.ERROR);
                 chooseFile.setContentText("The folder in the path you selected does not contain a text file named stop_words, please choose a new path and try again. (:");
