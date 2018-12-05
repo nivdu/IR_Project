@@ -1,8 +1,12 @@
 package Model;
 
 import javafx.scene.control.Alert;
-
 import java.util.*;
+import java.io.File;
+import java.util.HashMap;
+import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.Timer;
 
 public class Model {
     private Indexer indexer;
@@ -19,9 +23,27 @@ public class Model {
     /**
      * creating the dictionary and the posting of the inverted index
      */
-    public Alert generateInvertedIndex(String pathFrom,String pathTo,boolean toStem){//todo verify paths + called from "play"
-        indexer = new Indexer(pathFrom,pathTo,toStem);
 
+    public boolean generateInvertedIndex(String pathFrom,String pathTo,boolean toStem){//todo verify paths + called from "play"
+        //check the inserted path from.
+        File checkStop_Words = new File(pathFrom + "//stop_words.txt");
+        if(!checkStop_Words.exists()) {
+            Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+            chooseFile.setHeaderText("Error with path from");
+            chooseFile.setContentText("The folder in the path from you selected does not contain a text file named stop_words, please choose a new path and try again. (:");
+            chooseFile.show();
+            return false;
+        }
+        //check the inserted path to.
+        File checkPathTo = new File(pathTo);
+        if(!checkPathTo.exists()) {
+            Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+            chooseFile.setContentText("Error with path to");
+            chooseFile.setContentText("The path you selected to save at is not legal or not a path of directory. please choose another one before use the commit button :)");
+            chooseFile.show();
+            return false;
+        }
+        indexer = new Indexer(pathFrom,pathTo,toStem);
         long Stime = System.currentTimeMillis();
         boolean succGenerate=indexer.createPostingAndDic(toStem);
         long Ftime = System.currentTimeMillis();
@@ -35,13 +57,16 @@ public class Model {
             alert.setContentText("runtime by seconds: " + indexRunTime/1000 + "\n" +
                     "number Indexed docs: " + indexedDocNumber + "\n" +
                     "number unique Terms: " + uniqueTermsNumber);
+          alert.show();
+          return true;
         }
         else{
             alert = new Alert(Alert.AlertType.ERROR);
             alert.setHeaderText("Commit");
             alert.setContentText("Commit Failed!");
+            aler.show();
+            return false;
         }
-        return alert;
     }
 
     public void showWhenFinishIndexing(long indexRunTime){

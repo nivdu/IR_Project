@@ -53,8 +53,6 @@ public class ReadFile {
             //add the city saved in tag fp=104 if there isn't a city add empty string
             String city = cutTheCityTag(currentDoc);
             if(city!=null && !city.equals("")){
-                if(city.charAt(0)=='<')
-                    System.out.println("loren");
                 citiesFromTags.add(city.toLowerCase());
             }
         }

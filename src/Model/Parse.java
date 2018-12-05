@@ -1,5 +1,7 @@
 package Model;
 
+import javafx.scene.control.Alert;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -344,13 +346,15 @@ public class Parse {
      * @return - String of the context of the file
      */
     private String file2String(File file) {
-        StringBuilder contentBuilder = new StringBuilder();
         {
             String content = "";
             try {
                 content = new String(Files.readAllBytes(Paths.get(file.toPath().toString())));
             } catch (IOException e) {
-                e.printStackTrace();
+                Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+                chooseFile.setContentText("The folder in the path you selected does not contain a text file named stop_words, please choose a new path and try again. (:");
+                chooseFile.show();
+                return "";
             }
             return content;
         }
