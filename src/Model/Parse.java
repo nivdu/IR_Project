@@ -499,6 +499,7 @@ public class Parse {
         return false;
     }
 
+    /*
      * return the next token from currDoc
      *
      * @param currDoc - the curr doc

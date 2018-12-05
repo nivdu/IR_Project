@@ -32,7 +32,7 @@ public class Indexer {
         this.numberOfUniqueTerms = 0;
         this.filesNumber=0;
         this.filesPostedCounter = 0;
-        readFile = new ReadFile(pathFrom + "\\cor");
+        readFile = new ReadFile(pathFrom + "\\corpus");
         parse = new Parse(toStem, pathFrom);
         docList = new ArrayList<>();
         dictionaryPosting = new HashMap<>();
@@ -65,7 +65,10 @@ public class Indexer {
                 }
                 for (String path : allFilesPaths) {
                     ArrayList<String[]> docsToParse = readFile.spiltFileIntoSeparateDocs2(path);
+                    long sTine = System.currentTimeMillis();
                     parseFile(docsToParse, pathToCreate);
+                    long FTine = System.currentTimeMillis();
+                    System.out.println(FTine - sTine);
                 }
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/Postings", pathToCreate + "/Dictionaries", true);
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/citiesPosting", pathToCreate + "/Dictionaries", false);
@@ -159,7 +162,7 @@ public class Indexer {
             }
         }
         filesPostedCounter++;
-        if (filesPostedCounter%40==0 || filesPostedCounter == filesNumber) {
+        if (filesPostedCounter%10==0 || filesPostedCounter == filesNumber) {
             saveAndDeletePosition(dictionaryPosting, pathToCreate);
             saveAndDeleteCitiesPosition(dictionaryCities, pathToCreate);
             tempPostingCounter++;
