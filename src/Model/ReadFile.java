@@ -277,6 +277,26 @@ public class ReadFile {
         }
     }
 
+
+    private String cutTheLanguageTag(String currentDoc){
+        String[] splitByLanguage = currentDoc.split("<F P=105>");
+        //if there isn't language in doc
+        if (splitByLanguage.length == 1)
+            return "";
+            //if there is a languagein doc
+        else {
+            String[] splitByEndLanguage = splitByLanguage[1].split("</F>");
+            if(splitByEndLanguage[0].equals(""))
+                return "";
+            String language = splitByEndLanguage[0];
+            language = deletePunctutations(language);
+            return language;
+        }
+    }
+
+
+
+
     /**
      * check whether a string is legale doc
      * @param doc - doc to check
@@ -333,6 +353,32 @@ public class ReadFile {
     private String[] splitBySpecificString(String file2Split,String splitBy){
         String[] docs = file2Split.split(splitBy);
         return docs;
+    }
+
+    public HashSet<String> getLanguages(String path) {
+        HashSet<String> languages = new HashSet<>();
+        String wholeFileString = file2String(path);
+        String[] splitByDoc = splitBySpecificString(wholeFileString, "<DOC>\n");
+        for (String currentDoc : splitByDoc) {
+            if (!isDocLegal(currentDoc))
+                continue;
+            //add the city saved in tag fp=104 if there isn't a city add empty string
+            String language = cutTheLanguageTag(currentDoc);
+            if(language!=null && !language.equals("") &&!isLegalNumber(language)){
+                languages.add(language.toLowerCase());
+            }
+        }
+        return languages;
+    }
+
+    private boolean isLegalNumber(String language) {
+        if(language==null || language.equals(""))
+            return false;
+        for (int i = 0; i < language.length(); i++) {
+            if(Character.isDigit(language.charAt(i)))
+                return true;
+        }
+        return false;
     }
 }
 

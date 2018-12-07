@@ -3,12 +3,13 @@ package Controller;
 import Model.Model;
 import javafx.scene.control.Alert;
 
+import java.util.HashSet;
 import java.util.List;
 
 public class Controller {
     private Model model = new Model();
 
-    public Alert commit(String from, String to, boolean stem) {
+    public boolean commit(String from, String to, boolean stem) {
         return model.generateInvertedIndex(from,to,stem);
     }
 
@@ -16,11 +17,13 @@ public class Controller {
         return model.reset();
     }
 
-    public boolean Load(boolean stem) {
-        return model.loadDictionaryFromDiskToMemory(stem);
+    public boolean Load(boolean stem,String pathTo) {
+        return model.loadDictionaryFromDiskToMemory(stem,pathTo);
     }
 
-    public List<String> Display(boolean stem) {
-        return model.displayDictionary(stem);
+    public List<String> Display(boolean stem, String pathTo) {
+        return model.displayDictionary(stem, pathTo);
     }
+
+    public HashSet<String> languages(){return model.languages();}
 }

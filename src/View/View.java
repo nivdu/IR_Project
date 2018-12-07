@@ -2,6 +2,7 @@ package View;
 
 import Controller.Controller;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -14,6 +15,7 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 
 public class View {
@@ -34,13 +36,9 @@ public class View {
     @FXML
     private Button load;
     @FXML
-    private Button invertIndex;
-    @FXML
     private Button reset;
-    @FXML
-    private Button commit;
 
-    private Controller controller = new Controller();//todo how to do??????
+    private Controller controller = new Controller();
 
 
     @FXML
@@ -76,6 +74,8 @@ public class View {
             pathTo.setDisable(false);
             BrowseFrom.setDisable(false);
             BrowseTo.setDisable(false);
+            languages.setDisable(false);
+            setLanguages();
         }
         else {
             pathFrom.setDisable(false);
@@ -91,8 +91,6 @@ public class View {
         alert.setContentText(context);
         alert.showAndWait();
     }
-=======
-        
 
     @FXML
     private void browseFrom(ActionEvent event) throws IOException {
@@ -126,6 +124,7 @@ public class View {
             display.setDisable(true);
             load.setDisable(true);
             reset.setDisable(true);
+            languages.setDisable(true);
         }
         else{
             showAlert(Alert.AlertType.ERROR, "RESET","Reset Failed!");
@@ -134,20 +133,22 @@ public class View {
 
     @FXML
     private void Load(ActionEvent event) throws IOException {
-        boolean isSucceed = controller.Load(stemming.isSelected());
+        boolean isSucceed = controller.Load(stemming.isSelected(),pathTo.getText());
         if(isSucceed) {
             showAlert(Alert.AlertType.INFORMATION,"Load","Load succeed!");
         }
-        else{
-            showAlert(Alert.AlertType.ERROR, "Load","Load Failed!");
-        }
+//        else{
+//            showAlert(Alert.AlertType.ERROR, "Load","Load Failed!");
+//        }
     }
 
     @FXML
     private void Display(ActionEvent event) throws IOException {
-        List<String> dictionary= controller.Display(stemming.isSelected());
-        if(dictionary == null)
-            showAlert(Alert.AlertType.ERROR, "Display","Display Failed!");
+        List<String> dictionary= controller.Display(stemming.isSelected(),pathTo.getText());
+        if(dictionary == null){
+//            showAlert(Alert.AlertType.ERROR, "Display","Display Failed!");
+            return;
+        }
         ListView<String> listView = new ListView<String>();
         listView.getItems().setAll(FXCollections.observableList(dictionary));
         Stage stage = new Stage();
@@ -160,5 +161,15 @@ public class View {
         Scene scene = new Scene(anchorPane,500,400);
         stage.setScene(scene);
         stage.show();
+    }
+
+    private void setLanguages(){
+        HashSet<String> list = controller.languages();
+        ObservableList<String> obList = FXCollections.observableArrayList();
+        for (String lg: list) {
+            obList.add(lg);
+        }
+        obList.sort(String::compareToIgnoreCase);
+        languages.setItems(obList);
     }
 }

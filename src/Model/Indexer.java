@@ -290,6 +290,20 @@ public class Indexer {
         return sortCityQ;
     }
 
+
+    public HashSet<String> languages(){
+        HashSet<String> languages = new HashSet<>();
+        ArrayList<String> allFilesPaths = readFile.readCorpus();
+        for (String path : allFilesPaths) {
+            HashSet<String> currDocLanguages = readFile.getLanguages(path);
+            if (currDocLanguages.size() > 0)
+                for (String lg : currDocLanguages) {
+                    languages.add(lg);
+                }
+        }
+        return languages;
+    }
+
     private PriorityQueue<String> copyDicIntoPQByAscii() {
         PriorityQueue<String> sortTermsQ = new PriorityQueue<>();
         Set<String> keys = dictionaryPosting.keySet();

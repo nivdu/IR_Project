@@ -38,7 +38,7 @@ public class Model {
         File checkPathTo = new File(pathTo);
         if(!checkPathTo.exists()) {
             Alert chooseFile = new Alert(Alert.AlertType.ERROR);
-            chooseFile.setContentText("Error with path to");
+            chooseFile.setHeaderText("Error with path to");
             chooseFile.setContentText("The path you selected to save at is not legal or not a path of directory. please choose another one before use the commit button :)");
             chooseFile.show();
             return false;
@@ -64,7 +64,7 @@ public class Model {
             alert = new Alert(Alert.AlertType.ERROR);
             alert.setHeaderText("Commit");
             alert.setContentText("Commit Failed!");
-            aler.show();
+            alert.show();
             return false;
         }
     }
@@ -89,12 +89,45 @@ public class Model {
      * take the dictionary of the terms from the indexer : term, tf overall
      * @return the dictionary of the terms
      */
-    public List<String> displayDictionary(boolean isStem){
-        //todo take the dictionary from indexer
-        //todo check that the dictionary isnwt empty
+    public List<String> displayDictionary(boolean isStem, String pathTo){
+        File checkPathTo = new File(pathTo);
+        if(!checkPathTo.exists()) {
+            Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+            chooseFile.setHeaderText("Error with path to");
+            chooseFile.setContentText("The path you selected is not legal or not a path of directory. please choose another one. :)");
+            chooseFile.show();
+            return null;
+        }
+        else{
+            if(isStem){
+                File withStem = new File(pathTo + "\\withStemming");
+                if(!withStem.exists()){
+                    Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+                    chooseFile.setHeaderText("Error with Stemming");
+                    chooseFile.setContentText("The path you selected does not contain the withStemming directory!");
+                    chooseFile.show();
+                    return null;
+                }
+            }
+            else{
+                File withoutStem = new File(pathTo + "\\withoutStemming");
+                if(!withoutStem.exists()){
+                    Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+                    chooseFile.setHeaderText("Error with Stemming");
+                    chooseFile.setContentText("The path you selected does not contain the withoutStemming directory!");
+                    chooseFile.show();
+                    return null;
+                }
+            }
+        }
         List<String> dictionary = indexer.displayDictionary(isStem);
-        if(dictionary == null)
-            return null; //todo handke in the controller
+        if(dictionary == null){
+            Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+            chooseFile.setHeaderText("Error with Dictionary");
+            chooseFile.setContentText("The dictionary is not exist");
+            chooseFile.show();
+            return null;
+        }
         return dictionary;
     }
 
@@ -103,8 +136,49 @@ public class Model {
      * load the dictionary from the disk to the memory
      * @return true if the loading succeed, else retutn false
      */
-    public boolean loadDictionaryFromDiskToMemory(boolean isStem){
-        return indexer.loadDictionaryFromDiskToMemory(isStem);
+    public boolean loadDictionaryFromDiskToMemory(boolean isStem, String pathTo){
+        File checkPathTo = new File(pathTo);
+        if(!checkPathTo.exists()) {
+            Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+            chooseFile.setHeaderText("Error with path to");
+            chooseFile.setContentText("The path you selected is not legal or not a path of directory. please choose another one. :)");
+            chooseFile.show();
+            return false;
+        }
+        else{
+            if(isStem){
+                File withStem = new File(pathTo + "\\withStemming");
+                if(!withStem.exists()){
+                    Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+                    chooseFile.setHeaderText("Error with Stemming");
+                    chooseFile.setContentText("The path you selected does not contain the withStemming directory!");
+                    chooseFile.show();
+                    return false;
+                }
+            }
+            else{
+                File withoutStem = new File(pathTo + "\\withoutStemming");
+                if(!withoutStem.exists()){
+                    Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+                    chooseFile.setHeaderText("Error with Stemming");
+                    chooseFile.setContentText("The path you selected does not contain the withoutStemming directory!");
+                    chooseFile.show();
+                    return false;
+                }
+            }
+        }
+        boolean bl=indexer.loadDictionaryFromDiskToMemory(isStem);
+        if(bl) return true;
+        else{
+            Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+            chooseFile.setContentText("Loading failed!");
+            chooseFile.show();
+            return false;
+        }
+    }
+
+    public HashSet<String> languages(){
+        return indexer.languages();
     }
 
 
@@ -115,7 +189,7 @@ public class Model {
         Model model = new Model();
 //        model.reset();
         model.generateInvertedIndex(pathFrom,pathTo,false);
-        model.loadDictionaryFromDiskToMemory(false);
+//        model.loadDictionaryFromDiskToMemory(false,"");
 //        Queue<String> queue = model.displayDictionary(false);
 //        int size = queue.size();
 //        for (int i = 0; i < size; i++)

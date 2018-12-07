@@ -590,7 +590,7 @@ public class Parse {
      * @param nextNextNextT- the next next next token
      * @return- true if the term keep the given laws
      */
-    private int DollarTermMoreThanMillion(String token, String nextT, String nextNextT, String nextNextNextT, HashMap dicDoc) {
+    public int DollarTermMoreThanMillion(String token, String nextT, String nextNextT, String nextNextNextT, HashMap dicDoc) {
         if (token.equals(""))
             return -1;
         boolean tokenIsNumber = checkIfOnlyDigitsDotsComma(token);
@@ -599,7 +599,7 @@ public class Parse {
             tokenIsMoreThanMillion = isMoreThanMillion(token);
         String term = "";
         //cases like _ Dollars
-        if(nextT.equals("Dollars")){
+        if(nextT.equals("Dollars")) {
             //cases like 1000000 Dollars
             if (tokenIsNumber && tokenIsMoreThanMillion) {
                 term = regularNumberTerms2(token, nextT);
@@ -608,23 +608,20 @@ public class Parse {
                 addToDicDoc(dicDoc, term);
                 return 1;
             }
-            //cases like 20.6m Dollars
-            if (token.charAt(token.length() - 1) == 'm') {
-                String tokenWithoutM = token.substring(0, token.length() - 1);
-                if (checkIfOnlyDigitsDotsComma(tokenWithoutM)) {
-                    term = tokenWithoutM + " M " + nextT;
+        }
+        //cases like number _ Dollars
+        if(checkIfOnlyDigitsDotsComma(token) && nextNextT.equals("Dollars")) {
+            //cases like 20.6 m Dollars
+            if (nextT.equals("m")) {
+                    term = token + " M " + nextNextT;
                     addToDicDoc(dicDoc, term);
                     return 1;
-                }
             }
-            //cases like 100bn Dollars
-            if (token.length() >= 2 && token.charAt(token.length() - 2) == 'b' && token.charAt(token.length() - 1) == 'n') {
-                String tokenWithoutBN = token.substring(0, token.length() - 2);
-                if (checkIfOnlyDigitsDotsComma(tokenWithoutBN)) {
-                    term = tokenWithoutBN + "000" + " M " + nextT;
+            //cases like 100 bn Dollars
+            if (nextT.equals("bn")) {
+                    term = token + "000" + " M " + nextNextT;
                     addToDicDoc(dicDoc, term);
                     return 1;
-                }
             }
         }
         if (token.charAt(0) == '$') {
@@ -1092,5 +1089,8 @@ public class Parse {
             return false;
         return true;
     }
+
+
+
 }
 
