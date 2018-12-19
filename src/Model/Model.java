@@ -10,6 +10,7 @@ import java.util.Timer;
 
 public class Model {
     private Indexer indexer;
+    private Searcher searcher;
     private boolean toStem;
 
 
@@ -179,5 +180,16 @@ public class Model {
 
     public HashSet<String> languages(){
         return indexer.languages();
+    }
+
+
+    public boolean runQuery(String query){
+        searcher = new Searcher();
+        List<String[]> list = searcher.runQuery(query);//todo maybe object of queryAns
+        return false;
+    }
+
+    public boolean runQueryFile(String pathQueryFile){
+        return false;
     }
 }
