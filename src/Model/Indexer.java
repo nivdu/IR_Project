@@ -28,12 +28,12 @@ public class Indexer {
     /**
      * Constructor
      */
-    Indexer(String pathFrom, String pathTo, boolean toStem) {
+    Indexer(String pathFrom, String pathTo, boolean toStem, Parse parse) {
         this.numberOfUniqueTerms = 0;
         this.filesNumber=0;
         this.filesPostedCounter = 0;
         readFile = new ReadFile(pathFrom);
-        parse = new Parse(toStem, pathFrom);
+        this.parse = parse;
         docList = new ArrayList<>();
         dictionaryPosting = new HashMap<>();
         tempPostingCounter = 0;
@@ -62,9 +62,10 @@ public class Indexer {
                         for (String city : currDocCities) {
                             citiesFromTags.add(city);
                         }
+                        parse.setCitiesFromTags(citiesFromTags);
                 }
                 for (String path : allFilesPaths) {
-                    ArrayList<String[]> docsToParse = readFile.spiltFileIntoSeparateDocs2(path);
+                    ArrayList<document> docsToParse = readFile.spiltFileIntoSeparateDocs2(path);
                     parseFile(docsToParse, pathToCreate);
                 }
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/Postings", pathToCreate + "/Dictionaries", true);
@@ -125,32 +126,15 @@ public class Indexer {
         return term;
     }
 
-    public void parseFile(ArrayList<String[]> docsToParse, String pathToCreate) {
-        String city = "";
-        String docId = "";
-        String docPublishDate = "";
-        String docTitle = "";
-        int index = 0;
-        for (String[] currentDoc : docsToParse) {
-            if (currentDoc != null && currentDoc.length > 0) {
-                if (index % 5 == 0)
-                    city = currentDoc[0];
-                else if (index % 5 == 1)
-                    docId = currentDoc[0];
-                else if (index % 5 == 2)
-                    docPublishDate = currentDoc[0];
-                else if (index % 5 == 3)
-                    docTitle = currentDoc[0];
-                else {
-                    document currDoc = parse.parseDoc(currentDoc, city, docId, citiesFromTags, docTitle);
-                    currDoc.setPublishDate(docPublishDate);
-                    combineDicDocAndDictionary(currDoc);
-                    combineCitiesFromDoc(currDoc);
-                    currDoc.removeDic();
-                    currDoc.removeLocationOfCities();
-                    docList.add(currDoc);
-                }
-                index++;
+    public void parseFile(ArrayList<document> docsToParse, String pathToCreate) {
+        for (document currentDoc : docsToParse) {
+            if (currentDoc != null){
+                document currDoc = parse.parseDoc(currentDoc);
+                combineDicDocAndDictionary(currDoc);
+                combineCitiesFromDoc(currDoc);
+                currDoc.removeDic();
+                currDoc.removeLocationOfCities();
+                docList.add(currDoc);
             }
         }
         filesPostedCounter++;

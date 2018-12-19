@@ -12,6 +12,7 @@ public class Model {
     private Indexer indexer;
     private Searcher searcher;
     private boolean toStem;
+    private Parse parse;
 
 
     /**
@@ -44,7 +45,8 @@ public class Model {
             chooseFile.show();
             return false;
         }
-        indexer = new Indexer(pathFrom,pathTo,toStem);
+        parse = new Parse(toStem, pathFrom);
+        indexer = new Indexer(pathFrom,pathTo,toStem, parse);
         long Stime = System.currentTimeMillis();
         boolean succGenerate=indexer.createPostingAndDic(toStem);
         long Ftime = System.currentTimeMillis();
@@ -184,7 +186,7 @@ public class Model {
 
 
     public boolean runQuery(String query){
-        searcher = new Searcher();
+        searcher = new Searcher(parse);
         List<String[]> list = searcher.runQuery(query);//todo maybe object of queryAns
         return false;
     }
