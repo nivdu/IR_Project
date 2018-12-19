@@ -19,7 +19,8 @@ public class Parse {
     boolean toStem;
     //Stemmer class
     Stemmer stemmer;
-
+    //all the cities from document tags (F P=104)
+    HashSet<String> citiesFromTags;
     /**
      * Parse Constructor.
      */
@@ -85,7 +86,11 @@ public class Parse {
         months.put("DEC", "12");
     }
 
-    public document parseDoc(String[] splitedDoc, String city, String docId, HashSet<String> citiesFromTags, String docTitle) {
+    public document parseDoc(document doc2Parse) {//String[] splitedDoc, String city, String docId, HashSet<String> citiesFromTags, String docTitle
+        String[] splitedDoc = doc2Parse.getDocSplited();
+        String city = doc2Parse.getCity();
+        String docId = doc2Parse.getDocumentID();
+        String docTitle = doc2Parse.getDocTitle();
         //locations in the doc of appearances of the cities from tags , String - city name, ArrayList - locations indexes
 
         HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc = new HashMap<>();
@@ -96,8 +101,7 @@ public class Parse {
         }
         //temporary dictionary to find the max tf in current doc.
         HashMap<String, int[]> dicDoc = new HashMap<>();
-        String[] splitDocTitle = docTitle.split(" |\\\n|\\--|\\(|\\)|\\[|\\]|\\)|\\(|\\}|\\{|\\&|\\}|\\:|\\||\\<|\\>|\\?|\\!|\\}|\\_|\\@|\\'\'|\\;|\\\"");
-        dicDoc = parseMainFunc(splitDocTitle, citiesFromTags, locationOfCitiesAtCurrDoc, dicDoc);
+        dicDoc = parseMainFunc(doc2Parse, null);
         //insert the title terms into the dicdoc dictionary - dicdicintarr[1] = 1; marks that that term comes from the title - > for the indexer posting function.
         Set<String> keys = dicDoc.keySet();
         for (String titleTerm : keys) {
@@ -110,22 +114,39 @@ public class Parse {
         }
 //        splitedDoc = splitHyphenAndNumberWordWithoutSpace(splitedDoc);
         //parse the full split document and return the dicDoc dictionary contain the terms from it.
-        dicDoc = parseMainFunc(splitedDoc, citiesFromTags, locationOfCitiesAtCurrDoc, dicDoc);
+        dicDoc = parseMainFunc(doc2Parse, null);
+        doc2Parse.setDicDoc(dicDoc);
         //delete start and end char punctutations from the terms.
         int tf = getMaxTF(dicDoc);
+        doc2Parse.setMaxTf(tf);
         int maxUnique = getMaxUnique(dicDoc);
-        return new document(docId, tf, maxUnique, city, dicDoc, locationOfCitiesAtCurrDoc);
+        doc2Parse.setNumOfUniqueWords(maxUnique);
+        return doc2Parse;
     }
 
     /**
      * parse main function - parse the full split document and return the dicDoc dictionary contain the terms from it.
-     * @param splitedDoc - the current doc split to tokens
-     * @param citiesFromTags - the city names from all corpus tags ->(<F P=104>)
-     * @param locationOfCitiesAtCurrDoc - saves each city term from the current document with the location of the city from the document file.
-     * @param dicDoc - the current document dictionary
+//     * @param splitedDoc - the current doc split to tokens
+//     * @param citiesFromTags - the city names from all corpus tags ->(<F P=104>)
+//     * @param locationOfCitiesAtCurrDoc - saves each city term from the current document with the location of the city from the document file.
+//     * @param dicDoc - the current document dictionary
      * @return - the dicDoc dictionary contain the terms from the current given array.
      */
-    private HashMap<String, int[]> parseMainFunc(String[] splitedDoc, HashSet<String> citiesFromTags, HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc, HashMap<String, int[]> dicDoc) {
+    private HashMap<String, int[]> parseMainFunc(document doc2Parse, query query2Parse){//String[] splitedDoc, HashSet<String> citiesFromTags, HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc, HashMap<String, int[]> dicDoc) {
+        if(doc2Parse==null && query2Parse==null)
+            return null;
+        String[] splitedDoc;
+        HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc;
+        if(doc2Parse==null && query2Parse!=null){
+            splitedDoc = query2Parse.getDocSplited();
+            System.out.println();
+            locationOfCitiesAtCurrDoc=null;
+        }
+        else{
+            splitedDoc = doc2Parse.getDocSplited();
+            locationOfCitiesAtCurrDoc = doc2Parse.getLocationOfCitiesAtCurrDoc();
+        }
+        HashMap<String, int[]> dicDoc = new HashMap<>();
         int jump = 0;
         //locations in the doc of appearances of the city
         ArrayList<Integer> locationsOfCity = new ArrayList<>();
@@ -140,8 +161,8 @@ public class Parse {
             if (deleteStopWords(currToken.toLowerCase()))
                 continue;
             //add the currdocindex to the array list of this city location at the this doc
-
-            checkIfCityToken(currToken.toLowerCase(), locationOfCitiesAtCurrDoc, citiesFromTags, currDocIndex);
+            if(doc2Parse!=null)
+                checkIfCityToken(currToken.toLowerCase(), locationOfCitiesAtCurrDoc, citiesFromTags, currDocIndex);
             //stem if needed
             if (toStem) {
                 stemmer.setTerm(currToken);
@@ -188,14 +209,14 @@ public class Parse {
                 currDocIndex += jump;
                 continue;
             }
-//
+
             //our law1
             jump = ourLaw1(currToken, nextToken, dicDoc);
             if (jump != -1) {
                 currDocIndex += jump;
                 continue;
             }
-//
+
             //our law2
             jump = ourLaw2(currToken, nextToken, nextNextToken, dicDoc);
             if (jump != -1) {
@@ -300,6 +321,8 @@ public class Parse {
 
     //add the currdocindex to the array list of this city location at the this doc
     private void checkIfCityToken(String checkIfCityToken, HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc, HashSet<String> citiesFromTags, int currDocIndex) {
+        if(locationOfCitiesAtCurrDoc==null)
+            return;
         if (citiesFromTags.contains(checkIfCityToken)) {
             //add the currdocindex to the array list of this city location at the this doc
             if (locationOfCitiesAtCurrDoc.containsKey(checkIfCityToken)) {
@@ -1181,6 +1204,8 @@ public class Parse {
     }
 
 
-
+    public void setCitiesFromTags(HashSet<String> citiesFromTags) {
+        this.citiesFromTags = citiesFromTags;
+    }
 }
 
