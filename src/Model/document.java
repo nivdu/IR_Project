@@ -12,7 +12,7 @@ public class document {
     private HashMap<String,int[]> dicDoc;
     private HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc;
     private String[] docSplited;
-    private String docTitle;
+    private String[] docTitle;
 
     public String getPublishDate() {
         return publishDate;
@@ -42,16 +42,29 @@ public class document {
     public void setLocationOfCitiesAtCurrDoc(HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc) {
         this.locationOfCitiesAtCurrDoc = locationOfCitiesAtCurrDoc;
     }
+    
 
-    public document(String documentID, int maxTf, int numOfUniqueWords, String city, HashMap<String,int[]> tempDic, HashMap locationOfCitiesAtCurrDoc) {
-//        this.locationOfCitiesAtCurrDoc = new HashMap<>(locationOfCitiesAtCurrDoc);
-        this.locationOfCitiesAtCurrDoc = locationOfCitiesAtCurrDoc;
-        this.maxTf = maxTf;
-        this.numOfUniqueWords = numOfUniqueWords;
-        this.city = city;
-        this.dicDoc = tempDic;//todo new hashmap
-        this.documentID=documentID;
+    public document(){
+        this.documentID="";
+        this.maxTf=0;
+        this.numOfUniqueWords=0;
+        this.city="";
+        this.publishDate="";
+        this.dicDoc=null;
+        this.locationOfCitiesAtCurrDoc=null;
+        this.docSplited=null;
+        this.docTitle=null;
     }
+//
+//    public document(String documentID, int maxTf, int numOfUniqueWords, String city, HashMap<String,int[]> tempDic, HashMap locationOfCitiesAtCurrDoc) {
+////        this.locationOfCitiesAtCurrDoc = new HashMap<>(locationOfCitiesAtCurrDoc);
+//        this.locationOfCitiesAtCurrDoc = locationOfCitiesAtCurrDoc;
+//        this.maxTf = maxTf;
+//        this.numOfUniqueWords = numOfUniqueWords;
+//        this.city = city;
+//        this.dicDoc = tempDic;
+//        this.documentID=documentID;
+//    }
 
     public HashMap<String,ArrayList<Integer>> getLocationOfCities() {
         return locationOfCitiesAtCurrDoc;
@@ -60,6 +73,23 @@ public class document {
     public void removeDic(){ dicDoc.clear(); }
 
     public void removeLocationOfCities(){ locationOfCitiesAtCurrDoc.clear();}
+
+    public String[] getDocTitle() {
+        return docTitle;
+    }
+
+    public void setDocTitle(String[] docTitle) {
+        this.docTitle = docTitle;
+    }
+
+    public String[] getDocSplited() {
+        return docSplited;
+    }
+
+    public void setDocSplited(String[] docSplited) {
+        this.docSplited = docSplited;
+    }
+
 
     public int getMaxTf() {
         return maxTf;
@@ -97,5 +127,27 @@ public class document {
 
     public String getDocTitle() {
         return docTitle;
+    public void setDocumentID(String documentID) {
+        this.documentID = documentID;
+    }
+
+    public void setMaxTf(int maxTf) {
+        this.maxTf = maxTf;
+    }
+
+    public void setNumOfUniqueWords(int numOfUniqueWords) {
+        this.numOfUniqueWords = numOfUniqueWords;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public void setDicDoc(HashMap<String, int[]> dicDoc) {
+        this.dicDoc = dicDoc;
+    }
+
+    public void setLocationOfCitiesAtCurrDoc(HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc) {
+        this.locationOfCitiesAtCurrDoc = locationOfCitiesAtCurrDoc;
     }
 }

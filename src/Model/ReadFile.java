@@ -78,18 +78,20 @@ public class ReadFile {
      * Open file from the given path, split it by Docs tags, by Text tags and split by spaces and \n.
      * @param path - path of text file from the corpus.
      */
-    public ArrayList<String[]> spiltFileIntoSeparateDocs2(String path) {
-        ArrayList<String[]> docsFromFile = new ArrayList<>();
+    public ArrayList<document> spiltFileIntoSeparateDocs2(String path) {
+//        ArrayList<String[]> docsFromFile = new ArrayList<>();
+        ArrayList<document> docsFromFile = new ArrayList<>();
         String wholeFileString = file2String(path);
         //file split by <Doc>
         String[] splitByDoc = splitBySpecificString(wholeFileString, "<DOC>\n");
+        document doc=null;
         for (String currentDoc : splitByDoc) {
             if (!isDocLegal(currentDoc))
                 continue;
+            doc = new document();
             //add the city saved in tag fp=104 if there isn't a city add empty string
             String city = cutTheCityTag(currentDoc);
-            String[] cityAtArr = {city};
-            docsFromFile.add(cityAtArr);
+            doc.setCity(city);
             //add the serial number of the current document
             String[] splitDocByDocID = currentDoc.split("<DOCNO>");
             if (splitDocByDocID.length < 2) {
@@ -97,28 +99,20 @@ public class ReadFile {
             }
             String[] splitByEndDocID = splitDocByDocID[1].split("</DOCNO>");
             String docIDWithoutSpaces = deletePunctutations(splitByEndDocID[0]);
-            String[] docNO = new String[1];
-            docNO[0] = docIDWithoutSpaces;
-            docsFromFile.add(docNO);
+            doc.setDocumentID(docIDWithoutSpaces);
 
             //add the date in tag <DATE1>
             String date = cutTheDate1Tag(currentDoc);
-            String[] dateAtArr = {date};
-            docsFromFile.add(dateAtArr);
+            doc.setPublishDate(date);
 
             //add the title in tag <TI>
             String title = cutTheTitleTag(currentDoc);
-            String[] titleAtArr = {title};
-            docsFromFile.add(titleAtArr);
+            String[] titleAtArr = title.split(" |\\\n|\\--|\\(|\\)|\\[|\\]|\\)|\\(|\\}|\\{|\\&|\\}|\\:|\\||\\?|\\!|\\}|\\_|\\@|\\'\'|\\;|\\\"");
+            doc.setDocTitle(titleAtArr);
 
             String[] splitByText = splitBySpecificString(currentDoc, "<TEXT>\n");
             if (splitByText.length < 2)
-            {
-                String[] splitBySpace = new String[1];
-                splitBySpace[0]="";
-                docsFromFile.add(splitBySpace);
                 continue;
-            }
             String[] splitByEndText = splitBySpecificString(splitByText[1], "</TEXT>\n");
             String docSplitBySpaces[] = splitByEndText[0].split(" |\\\n|\\--|\\(|\\)|\\[|\\]|\\)|\\(|\\}|\\{|\\&|\\}|\\:|\\||\\?|\\!|\\}|\\_|\\@|\\'\'|\\;|\\\"");
             ArrayList<String> docSplit2Return = new ArrayList<>();
@@ -204,13 +198,9 @@ public class ReadFile {
                     docSplitBySpaces[i] = s3;
                     i++;
                 }
-                docsFromFile.add(docSplitBySpaces);
+                doc.setDocSplited(docSplitBySpaces);
             }
-            else{
-                String[] s=new String[1];
-                s[0]="";
-                docsFromFile.add(s);
-            }
+            docsFromFile.add(doc);
         }
         return docsFromFile;
     }
