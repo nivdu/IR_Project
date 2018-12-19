@@ -69,7 +69,17 @@ public class Indexer {
                 }
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/Postings", pathToCreate + "/Dictionaries", true);
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/citiesPosting", pathToCreate + "/Dictionaries", false);
-                setNumOfUniqueTerms();
+                File f = new File("C:\\Users\\user\\Desktop\\אוניברסיטה\\שנה ג\\שנה ג - סמסטר א\\אחזור\\עבודות\\מנוע חלק א\\nivcheckoutput\\filetf\\loren.txt");
+                if (!f.exists())
+                    f.createNewFile();
+                FileWriter fw = new FileWriter(f);
+                PriorityQueue<String> tfPosting = new PriorityQueue<>();
+                Set<String> keys = dictionaryPosting.keySet();
+                for (String term : keys) {
+                    fw.write(dictionaryPosting.get(term)[2] + "\n");
+                }
+                fw.flush();
+                fw.close();
                 dictionaryPosting.clear();
             } catch (SecurityException se) {
                 return false;
@@ -80,19 +90,13 @@ public class Indexer {
         return true;
     }
 
-    /**
-     * Setter - set num of unique terms to the dictionaryPosting size.
-     */
-    private void setNumOfUniqueTerms() {
-        numberOfUniqueTerms = dictionaryPosting.size();
-    }
 
     /**
      * getter
      * @return - the number of indexed doc.
      */
     public int getIndexedDocNumber() {
-        return docList.size();//todo check if its the right size.
+        return docList.size();
     }
 
     /**
@@ -100,16 +104,7 @@ public class Indexer {
      * @return - the number of unique terms from current file stock.
      */
     public int getUniqueTermsNumber() {
-        return numberOfUniqueTerms;//todo check if its the right size.
-    }
-
-
-    class compareLexicographically2 implements Comparator<String[]> {
-        // Overriding compare()method of Comparator
-        // compare string lexicographically.
-        public int compare(String[] s1, String[] s2) {
-            return compareLexicographically.compare(s1[0], s2[0]);
-        }
+        return numberOfUniqueTerms;
     }
 
     /**
@@ -184,17 +179,16 @@ public class Indexer {
             fw.flush();
             fw.close();
         } catch (IOException e) {
-            System.out.println("problem in saveanddeletefunction indexer");//todo delete this
-            e.printStackTrace();
+            System.out.println("problem in saveanddeletefunction indexer");
         }
     }
 
     private void saveAndDeletePosition(HashMap<String, String[]> dictionaryPosting, String pathToCreate) {
         try {
-            File dirOfPostings = new File(pathToCreate + "\\Postings");//todo counter for number
+            File dirOfPostings = new File(pathToCreate + "\\Postings");
             if (!dirOfPostings.exists())
                 dirOfPostings.mkdir();
-            File f = new File(pathToCreate + "\\Postings\\posting" + tempPostingCounter + ".txt");//todo counter for number
+            File f = new File(pathToCreate + "\\Postings\\posting" + tempPostingCounter + ".txt");
             if (!f.exists())
                 f.createNewFile();
             FileWriter fw = new FileWriter(f);
@@ -206,48 +200,9 @@ public class Indexer {
             fw.flush();
             fw.close();
         } catch (IOException e) {
-            System.out.println("problem in saveanddeletefunction indexer");//todo delete this
-            e.printStackTrace();
+            System.out.println("problem in saveanddeletefunction indexer");
         }
     }
-
-    Comparator<String> compareLexicographically = new Comparator<String>() {
-        //letters first (ignoring differences in case), digits are second and marks (like &%^*%) are the last in priority.
-        @Override
-        public int compare(String s1, String s2) {
-            if (s1 == null || s1.equals("") || s2 == null || s2.equals(""))//todo check better
-                return 0;
-            for (int i = 0; i < s1.length() && i < s2.length(); i++) {
-                char c1 = s1.charAt(i);
-                char c2 = s2.charAt(i);
-                int n1 = letterIsBetter(c1);
-                int n2 = letterIsBetter(c2);
-                //if n1 should be first
-                if (n2 < n1)
-                    return 1;
-                //if n2 should be first
-                if (n2 > n1)
-                    return -1;
-            }
-            //case like : aa wins aaa (s1 is better)
-            if (s2.length() < s1.length())
-                return 1;
-            //case like : s2 is better
-            if (s2.length() > s1.length())
-                return -1;
-            //equals
-            return 0;
-
-        }
-
-        private int letterIsBetter(char c) {
-            if (Character.isLetter(c))
-                return Character.valueOf(Character.toLowerCase(c));
-            if (Character.isDigit(c))
-                return (Character.valueOf(c) + 75);
-            else return (Character.valueOf(Character.valueOf(c)) + 140);
-        }
-    };
 
     /**
      * takes all the postings of terms and create one long String and delete the postings from memory
@@ -256,6 +211,15 @@ public class Indexer {
      * @return - string of all postings combined
      */
     private PriorityQueue<String> copyPostingIntoString(HashMap<String, String[]> dictionaryPosting) {
+        Comparator<String> compareLexicographically = new Comparator<String>() {
+            //letters first (ignoring differences in case), digits are second and marks (like &%^*%) are the last in priority.
+            @Override
+            public int compare(String s1, String s2) {
+                String n1 = s1.substring(0,s1.indexOf(":"));
+                String n2 = s2.substring(0,s2.indexOf(":"));
+                return n1.compareToIgnoreCase(n2);
+            }
+        };
         PriorityQueue<String> sortTermsQ = new PriorityQueue<>(compareLexicographically);
         Set<String> keys = dictionaryPosting.keySet();
         for (String term : keys) {
@@ -276,6 +240,15 @@ public class Indexer {
      * @return - string of all postings combined
      */
     private PriorityQueue<String> copyCityPostingIntoString(HashMap<String, String[]> dictionaryCities) {
+        Comparator<String> compareLexicographically = new Comparator<String>() {
+            //letters first (ignoring differences in case), digits are second and marks (like &%^*%) are the last in priority.
+            @Override
+            public int compare(String s1, String s2) {
+                String n1 = s1.substring(0,s1.indexOf(":"));
+                String n2 = s2.substring(0,s2.indexOf(":"));
+                return n1.compareToIgnoreCase(n2);
+            }
+        };
         PriorityQueue<String> sortCityQ = new PriorityQueue<>(compareLexicographically);
         Set<String> keys = dictionaryCities.keySet();
         for (String city : keys) {
@@ -288,6 +261,20 @@ public class Indexer {
             dictionaryCities.put(city, cityPosting);
         }
         return sortCityQ;
+    }
+
+
+    public HashSet<String> languages(){
+        HashSet<String> languages = new HashSet<>();
+        ArrayList<String> allFilesPaths = readFile.readCorpus();
+        for (String path : allFilesPaths) {
+            HashSet<String> currDocLanguages = readFile.getLanguages(path);
+            if (currDocLanguages.size() > 0)
+                for (String lg : currDocLanguages) {
+                    languages.add(lg);
+                }
+        }
+        return languages;
     }
 
     private PriorityQueue<String> copyDicIntoPQByAscii() {
@@ -310,8 +297,9 @@ public class Indexer {
         Set<String> keys = dicDoc.keySet();
         for (String term : keys) {
             //term already exists in dictionary
-            if (dictionaryPosting.containsKey(term)) {
-                String[] dfPosting = dictionaryPosting.get(term);
+            String termUpdated = termBigSmallLettersMerge(term);
+            if (dictionaryPosting.containsKey(termUpdated)) {
+                String[] dfPosting = dictionaryPosting.get(termUpdated);
                 int df = Integer.parseInt(dfPosting[0]);
                 dfPosting[0] = "" + (df + 1);
                 int[] dicDocInt = dicDoc.get(term);//{tf,title}
@@ -321,7 +309,7 @@ public class Indexer {
                     dfPosting[1] += ";" + currDoc.getDocumentID() + "," + dicDocInt[0] +"," + dicDocInt[1];
                 int tfOverall = Integer.parseInt(dfPosting[2]);
                 dfPosting[2] = "" + (tfOverall + dicDocInt[0]);
-                dictionaryPosting.put(term, dfPosting);
+                dictionaryPosting.put(termUpdated, dfPosting);
             }
             //term doesn't exist in dictionary
             else {
@@ -334,6 +322,21 @@ public class Indexer {
                 dictionaryPosting.put(term, dfPosting);
             }
         }
+    }
+
+    private String termBigSmallLettersMerge(String term){
+        if(!(Pattern.matches("[a-zA-Z]+", term)))
+            return term;
+        if(term.equals(term.toUpperCase()) && dictionaryPosting.containsKey(term.toUpperCase()))
+            return term.toUpperCase();
+        if(term.equals(term.toLowerCase()) && dictionaryPosting.containsKey(term.toUpperCase())) {
+            dictionaryPosting.put(term.toLowerCase(),dictionaryPosting.get(term.toUpperCase()));
+            dictionaryPosting.remove(term.toUpperCase());
+            return term.toLowerCase();
+        }
+        if(dictionaryPosting.containsKey(term.toLowerCase()))
+            return term.toLowerCase();
+        return term;
     }
 
     /**
@@ -383,7 +386,16 @@ public class Indexer {
         int currDir = 0;
         File unitedPosting;
         //create file for each temp posting and insert to the temp posting array
-        PriorityQueue<String[]> linesPQ = new PriorityQueue<>(new compareLexicographically2());//todo repair the compare function
+        Comparator<String[]> compareLexicographically = new Comparator<String[]>() {
+            //letters first (ignoring differences in case), digits are second and marks (like &%^*%) are the last in priority.
+            @Override
+            public int compare(String[] s1, String[] s2) {
+                String n1 = s1[0].substring(0,s1[0].indexOf(":"));
+                String n2 = s2[0].substring(0,s2[0].indexOf(":"));
+                return n1.compareToIgnoreCase(n2);
+            }
+        };
+        PriorityQueue<String[]> linesPQ = new PriorityQueue<>(compareLexicographically);
         File[] tempPostingFiles = (new File(pathToCreate)).listFiles();
         BufferedReader[] br = new BufferedReader[tempPostingFiles.length];
         //create new text file for united posting
@@ -405,18 +417,27 @@ public class Indexer {
             while (!insertToOnePostDisk.equals("")) {
                 String term= cutTheTerm(insertToOnePostDisk);
                 if(termOrNot) {
-                    String[] valueOfTerm = dictionaryPosting.get(term);
+                    String[] valueOfTerm=null;
+                    if(dictionaryPosting.containsKey(term))
+                        valueOfTerm = dictionaryPosting.get(term);
+                    else if(dictionaryPosting.containsKey(term.toLowerCase())) {
+                        valueOfTerm = dictionaryPosting.get(term.toLowerCase());
+                        term = term.toLowerCase();
+                    }
+                    else if(dictionaryPosting.containsKey(term.toUpperCase())) {
+                        valueOfTerm = dictionaryPosting.get(term.toUpperCase());
+                        term = term.toUpperCase();
+                    }
                     if(valueOfTerm==null)
                         System.out.println("term isnt in dictionary");
+                    numberOfUniqueTerms++;
                     bwOfDic.write(term + ":" + valueOfTerm[0] + ";" + valueOfTerm[2] + ";" + locationIndex + "\n");
                     bw.write(insertToOnePostDisk);
                 }
                 else{
                     String[] city = dictionaryCities.get(term);
-                    String cityCoinCiv = ApiCity(term);//todo country;coin;civil
+                    String cityCoinCiv = ApiCity(term);
                     bwOfDic.write(term + ":" + cityCoinCiv + locationIndex + "\n");
-//                    bwOfDic.write(term + ":" + locationIndex + "\n");
-//                    bwOfDic.write(term + ":" + "\n");
                     bw.write(insertToOnePostDisk);
                 }
                 locationIndex+=insertToOnePostDisk.getBytes().length;
@@ -436,7 +457,7 @@ public class Indexer {
      * @param term - term represent the city to api for
      * @return - string contain the given term(city) (country + ";" + coin + ";" + population).
      */
-    private String ApiCity(String term) {//todo
+    private String ApiCity(String term) {
         String currCityData = "";
         URL url;
         try {
@@ -469,8 +490,10 @@ public class Indexer {
                     currCityData += country + ";";
                 if(!coin.equals(""))
                     currCityData += coin + ";";
-                if(!population.equals(""))
+                if(!population.equals("")) {
+                    population = parse.regularNumberTerms2(population, "");
                     currCityData += population + ";";
+                }
             }
             br.close();
         } catch (IOException e) { }
@@ -538,7 +561,7 @@ public class Indexer {
      */
     private String combineLines(String l1, String l2) {
         if (l1 == null || l2 == null || l1.equals("") || l2.equals(""))
-            return "";//todo at the call function handle ""
+            return "";
         //remove the term from the posting line.
         String T1 = cutTheTerm(l1).toLowerCase();
         String T2 = cutTheTerm(l2).toLowerCase();
@@ -549,7 +572,7 @@ public class Indexer {
             }
         }
         if(T2.length()<(l2.length()-1))
-            l2 = l2.substring(T2.length() + 1);//todo check
+            l2 = l2.substring(T2.length() + 1);
         return l1 + ";" + l2;
     }
 

@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.RowConstraints?>
 
-<GridPane alignment="center" hgap="10" vgap="10" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="View.View">
+<GridPane alignment="center" hgap="10" vgap="10" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="View.View">
     <columnConstraints>
         <ColumnConstraints />
     </columnConstraints>
@@ -18,7 +18,7 @@
         <RowConstraints />
     </rowConstraints>
     <children>
-        <Pane prefHeight="392.0" prefWidth="518.0" style="-fx-background-color: purple;">
+        <Pane prefHeight="392.0" prefWidth="518.0">
             <children>
                 <Label layoutX="60.0" layoutY="37.0" text="Path to take from:" />
                 <Label layoutX="60.0" layoutY="81.0" text="Path to create to:" />
@@ -27,7 +27,7 @@
                 <Button fx:id="BrowseFrom" layoutX="427.0" layoutY="31.0" mnemonicParsing="false" onAction="#browseFrom" text="Browse" />
                 <Button fx:id="BrowseTo" layoutX="429.0" layoutY="75.0" mnemonicParsing="false" onAction="#browseTo" text="Browse" />
                 <CheckBox fx:id="stemming" layoutX="60.0" layoutY="146.0" mnemonicParsing="false" text="Stemming" />
-                <ComboBox fx:id="languages" layoutX="240.0" layoutY="140.0" prefWidth="150.0" promptText="Languages" />
+                <ComboBox fx:id="languages" disable="true" layoutX="240.0" layoutY="140.0" prefWidth="150.0" promptText="Languages" />
                 <Button fx:id="display" disable="true" layoutX="60.0" layoutY="196.0" mnemonicParsing="false" onAction="#Display" text="Display Dictionary" />
                 <Button fx:id="load" disable="true" layoutX="60.0" layoutY="251.0" mnemonicParsing="false" onAction="#Load" text="Load Dictionary" />
                 <Button fx:id="invertIndex" layoutX="315.0" layoutY="196.0" mnemonicParsing="false" onAction="#Commit" text="Commit" />
