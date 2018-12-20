@@ -87,31 +87,45 @@ public class Parse {
     }
 
     public document parseDoc(document doc2Parse) {//String[] splitedDoc, String city, String docId, HashSet<String> citiesFromTags, String docTitle
-        String[] splitedDoc = doc2Parse.getDocSplited();
+        if(doc2Parse==null) {//todo delete this if
+            System.out.println("lama ani null parseDoc at Parse func");
+            return null;
+        }
         String city = doc2Parse.getCity();
-        String docId = doc2Parse.getDocumentID();
-        String docTitle = doc2Parse.getDocTitle();
         //locations in the doc of appearances of the cities from tags , String - city name, ArrayList - locations indexes
 
         HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc = new HashMap<>();
-        if (!city.equals("")) {
+        if (city!=null && !city.equals("")) {
             ArrayList<Integer> locationArray = new ArrayList<>();
             locationArray.add(-1);
             locationOfCitiesAtCurrDoc.put(city.toLowerCase(), locationArray);
         }
+        doc2Parse.setLocationOfCitiesAtCurrDoc(locationOfCitiesAtCurrDoc);
         //temporary dictionary to find the max tf in current doc.
         HashMap<String, int[]> dicDoc = new HashMap<>();
-        dicDoc = parseMainFunc(doc2Parse, null);
-        //insert the title terms into the dicdoc dictionary - dicdicintarr[1] = 1; marks that that term comes from the title - > for the indexer posting function.
-        Set<String> keys = dicDoc.keySet();
-        for (String titleTerm : keys) {
-            if(titleTerm.equals(""))
-                continue;
-            int[] dicDocIntArr = new int[2];
-            dicDocIntArr[0] = 1;
-            dicDocIntArr[1] = 1;
-            dicDoc.put(titleTerm, dicDocIntArr);
+        if(doc2Parse.getDocTitle()!=null && !doc2Parse.getDocTitle().equals("")) {
+            document documentOfTitle = new document();
+            documentOfTitle.setLocationOfCitiesAtCurrDoc(locationOfCitiesAtCurrDoc);
+            documentOfTitle.setDocSplited(doc2Parse.getDocTitle());
+            dicDoc = parseMainFunc(documentOfTitle, null);
+            //insert the title terms into the dicdoc dictionary - dicdicintarr[1] = 1; marks that that term comes from the title - > for the indexer posting function.
+            Set<String> keys = dicDoc.keySet();
+            for (String titleTerm : keys) {
+                if (titleTerm.equals(""))
+                    continue;
+                int[] dicDocIntArr = new int[2];
+                dicDocIntArr[0] = 1;
+                dicDocIntArr[1] = 1;
+                dicDoc.put(titleTerm, dicDocIntArr);
+            }
+            if(dicDoc.size()>0) {
+                doc2Parse.setDicDoc(dicDoc);
+            }
+            if(documentOfTitle.getLocationOfCities()!=null && documentOfTitle.getLocationOfCities().size()>0){
+                doc2Parse.setLocationOfCitiesAtCurrDoc(documentOfTitle.getLocationOfCitiesAtCurrDoc());
+            }
         }
+
 //        splitedDoc = splitHyphenAndNumberWordWithoutSpace(splitedDoc);
         //parse the full split document and return the dicDoc dictionary contain the terms from it.
         dicDoc = parseMainFunc(doc2Parse, null);
@@ -121,6 +135,8 @@ public class Parse {
         doc2Parse.setMaxTf(tf);
         int maxUnique = getMaxUnique(dicDoc);
         doc2Parse.setNumOfUniqueWords(maxUnique);
+        if(doc2Parse==null)
+            System.out.println("hi");
         return doc2Parse;
     }
 
@@ -133,20 +149,32 @@ public class Parse {
      * @return - the dicDoc dictionary contain the terms from the current given array.
      */
     private HashMap<String, int[]> parseMainFunc(document doc2Parse, query query2Parse){//String[] splitedDoc, HashSet<String> citiesFromTags, HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc, HashMap<String, int[]> dicDoc) {
-        if(doc2Parse==null && query2Parse==null)
+        if(doc2Parse==null && query2Parse==null) {
+            System.out.println("why line 148");
             return null;
+        }
+        HashMap<String, int[]> dicDoc = new HashMap<>();
         String[] splitedDoc;
         HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc;
         if(doc2Parse==null && query2Parse!=null){
             splitedDoc = query2Parse.getDocSplited();
-            System.out.println();
+            if(splitedDoc==null) {
+                System.out.println("why i am null parseMain Parse class");
+
+            }
             locationOfCitiesAtCurrDoc=null;
         }
         else{
             splitedDoc = doc2Parse.getDocSplited();
+            if(splitedDoc==null && doc2Parse.getDicDoc()==null) {
+                System.out.println("line 163");
+                return dicDoc;
+            }
+            else if(splitedDoc==null) return doc2Parse.getDicDoc();
+            if(doc2Parse.getDicDoc()!=null && doc2Parse.getDicDoc().size()>0)
+                dicDoc = doc2Parse.getDicDoc();
             locationOfCitiesAtCurrDoc = doc2Parse.getLocationOfCitiesAtCurrDoc();
         }
-        HashMap<String, int[]> dicDoc = new HashMap<>();
         int jump = 0;
         //locations in the doc of appearances of the city
         ArrayList<Integer> locationsOfCity = new ArrayList<>();
@@ -243,6 +271,8 @@ public class Parse {
                 addToDicDoc(dicDoc, currToken);
             }
         }
+        if(doc2Parse!=null)
+            doc2Parse.setLocationOfCitiesAtCurrDoc(locationOfCitiesAtCurrDoc);
         return dicDoc;
     }
 
@@ -474,6 +504,7 @@ public class Parse {
             for (String SW : currStopWord)
                 stopWords.add(SW);
         }
+        System.out.println(stopWords.size());
     }
 
     /**
