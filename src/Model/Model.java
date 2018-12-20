@@ -185,9 +185,9 @@ public class Model {
     }
 
 
-    public boolean runQuery(String query){
+    public boolean runQuery(String query, boolean toStem){
         searcher = new Searcher(parse);
-        List<String[]> list = searcher.runQuery(query);//todo maybe object of queryAns
+//        List<String[]> list = searcher.runQuery(query);//todo maybe object of queryAns
         return false;
     }
 
