@@ -64,11 +64,14 @@ public class Ranker {
         return avrLengh;
     }
 
-    public HashMap<String,Integer> rankDocQuery(ArrayList<String> wordsFromQuery, HashSet<String> docsID){
+    public HashMap<String,Integer> RankQueryDocs(ArrayList<QueryWord> wordsFromQuery, HashSet<String> docsID){
+
+        return BM25(wordsFromQuery, docsID);
+    }
+
+    public HashMap<String,Integer> BM25(ArrayList<QueryWord> wordsFromQuery, HashSet<String> docsID){
         double avdl = calculateAverageOfDocsLengths();
-        HashMap<String, int[]> docsOfWord = null;//todo take it from word object tf of each word at each doc
         int m = numOfDocs;
-        QueryWord qw = new QueryWord();
         double rankOfDocQuery = 0;
         //best match doc will be the first, second be the after him.....
         HashMap<String,Double> docsRank = new HashMap<>();
@@ -76,11 +79,12 @@ public class Ranker {
         for (String docID : docsID) {
             rankOfDocQuery = 0;
             //foreach word from query (sigma)
-            for (String word : wordsFromQuery) {
+            for (QueryWord Qword : wordsFromQuery) {
+                HashMap<String, int[]> docsOfWord = Qword.getDocsOfWord();//todo take it from word object tf of each word at each doc
                 //C(w,q)
-                int wordAppearanceAtQuery = qw.getApearanceAtQuery();
+                int wordAppearanceAtQuery = Qword.getNumOfWordInQuery();
                 int tfAtCurrDoc = docsOfWord.get(docID)[0];//C(w,d)
-                int df = qw.getdf();
+                int df = Qword.getDf();
                 int d = 0;
                 if(toStem)
                     d = docsLenghsStem.get(docID);

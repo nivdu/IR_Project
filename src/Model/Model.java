@@ -193,9 +193,7 @@ public class Model {
      * @return
      */
     public boolean runQuery(String query){
-        int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
-
-        searcher = new Searcher(parse);
+        searcher = new Searcher(parse,ranker);
 //        List<String[]> list = searcher.runQuery(query);//todo maybe object of queryAns
         return false;
     }
