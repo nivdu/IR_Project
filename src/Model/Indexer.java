@@ -24,16 +24,19 @@ public class Indexer {
     private String pathTo;
     private int filesNumber;
     private int numberOfUniqueTerms;
-
+    private HashMap<String,Integer> docsLenghs;
+    private Ranker ranker;
     /**
      * Constructor
      */
-    Indexer(String pathFrom, String pathTo, Parse parse) {
+    Indexer(String pathFrom, String pathTo, Parse parse, Ranker ranker) {
         this.numberOfUniqueTerms = 0;
         this.filesNumber=0;
         this.filesPostedCounter = 0;
+        docsLenghs = new HashMap<>();
         readFile = new ReadFile(pathFrom);
         this.parse = parse;
+        this.ranker = ranker;
         docList = new ArrayList<>();
         dictionaryPosting = new HashMap<>();
         tempPostingCounter = 0;
@@ -72,6 +75,8 @@ public class Indexer {
                 }
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/Postings", pathToCreate + "/Dictionaries", true);
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/citiesPosting", pathToCreate + "/Dictionaries", false);
+                bringRankerDocsLengths(toStem);
+                bringRankerNumOfDocs();
                 dictionaryPosting.clear();
             } catch (SecurityException se) {
                 return false;
@@ -81,7 +86,6 @@ public class Indexer {
         }
         return true;
     }
-
 
     /**
      * getter
@@ -122,9 +126,10 @@ public class Indexer {
             if (currentDoc != null){
                 document currDoc = parse.parseDoc(currentDoc);
                 if(currDoc==null) {
-                    System.out.println("line 126 indexer");
+                    System.out.println("line 126 indexer");//todo delete this and all the rest prints
                 }
                 System.out.println("combine");
+                saveDocsLenghsForRank(currDoc);
                 combineDicDocAndDictionary(currDoc);
                 combineCitiesFromDoc(currDoc);
                 System.out.println("combineFinished");
@@ -144,6 +149,31 @@ public class Indexer {
             tempPostingCounter++;
         }
         docsToParse.clear();
+    }
+
+    private void bringRankerDocsLengths(boolean toStem) {
+        if(toStem)
+            ranker.setDocsLenghsStem(docsLenghs);
+        else ranker.setDocsLenghsNoStem(docsLenghs);
+    }
+
+    private void bringRankerNumOfDocs() {
+        ranker.setNumOfDocs(getIndexedDocNumber());
+    }
+
+    private void saveDocsLenghsForRank(document currDoc) {
+        HashMap<String,int[]> dicDoc = currDoc.getDicDoc();
+        if (dicDoc == null || dicDoc.size() == 0)
+            return;
+        int numOfWordsAtCurrDoc = 0;
+        Set<String> keys = dictionaryPosting.keySet();
+        for (String term : keys) {
+            int[] termValues = dicDoc.get(term);
+            if (termValues == null)
+                continue;
+            numOfWordsAtCurrDoc += termValues[0];
+        }
+        docsLenghs.put(currDoc.getDocumentID(),numOfWordsAtCurrDoc);
     }
 
     private void saveAndDeleteCitiesPosition(HashMap<String, String[]> dictionaryCities, String pathToCreate) {
