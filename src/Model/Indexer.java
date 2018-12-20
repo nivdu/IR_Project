@@ -28,7 +28,7 @@ public class Indexer {
     /**
      * Constructor
      */
-    Indexer(String pathFrom, String pathTo, boolean toStem, Parse parse) {
+    Indexer(String pathFrom, String pathTo, Parse parse) {
         this.numberOfUniqueTerms = 0;
         this.filesNumber=0;
         this.filesPostedCounter = 0;
@@ -66,21 +66,12 @@ public class Indexer {
                 }
                 for (String path : allFilesPaths) {
                     ArrayList<document> docsToParse = readFile.spiltFileIntoSeparateDocs2(path);
+                    long stimr = System.currentTimeMillis();
                     parseFile(docsToParse, pathToCreate);
+                    System.out.println(stimr-System.currentTimeMillis());
                 }
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/Postings", pathToCreate + "/Dictionaries", true);
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/citiesPosting", pathToCreate + "/Dictionaries", false);
-                File f = new File("C:\\Users\\user\\Desktop\\אוניברסיטה\\שנה ג\\שנה ג - סמסטר א\\אחזור\\עבודות\\מנוע חלק א\\nivcheckoutput\\filetf\\loren.txt");
-                if (!f.exists())
-                    f.createNewFile();
-                FileWriter fw = new FileWriter(f);
-                PriorityQueue<String> tfPosting = new PriorityQueue<>();
-                Set<String> keys = dictionaryPosting.keySet();
-                for (String term : keys) {
-                    fw.write(dictionaryPosting.get(term)[2] + "\n");
-                }
-                fw.flush();
-                fw.close();
                 dictionaryPosting.clear();
             } catch (SecurityException se) {
                 return false;
@@ -130,15 +121,24 @@ public class Indexer {
         for (document currentDoc : docsToParse) {
             if (currentDoc != null){
                 document currDoc = parse.parseDoc(currentDoc);
+                if(currDoc==null) {
+                    System.out.println("line 126 indexer");
+                }
+                System.out.println("combine");
                 combineDicDocAndDictionary(currDoc);
                 combineCitiesFromDoc(currDoc);
+                System.out.println("combineFinished");
                 currDoc.removeDic();
                 currDoc.removeLocationOfCities();
+                currDoc.removeDocSplitedArr();
+                System.out.println("remove finish");
                 docList.add(currDoc);
             }
         }
         filesPostedCounter++;
         if (filesPostedCounter%8==0 || filesPostedCounter == filesNumber) {
+            if(filesPostedCounter==136*8)
+                System.out.println("stop");
             saveAndDeletePosition(dictionaryPosting, pathToCreate);
             saveAndDeleteCitiesPosition(dictionaryCities, pathToCreate);
             tempPostingCounter++;

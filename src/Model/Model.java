@@ -46,12 +46,12 @@ public class Model {
             return false;
         }
         parse = new Parse(toStem, pathFrom);
-        indexer = new Indexer(pathFrom,pathTo,toStem, parse);
+        indexer = new Indexer(pathFrom,pathTo, parse);
         long Stime = System.currentTimeMillis();
         boolean succGenerate=indexer.createPostingAndDic(toStem);
         long Ftime = System.currentTimeMillis();
         Alert alert;
-        if(succGenerate){
+            if(succGenerate){
             long indexRunTime = Ftime-Stime;
             int indexedDocNumber = indexer.getIndexedDocNumber();
             int uniqueTermsNumber = indexer.getUniqueTermsNumber();
