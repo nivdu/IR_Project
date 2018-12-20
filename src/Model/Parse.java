@@ -148,7 +148,8 @@ public class Parse {
 //     * @param dicDoc - the current document dictionary
      * @return - the dicDoc dictionary contain the terms from the current given array.
      */
-    private HashMap<String, int[]> parseMainFunc(document doc2Parse, Query query2Parse){//String[] splitedDoc, HashSet<String> citiesFromTags, HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc, HashMap<String, int[]> dicDoc) {
+
+    public HashMap<String, int[]> parseMainFunc(document doc2Parse, Query query2Parse){//String[] splitedDoc, HashSet<String> citiesFromTags, HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc, HashMap<String, int[]> dicDoc) {
         if(doc2Parse==null && query2Parse==null) {
             System.out.println("why line 148");
             return null;

@@ -1,19 +1,28 @@
 package Model;
 
-import java.util.HashMap;
-
 public class Query {
-    private HashMap<String,Integer> docsLenghsNoStem;
-    private HashMap<String,Integer> docsLenghsStem;
-    public String[] getDocSplited() {
-        return null;
+    private String data;
+    private String queryID;
+    private String[] querySplited;
+
+    public Query(String data, String queryID) {
+        this.data = data;
+        queryID = queryID;
     }
 
-    public void setDocsLenghsNoStem(HashMap<String, Integer> docsLenghsNoStem) {
-        this.docsLenghsNoStem = docsLenghsNoStem;
+    public String getData() {
+        return data;
     }
 
-    public void setDocsLenghsStem(HashMap<String, Integer> docsLenghsStem) {
-        this.docsLenghsStem = docsLenghsStem;
+    public void setData(String data) {
+        this.data = data;
+    }
+
+    public String getQueryID() {
+        return queryID;
+    }
+
+    public void setQueryID(String queryID) {
+        queryID = queryID;
     }
 }

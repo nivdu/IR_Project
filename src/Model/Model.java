@@ -187,7 +187,6 @@ public class Model {
         return indexer.languages();
     }
 
-
     /**
      * can call only after inverted index is created//todo disable this functions (buttons) untill create inverted index.
      * @param query
@@ -195,8 +194,9 @@ public class Model {
      */
     public boolean runQuery(String query){
         int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
+
         searcher = new Searcher(parse);
-        List<String[]> list = searcher.runQuery(query);//todo maybe object of queryAns
+//        List<String[]> list = searcher.runQuery(query);//todo maybe object of queryAns
         return false;
     }
 

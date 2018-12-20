@@ -706,4 +706,9 @@ public class Indexer {
         }
         return false;
     }
+
+
+    public HashMap<String, String[]> getDictionaryPosting() {
+        return dictionaryPosting;
+    }
 }
