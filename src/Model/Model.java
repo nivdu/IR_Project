@@ -13,6 +13,7 @@ public class Model {
     private Searcher searcher;
     private boolean toStem;
     private Parse parse;
+    private Ranker ranker;
 
 
     /**
@@ -28,6 +29,7 @@ public class Model {
 
     public boolean generateInvertedIndex(String pathFrom,String pathTo,boolean toStem){
         //check the inserted path from.
+        ranker = new Ranker(toStem);
         File checkStop_Words = new File(pathFrom + "//stop_words.txt");
         if(!checkStop_Words.exists()) {
             Alert chooseFile = new Alert(Alert.AlertType.ERROR);
@@ -46,10 +48,11 @@ public class Model {
             return false;
         }
         parse = new Parse(toStem, pathFrom);
-        indexer = new Indexer(pathFrom,pathTo, parse);
+        indexer = new Indexer(pathFrom,pathTo, parse, ranker);
         long Stime = System.currentTimeMillis();
         boolean succGenerate=indexer.createPostingAndDic(toStem);
         long Ftime = System.currentTimeMillis();
+        ranker.Test();//todo delete this test line
         Alert alert;
             if(succGenerate){
             long indexRunTime = Ftime-Stime;
@@ -184,8 +187,14 @@ public class Model {
         return indexer.languages();
     }
 
+    /**
+     * can call only after inverted index is created//todo disable this functions (buttons) untill create inverted index.
+     * @param query
+     * @return
+     */
+    public boolean runQuery(String query){
+        int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
 
-    public boolean runQuery(String query, boolean toStem){
         searcher = new Searcher(parse);
 //        List<String[]> list = searcher.runQuery(query);//todo maybe object of queryAns
         return false;

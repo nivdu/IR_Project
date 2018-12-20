@@ -25,12 +25,4 @@ public class Query {
     public void setQueryID(String queryID) {
         queryID = queryID;
     }
-
-    public String[] getDocSplited() {
-        return querySplited;
-    }
-
-    public void setQuerySplited(String[] querySplited) {
-        this.querySplited = querySplited;
-    }
 }

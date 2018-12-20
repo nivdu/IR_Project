@@ -97,9 +97,9 @@ public class Searcher {
 
 
     /**
-     * cut the query string by tags
-     * @param query - query to cut
-     * @return - String array of the query contents.
+     * cut the Query string by tags
+     * @param query - Query to cut
+     * @return - String array of the Query contents.
      */
     private document queryCut(String query){
         if(query==null || query.equals(""))
