@@ -156,7 +156,7 @@ public class Ranker {
             }
             docsRank.put(docID,rankOfDocQuery);
         }
-        return docsRank;
+            return docsRank;
     }
 
 }

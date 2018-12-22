@@ -191,6 +191,7 @@ public class Model {
      * @param query
      * @return
      */
+
     public boolean runQuery(String query,boolean toStem, String pathTo){
 //        int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
 

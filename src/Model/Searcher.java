@@ -5,10 +5,12 @@ import java.util.*;
 
 public class Searcher {
     private Parse parse;
-    private HashMap<String, String[]> dictionaryPosting; //df,tf_overall,pointerToPosting
+    private Ranker ranker;
+    private HashMap<String,String[]> dictionaryPosting; //df,tf_overall,pointerToPosting
 
 
-    public Searcher(Parse parse) {
+    public Searcher(Parse parse, Ranker ranker){
+        this.ranker = ranker;
         this.parse = parse;
         this.dictionaryPosting = new HashMap<>();
     }
@@ -61,8 +63,7 @@ public class Searcher {
                 e.printStackTrace();
             }
         }
-        //todo call to ranker function with arraylist and hashset
-
+        ranker.RankQueryDocs(listOfWords, allRelevantDocsInPosting);
         return null;
     }
 
