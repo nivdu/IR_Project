@@ -52,7 +52,6 @@ public class Model {
         long Stime = System.currentTimeMillis();
         boolean succGenerate=indexer.createPostingAndDic(toStem);
         long Ftime = System.currentTimeMillis();
-        ranker.Test();//todo delete this test line
         Alert alert;
             if(succGenerate){
             long indexRunTime = Ftime-Stime;
@@ -192,15 +191,17 @@ public class Model {
      * @param query
      * @return
      */
-    public boolean runQuery(String query){
-        int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
+    public boolean runQuery(String query,boolean toStem, String pathTo){
+//        int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
 
         searcher = new Searcher(parse);
-//        List<String[]> list = searcher.runQuery(query);//todo maybe object of queryAns
+        List<String[]> list = searcher.runQuery(query, toStem, pathTo,null);//todo maybe object of queryAns
         return false;
     }
 
     public boolean runQueryFile(String pathQueryFile){
         return false;
     }
+
+
 }

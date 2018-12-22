@@ -24,6 +24,8 @@ public class View {
     @FXML
     private TextField pathTo;
     @FXML
+    private TextField queryText;
+    @FXML
     private Button BrowseFrom;
     @FXML
     private Button BrowseTo;
@@ -171,5 +173,10 @@ public class View {
         }
         obList.sort(String::compareToIgnoreCase);
         languages.setItems(obList);
+    }
+
+    @FXML
+    private void RunQuery(ActionEvent event) throws IOException {
+        controller.RunQuery(queryText.getText(),stemming.isSelected(), pathTo.getText());
     }
 }
