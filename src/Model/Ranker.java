@@ -65,6 +65,8 @@ public class Ranker {
     }
 
     public HashMap<String,Double> RankQueryDocs(ArrayList<QueryWord> wordsFromQuery, HashSet<String> docsID){
+        if(wordsFromQuery==null || docsID == null)
+            return null;
         ArrayList<HashMap<String,Double>> docsRanks = new ArrayList<>();
         docsRanks.add(inTitleCalc(wordsFromQuery, docsID));
         docsRanks.add(BM25(wordsFromQuery, docsID));
@@ -81,11 +83,10 @@ public class Ranker {
         double[] weights = new double[docsRanks.size()];
         weights[0] = 0.1;//todo from here
         weights[1] = 0.1;
-        weights[2] = 0.1;
-        weights[3] = 0.1;
-        weights[4] = 0.1;//todo until here
+//        weights[2] = 0.1;
+//        weights[3] = 0.1;
+//        weights[4] = 0.1;//todo until here
         for (HashMap<String,Double> currDocsRank: docsRanks) {
-
             Set<String> keys = currDocsRank.keySet();
             for (String docID : keys) {
                 if(!combinedDocsRank.containsKey(docID))
@@ -115,7 +116,7 @@ public class Ranker {
                     else
                         docsRank.put(docID, 1.0);
                 }
-                else if(!docsOfWord.containsKey(docID))
+                else if(!docsRank.containsKey(docID))
                     docsRank.put(docID,0.0);
             }
         }
@@ -128,12 +129,14 @@ public class Ranker {
         double rankOfDocQuery;
         //best match doc will be the first, second be the after him.....
         HashMap<String,Double> docsRank = new HashMap<>();
-        //foreach doc
-        for (String docID : docsID) {
+        //foreach word from query (sigma)
+        for (QueryWord Qword : wordsFromQuery) {
             rankOfDocQuery = 0;
-            //foreach word from query (sigma)
-            for (QueryWord Qword : wordsFromQuery) {
-                HashMap<String, int[]> docsOfWord = Qword.getDocsOfWord();//todo take it from word object tf of each word at each doc
+            HashMap<String, int[]> docsOfWord = Qword.getDocsOfWord();
+            //foreach doc
+            Set<String> keys = docsOfWord.keySet();
+            for (String docID : keys) {
+//                HashMap<String, int[]> docsOfWord = Qword.getDocsOfWord();//todo take it from word object tf of each word at each doc
                 //C(w,q)
                 int wordAppearanceAtQuery = Qword.getNumOfWordInQuery();
                 int tfAtCurrDoc = docsOfWord.get(docID)[0];//C(w,d)
@@ -153,8 +156,10 @@ public class Ranker {
                 double mone = ((k+1)*tfAtCurrDoc)*wordAppearanceAtQuery*log;
                 double currWordCalc = mone/mehane;
                 rankOfDocQuery+=currWordCalc;
+                if(docsRank.containsKey(docID))
+                    docsRank.put(docID, rankOfDocQuery + docsRank.get(docID));
+                else docsRank.put(docID, rankOfDocQuery);
             }
-            docsRank.put(docID,rankOfDocQuery);
         }
             return docsRank;
     }
