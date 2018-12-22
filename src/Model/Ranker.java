@@ -64,15 +64,68 @@ public class Ranker {
         return avrLengh;
     }
 
-    public HashMap<String,Integer> RankQueryDocs(ArrayList<QueryWord> wordsFromQuery, HashSet<String> docsID){
-
-        return BM25(wordsFromQuery, docsID);
+    public HashMap<String,Double> RankQueryDocs(ArrayList<QueryWord> wordsFromQuery, HashSet<String> docsID){
+        ArrayList<HashMap<String,Double>> docsRanks = new ArrayList<>();
+        docsRanks.add(inTitleCalc(wordsFromQuery, docsID));
+        docsRanks.add(BM25(wordsFromQuery, docsID));
+        return combineArrayByWights(docsRanks);
     }
 
-    public HashMap<String,Integer> BM25(ArrayList<QueryWord> wordsFromQuery, HashSet<String> docsID){
+    /**
+     * combine the docs ranks from all the functions to one Hashset by the wight of each function
+     * @param docsRanks - array of HashSet of docs Ranks from all function
+     */
+    private HashMap<String,Double> combineArrayByWights(ArrayList<HashMap<String,Double>> docsRanks) {
+        HashMap<String,Double> combinedDocsRank = new HashMap<>();
+        int i = 0;
+        double[] weights = new double[docsRanks.size()];
+        weights[0] = 0.1;//todo from here
+        weights[1] = 0.1;
+        weights[2] = 0.1;
+        weights[3] = 0.1;
+        weights[4] = 0.1;//todo until here
+        for (HashMap<String,Double> currDocsRank: docsRanks) {
+
+            Set<String> keys = currDocsRank.keySet();
+            for (String docID : keys) {
+                if(!combinedDocsRank.containsKey(docID))
+                    combinedDocsRank.put(docID, weights[i]*currDocsRank.get(docID));
+                else combinedDocsRank.put(docID, weights[i]*currDocsRank.get(docID) + combinedDocsRank.get(docID));
+            }
+            i++;
+        }
+        return combinedDocsRank;
+    }
+
+    /**
+     * for each doc count the number of word from the query placed at the doc title.
+     * @param wordsFromQuery - the words from the query
+     * @param docsID - all the docs contain at least one word of the query
+     * return - Hash map key - docId , value - count of the number of word from the query placed at the doc title
+     */
+    private HashMap<String,Double> inTitleCalc(ArrayList<QueryWord> wordsFromQuery, HashSet<String> docsID) {
+        HashMap<String,Double> docsRank = new HashMap<>();
+        for (QueryWord qw:wordsFromQuery){
+            HashMap<String,int[]> docsOfWord = qw.getDocsOfWord();
+            Set<String> keys = docsOfWord.keySet();
+            for (String docID : keys) {
+                if(docsOfWord.get(docID)[1]==1) {
+                    if(docsRank.containsKey(docID))
+                        docsRank.put(docID,docsRank.get(docID)+1);
+                    else
+                        docsRank.put(docID, 1.0);
+                }
+                else if(!docsOfWord.containsKey(docID))
+                    docsRank.put(docID,0.0);
+            }
+        }
+        return docsRank;
+    }
+
+    public HashMap<String,Double> BM25(ArrayList<QueryWord> wordsFromQuery, HashSet<String> docsID){
         double avdl = calculateAverageOfDocsLengths();
         int m = numOfDocs;
-        double rankOfDocQuery = 0;
+        double rankOfDocQuery;
         //best match doc will be the first, second be the after him.....
         HashMap<String,Double> docsRank = new HashMap<>();
         //foreach doc
@@ -85,7 +138,7 @@ public class Ranker {
                 int wordAppearanceAtQuery = Qword.getNumOfWordInQuery();
                 int tfAtCurrDoc = docsOfWord.get(docID)[0];//C(w,d)
                 int df = Qword.getDf();
-                int d = 0;
+                int d;
                 if(toStem)
                     d = docsLenghsStem.get(docID);
                 else d = docsLenghsNoStem.get(docID);
@@ -103,7 +156,7 @@ public class Ranker {
             }
             docsRank.put(docID,rankOfDocQuery);
         }
-            return null;
+            return docsRank;
     }
 
 }

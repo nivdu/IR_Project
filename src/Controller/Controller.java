@@ -26,4 +26,8 @@ public class Controller {
     }
 
     public HashSet<String> languages(){return model.languages();}
+
+    public void RunQuery(String query, boolean toStem, String pathTo) {
+        model.runQuery(query, toStem,pathTo);
+    }
 }
