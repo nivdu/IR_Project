@@ -8,8 +8,10 @@ import java.util.regex.Pattern;
 
 public class Indexer {
 
-    //list of all the documents
-    private ArrayList<document> docList;
+
+//    private ArrayList<document> docList;
+//list of all the documents
+    HashMap<String, document> docsHash = new HashMap();
     //readFile class
     private ReadFile readFile;
     //parse Class
@@ -35,7 +37,8 @@ public class Indexer {
         readFile = new ReadFile(pathFrom);
         this.parse = parse;
         this.ranker = ranker;
-        docList = new ArrayList<>();
+//        docList = new ArrayList<>();
+        docsHash = new HashMap<>();
         dictionaryPosting = new HashMap<>();
         tempPostingCounter = 0;
         citiesFromTags = new HashSet<>();
@@ -73,7 +76,8 @@ public class Indexer {
                 }
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/Postings", pathToCreate + "/Dictionaries", true);
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/citiesPosting", pathToCreate + "/Dictionaries", false);
-                bringRankerAllDocs();
+//                bringRankerAllDocs();
+                writeDocsDataToDisk(pathToCreate + "/docsData.txt");
                 dictionaryPosting.clear();
             } catch (SecurityException se) {
                 return false;
@@ -85,11 +89,31 @@ public class Indexer {
     }
 
     /**
+     * write docs data to disk
+     * @param pathTo - pato to create
+     */
+    private void writeDocsDataToDisk(String pathTo) {
+        try {
+            FileOutputStream fos = new FileOutputStream(pathTo);
+            ObjectOutputStream objOS = new ObjectOutputStream(fos);
+            objOS.writeObject(docsHash);
+            objOS.flush();
+            objOS.close();
+            fos.flush();
+            fos.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("problem in writeDocsDataToDisk function (Indexer");
+        } catch (IOException e) {
+            System.out.println("problem in writeDocsDataToDisk function (Indexer");
+        }
+    }
+
+    /**
      * getter
      * @return - the number of indexed doc.
      */
     public int getIndexedDocNumber() {
-        return docList.size();
+        return docsHash.size();
     }
 
     /**
@@ -138,7 +162,7 @@ public class Indexer {
                 currDoc.removeDic();
                 currDoc.removeLocationOfCities();
                 currDoc.removeDocSplitedArr();
-                docList.add(currDoc);
+                docsHash.put(currDoc.getDocumentID(), currDoc);
             }
         }
         filesPostedCounter++;
@@ -152,14 +176,15 @@ public class Indexer {
         docsToParse.clear();
     }
 
-    private void bringRankerAllDocs() {
-        HashMap<String, document> docsHash = new HashMap();
-        for (document doc:docList){
-            if(doc!=null && doc.getDocumentID()!=null)
-            docsHash.put(doc.getDocumentID(),doc);
-        }
-        ranker.setDocs(docsHash);
-    }
+//    private void bringRankerAllDocs() {
+//        HashMap<String, document> docsHash = new HashMap();
+//        Set<String> keys = docsHash.keySet();
+//        for (document doc:keys){
+//            if(doc!=null && doc.getDocumentID()!=null)
+//            docsHash.put(doc.getDocumentID(),doc);
+//        }
+//        ranker.setDocs(docsHash);
+//    }
 
     private void saveDocsLenghsForRank(document currDoc) {
         HashMap<String,int[]> dicDoc = currDoc.getDicDoc();
@@ -399,6 +424,7 @@ public class Indexer {
         long locationIndex = 0;
         int currDir = 0;
         File unitedPosting;
+//        File docsFile;
         //create file for each temp posting and insert to the temp posting array
         Comparator<String[]> compareLexicographically = new Comparator<String[]>() {
             //letters first (ignoring differences in case), digits are second and marks (like &%^*%) are the last in priority.
@@ -417,6 +443,9 @@ public class Indexer {
             unitedPosting = new File(pathToCreate + "/unitedPosting.txt");
             unitedPosting.createNewFile();
             BufferedWriter bw = new BufferedWriter(new FileWriter(unitedPosting));//write to the correct united posting txt
+//            docsFile = new File(pathToCreate + "/docsFile.txt");
+//            docsFile.createNewFile();
+//            BufferedWriter bwDocsFile = new BufferedWriter(new FileWriter(docsFile));//write to the correct united posting txt
             int i = 0;
             for (File f : tempPostingFiles) {
                 br[i] = new BufferedReader(new FileReader(f));
@@ -446,7 +475,10 @@ public class Indexer {
                         System.out.println("term isnt in dictionary");
                     numberOfUniqueTerms++;
                     bwOfDic.write(term + ":" + valueOfTerm[0] + ";" + valueOfTerm[2] + ";" + locationIndex + "\n");
+                    //write to combined posting file
                     bw.write(insertToOnePostDisk);
+                    //write to docs File
+//                    bwDocsFile.write();//todo
                 }
                 else{
                     String[] city = dictionaryCities.get(term);

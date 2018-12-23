@@ -37,6 +37,35 @@ public class ReadFile {
     }
 
     /**
+     * create arrayList of queries from given path of file
+     * @return - array list of queries from the give file path
+     */
+    public ArrayList<Query> readQueryFile() {
+        ArrayList<Query> queriesFromFile = new ArrayList<>();
+        String queryTitle = "";
+        String queryNumber = "";
+        String wholeQueryString = file2String(corpusPath);//gonna be the query path when init the readFile for searcher/query
+        String[] queryByLines = wholeQueryString.split("\r\n|\\\n");
+        if (queryByLines != null && queryByLines.length > 0) {
+            for (String line : queryByLines) {
+                if (line.equals("") || line.equals("\n"))
+                    continue;
+                if (line.substring(0, 14).equals("<num> Number: ")) {
+                    queryNumber = line.substring(0, 14);//todo check if 14
+                    queryNumber = queryNumber.replace("\n", "");
+                }
+                if (!line.substring(0, 7).equals("<title>"))
+                    continue;
+                queryTitle = line.substring(0, 8);
+                queryTitle = queryTitle.replace("\n", "");
+                queriesFromFile.add(new Query(queryTitle, queryNumber));
+                queryNumber = "";
+            }
+        }
+        return queriesFromFile;
+    }
+
+    /**
      * make a hashset of strings contain all the city first word found after the tag<F P=104> at the current
      * file in the given path(save the cities names as lower case).
      * @param path - path of the doc to cut the city tag from
@@ -79,7 +108,6 @@ public class ReadFile {
      * @param path - path of text file from the corpus.
      */
     public ArrayList<document> spiltFileIntoSeparateDocs2(String path) {
-//        ArrayList<String[]> docsFromFile = new ArrayList<>();
         ArrayList<document> docsFromFile = new ArrayList<>();
         String wholeFileString = file2String(path);
         //file split by <Doc>

@@ -7,17 +7,15 @@ import java.util.*;
 public class Ranker {
 
     private HashMap<String,document> docs;
-    private boolean toStem;
     private double avrLengh;
     private double k;
     private double b;
+
     /**
      * contractor
-     * @param toStem - true if need to stem else false.
      */
-    public Ranker(boolean toStem){
-        this.toStem = toStem;
-        docs=null;
+    public Ranker(HashMap<String,document> docs){
+        this.docs=docs;
         avrLengh = 0;
         k=0;
         b=0;
