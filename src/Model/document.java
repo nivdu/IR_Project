@@ -13,6 +13,26 @@ public class document {
     private HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc;
     private String[] docSplited;
     private String[] docTitle;
+    private int docLength;
+    private int[] docSplitDate;
+
+    public void setDocLength(int docLength) {
+        this.docLength = docLength;
+    }
+
+    public void setDocSplitDate(int[] docSplitDate) {
+        this.docSplitDate = docSplitDate;
+    }
+
+    public int[] getDocSplitDate() {
+
+        return docSplitDate;
+    }
+
+    public int getDocLength() {
+
+        return docLength;
+    }
 
     public String getPublishDate() {
         return publishDate;
@@ -54,6 +74,7 @@ public class document {
         this.locationOfCitiesAtCurrDoc=null;
         this.docSplited=null;
         this.docTitle=null;
+        this.docSplitDate=null;
     }
 //
 //    public document(String documentID, int maxTf, int numOfUniqueWords, String city, HashMap<String,int[]> tempDic, HashMap locationOfCitiesAtCurrDoc) {

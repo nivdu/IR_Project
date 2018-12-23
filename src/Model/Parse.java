@@ -93,7 +93,7 @@ public class Parse {
         }
         String city = doc2Parse.getCity();
         //locations in the doc of appearances of the cities from tags , String - city name, ArrayList - locations indexes
-
+        createDocDate(doc2Parse);
         HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc = new HashMap<>();
         if (city!=null && !city.equals("")) {
             ArrayList<Integer> locationArray = new ArrayList<>();
@@ -138,6 +138,35 @@ public class Parse {
         if(doc2Parse==null)
             System.out.println("hi");
         return doc2Parse;
+    }
+
+    private void createDocDate(document doc2Parse) {
+        String date = doc2Parse.getPublishDate();
+        String[] dateByParts;
+        String Syear = null, Smonth = null, Sday = null;
+        if (date != null) {
+            dateByParts = date.split(" ");
+            //if legal date
+            if (dateByParts != null && dateByParts.length == 3) {
+                for (String currPart : dateByParts) {
+                    if (currPart.length() == 2 && checkIfOnlyDigitsDotsComma(currPart)) {
+                        int day = Integer.parseInt(currPart);
+                        if (day >= 0 && day <= 31)
+                            Sday = currPart;
+                    } else if (currPart.length() == 4 && checkIfOnlyDigitsDotsComma(currPart))
+                        Syear = currPart;
+                    else if (months.containsKey(currPart))
+                        Smonth = months.get(currPart);
+                }
+                if (Sday != null && Smonth != null && Syear != null) {
+                    int[] dateByPartsInt = new int[3];
+                    dateByPartsInt[0] = Integer.parseInt(Syear);
+                    dateByPartsInt[1] = Integer.parseInt(Smonth);
+                    dateByPartsInt[2] = Integer.parseInt(Sday);
+                    doc2Parse.setDocSplitDate(dateByPartsInt);
+                }
+            }
+        }
     }
 
     /**

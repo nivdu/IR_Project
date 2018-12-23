@@ -24,7 +24,7 @@ public class Indexer {
     private String pathTo;
     private int filesNumber;
     private int numberOfUniqueTerms;
-    private HashMap<String,Integer> docsLenghs;
+    private HashMap<String,document> docsLenghs;
     private Ranker ranker;
     /**
      * Constructor
@@ -75,8 +75,7 @@ public class Indexer {
                 }
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/Postings", pathToCreate + "/Dictionaries", true);
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/citiesPosting", pathToCreate + "/Dictionaries", false);
-                bringRankerDocsLengths(toStem);
-                bringRankerNumOfDocs();
+                bringRankerAllDocs();
                 dictionaryPosting.clear();
             } catch (SecurityException se) {
                 return false;
@@ -151,14 +150,13 @@ public class Indexer {
         docsToParse.clear();
     }
 
-    private void bringRankerDocsLengths(boolean toStem) {
-        if(toStem)
-            ranker.setDocsLenghsStem(docsLenghs);
-        else ranker.setDocsLenghsNoStem(docsLenghs);
-    }
-
-    private void bringRankerNumOfDocs() {
-        ranker.setNumOfDocs(getIndexedDocNumber());
+    private void bringRankerAllDocs() {
+        HashMap<String, document> docsHash = new HashMap();
+        for (document doc:docList){
+            if(doc!=null && doc.getDocumentID()!=null)
+            docsHash.put(doc.getDocumentID(),doc);
+        }
+        ranker.setDocs(docsHash);
     }
 
     private void saveDocsLenghsForRank(document currDoc) {
@@ -173,7 +171,7 @@ public class Indexer {
                 continue;
             numOfWordsAtCurrDoc += termValues[0];
         }
-        docsLenghs.put(currDoc.getDocumentID(),numOfWordsAtCurrDoc);
+        currDoc.setDocLength(numOfWordsAtCurrDoc);
     }
 
     private void saveAndDeleteCitiesPosition(HashMap<String, String[]> dictionaryCities, String pathToCreate) {
