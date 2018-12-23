@@ -1,13 +1,13 @@
 package Model;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class Ranker {
 
-    private HashMap<String,Integer> docsLenghsNoStem;
-    private HashMap<String,Integer> docsLenghsStem;
+    private HashMap<String,document> docs;
     private boolean toStem;
-    private int numOfDocs;
     private double avrLengh;
     private double k;
     private double b;
@@ -17,58 +17,87 @@ public class Ranker {
      */
     public Ranker(boolean toStem){
         this.toStem = toStem;
-        numOfDocs = 0;
-        docsLenghsNoStem=null;
-        docsLenghsStem=null;
+        docs=null;
         avrLengh = 0;
         k=0;
         b=0;
     }
 
-    public void Test(){
-        System.out.println(calculateAverageOfDocsLengths());
+    public void setDocs(HashMap<String, document> docsHash) {
+        this.docs = docsHash;
     }
 
-    public void setDocsLenghsNoStem(HashMap<String, Integer> docsLenghsNoStem) {
-        this.docsLenghsNoStem = docsLenghsNoStem;
-    }
-
-    public void setDocsLenghsStem(HashMap<String, Integer> docsLenghsStem) {
-        this.docsLenghsStem = docsLenghsStem;
-    }
-
-    public void setNumOfDocs(int numOfDocs) {
-        this.numOfDocs = numOfDocs;
-    }
-
-    private double calculateAverageOfDocsLengths(){
+    private double calculateAverageOfDocsLengths() {
         double avrLengh = 0;
-        if(toStem) {
-            if(docsLenghsStem!=null && docsLenghsStem.size()>0) {
-                Set<String> keys = docsLenghsStem.keySet();
-                for (String docID : keys) {
-                    avrLengh += docsLenghsStem.get(docID);
+        if (docs != null && docs.size() > 0) {
+            Set<String> keys = docs.keySet();
+            for (String docID : keys) {
+                document currDoc = docs.get(docID);
+                if (currDoc != null) {
+                    avrLengh += currDoc.getDocLength();
                 }
-                avrLengh = avrLengh / docsLenghsStem.size();
             }
-        }
-        else {
-            if(docsLenghsNoStem!=null && docsLenghsNoStem.size()>0) {
-                Set<String> keys = docsLenghsNoStem.keySet();
-                for (String docID : keys) {
-                    avrLengh += docsLenghsNoStem.get(docID);
-                }
-                avrLengh = avrLengh / docsLenghsNoStem.size();
-            }
+            avrLengh = avrLengh / docs.size();
         }
         return avrLengh;
     }
 
     public HashMap<String,Double> RankQueryDocs(ArrayList<QueryWord> wordsFromQuery, HashSet<String> docsID){
+        if(wordsFromQuery==null || docsID == null)
+            return null;
+        avrLengh = calculateAverageOfDocsLengths();
         ArrayList<HashMap<String,Double>> docsRanks = new ArrayList<>();
         docsRanks.add(inTitleCalc(wordsFromQuery, docsID));
         docsRanks.add(BM25(wordsFromQuery, docsID));
+        try { docsRanks.add(publishDataRank(docsID)); } catch (Exception e){}
         return combineArrayByWights(docsRanks);
+    }
+
+    /**
+     * for each doc calc is rank by is publish date
+     * @param docsID - all the docs contain at least one word of the query
+     * return - Hash map key - docId , value - count of the number of word from the query placed at the doc title
+     */
+    private HashMap<String,Double> publishDataRank(HashSet<String> docsID) {
+        HashMap<String, Double> docsRank = new HashMap<>();
+        for (String docID : docsID) {
+            document currDoc = docs.get(docID);
+            if (currDoc != null) {
+                int[] docDate = currDoc.getDocSplitDate();
+                if (docDate != null && docDate.length == 3) {
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+                    Date date = new Date();
+                    String currDate = dateFormat.format(date);
+                    if (currDate != null) {
+                        int[] currDateInt = getCurrDateInt(currDate);
+                        int difference = ((currDateInt[0] - docDate[0]) * 365);
+                        //bad publish date year for currDoc , cant be bigger than today's date
+                        if (difference < 0)
+                            difference = 0;
+                        difference += (Math.abs(currDateInt[1] - docDate[1]) * 30);
+                        difference += (Math.abs(currDateInt[2] - docDate[2]));
+                        if (difference == 0)
+                            difference = 1;
+                        docsRank.put(docID, ((double) 1 / difference));//todo find better calc for difference between dates.
+                    }
+                }
+                if(!docsRank.containsKey(docID))
+                    docsRank.put(docID,0.0);
+            }
+        }
+        return docsRank;
+    }
+
+    private int[] getCurrDateInt(String date) {
+        String[] dateByParts;
+        int[] dateByPartsInt = new int[3];
+        if (date != null) {
+            dateByParts = date.split("/");
+            dateByPartsInt[0] = Integer.parseInt(dateByParts[0]);
+            dateByPartsInt[1] = Integer.parseInt(dateByParts[1]);
+            dateByPartsInt[2] = Integer.parseInt(dateByParts[2]);
+        }
+        return dateByPartsInt;
     }
 
     /**
@@ -79,13 +108,14 @@ public class Ranker {
         HashMap<String,Double> combinedDocsRank = new HashMap<>();
         int i = 0;
         double[] weights = new double[docsRanks.size()];
-        weights[0] = 0.1;//todo from here
-        weights[1] = 0.1;
-        weights[2] = 0.1;
-        weights[3] = 0.1;
-        weights[4] = 0.1;//todo until here
+        //todo from here
+        weights[0] = 0.1;//bm25
+        weights[1] = 0.1;//title
+        weights[2] = 0.1;//date
+//        weights[3] = 0.1;
+//        weights[4] = 0.1;
+        // todo until here
         for (HashMap<String,Double> currDocsRank: docsRanks) {
-
             Set<String> keys = currDocsRank.keySet();
             for (String docID : keys) {
                 if(!combinedDocsRank.containsKey(docID))
@@ -115,7 +145,7 @@ public class Ranker {
                     else
                         docsRank.put(docID, 1.0);
                 }
-                else if(!docsOfWord.containsKey(docID))
+                else if(!docsRank.containsKey(docID))
                     docsRank.put(docID,0.0);
             }
         }
@@ -123,25 +153,25 @@ public class Ranker {
     }
 
     public HashMap<String,Double> BM25(ArrayList<QueryWord> wordsFromQuery, HashSet<String> docsID){
-        double avdl = calculateAverageOfDocsLengths();
-        int m = numOfDocs;
+        double avdl = avrLengh;
+        int m = docs.size();
         double rankOfDocQuery;
         //best match doc will be the first, second be the after him.....
         HashMap<String,Double> docsRank = new HashMap<>();
-        //foreach doc
-        for (String docID : docsID) {
+        //foreach word from query (sigma)
+        for (QueryWord Qword : wordsFromQuery) {
             rankOfDocQuery = 0;
-            //foreach word from query (sigma)
-            for (QueryWord Qword : wordsFromQuery) {
-                HashMap<String, int[]> docsOfWord = Qword.getDocsOfWord();//todo take it from word object tf of each word at each doc
+            HashMap<String, int[]> docsOfWord = Qword.getDocsOfWord();
+            //foreach doc
+            Set<String> keys = docsOfWord.keySet();
+            for (String docID : keys) {
+//                HashMap<String, int[]> docsOfWord = Qword.getDocsOfWord();//todo take it from word object tf of each word at each doc
                 //C(w,q)
                 int wordAppearanceAtQuery = Qword.getNumOfWordInQuery();
                 int tfAtCurrDoc = docsOfWord.get(docID)[0];//C(w,d)
                 int df = Qword.getDf();
                 int d;
-                if(toStem)
-                    d = docsLenghsStem.get(docID);
-                else d = docsLenghsNoStem.get(docID);
+                d = docs.get(docID).getDocLength();
                 //formula
                 //d/avdl
                 double temp1 = d/avdl;
@@ -153,8 +183,10 @@ public class Ranker {
                 double mone = ((k+1)*tfAtCurrDoc)*wordAppearanceAtQuery*log;
                 double currWordCalc = mone/mehane;
                 rankOfDocQuery+=currWordCalc;
+                if(docsRank.containsKey(docID))
+                    docsRank.put(docID, rankOfDocQuery + docsRank.get(docID));
+                else docsRank.put(docID, rankOfDocQuery);
             }
-            docsRank.put(docID,rankOfDocQuery);
         }
             return docsRank;
     }

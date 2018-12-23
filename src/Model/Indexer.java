@@ -24,7 +24,6 @@ public class Indexer {
     private String pathTo;
     private int filesNumber;
     private int numberOfUniqueTerms;
-    private HashMap<String,Integer> docsLenghs;
     private Ranker ranker;
     /**
      * Constructor
@@ -33,7 +32,6 @@ public class Indexer {
         this.numberOfUniqueTerms = 0;
         this.filesNumber=0;
         this.filesPostedCounter = 0;
-        docsLenghs = new HashMap<>();
         readFile = new ReadFile(pathFrom);
         this.parse = parse;
         this.ranker = ranker;
@@ -75,8 +73,7 @@ public class Indexer {
                 }
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/Postings", pathToCreate + "/Dictionaries", true);
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/citiesPosting", pathToCreate + "/Dictionaries", false);
-                bringRankerDocsLengths(toStem);
-                bringRankerNumOfDocs();
+                bringRankerAllDocs();
                 dictionaryPosting.clear();
             } catch (SecurityException se) {
                 return false;
@@ -124,19 +121,23 @@ public class Indexer {
     public void parseFile(ArrayList<document> docsToParse, String pathToCreate) {
         for (document currentDoc : docsToParse) {
             if (currentDoc != null){
+                long Stime = System.currentTimeMillis();
                 document currDoc = parse.parseDoc(currentDoc);
+                long Ftime = System.currentTimeMillis();
+                System.out.println("parsetime= " + (Ftime-Stime));
                 if(currDoc==null) {
                     System.out.println("line 126 indexer");//todo delete this and all the rest prints
                 }
-                System.out.println("combine");
+                Stime = System.currentTimeMillis();
                 saveDocsLenghsForRank(currDoc);
+                Ftime = System.currentTimeMillis();
+                System.out.println("docslengh= " + (Ftime-Stime));
+
                 combineDicDocAndDictionary(currDoc);
                 combineCitiesFromDoc(currDoc);
-                System.out.println("combineFinished");
                 currDoc.removeDic();
                 currDoc.removeLocationOfCities();
                 currDoc.removeDocSplitedArr();
-                System.out.println("remove finish");
                 docList.add(currDoc);
             }
         }
@@ -151,14 +152,13 @@ public class Indexer {
         docsToParse.clear();
     }
 
-    private void bringRankerDocsLengths(boolean toStem) {
-        if(toStem)
-            ranker.setDocsLenghsStem(docsLenghs);
-        else ranker.setDocsLenghsNoStem(docsLenghs);
-    }
-
-    private void bringRankerNumOfDocs() {
-        ranker.setNumOfDocs(getIndexedDocNumber());
+    private void bringRankerAllDocs() {
+        HashMap<String, document> docsHash = new HashMap();
+        for (document doc:docList){
+            if(doc!=null && doc.getDocumentID()!=null)
+            docsHash.put(doc.getDocumentID(),doc);
+        }
+        ranker.setDocs(docsHash);
     }
 
     private void saveDocsLenghsForRank(document currDoc) {
@@ -166,14 +166,14 @@ public class Indexer {
         if (dicDoc == null || dicDoc.size() == 0)
             return;
         int numOfWordsAtCurrDoc = 0;
-        Set<String> keys = dictionaryPosting.keySet();
+        Set<String> keys = dicDoc.keySet();
         for (String term : keys) {
             int[] termValues = dicDoc.get(term);
             if (termValues == null)
                 continue;
             numOfWordsAtCurrDoc += termValues[0];
         }
-        docsLenghs.put(currDoc.getDocumentID(),numOfWordsAtCurrDoc);
+        currDoc.setDocLength(numOfWordsAtCurrDoc);
     }
 
     private void saveAndDeleteCitiesPosition(HashMap<String, String[]> dictionaryCities, String pathToCreate) {

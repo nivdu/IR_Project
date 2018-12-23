@@ -32,6 +32,8 @@ public class Searcher {
         Set<String> keys = queryTermsTF.keySet();
         //foreach word in query
         for (String term : keys) {
+            if(!dictionaryPosting.containsKey(term))
+                continue;
             String[] dfTfPointer = dictionaryPosting.get(term);
             String pointerToPosting = dfTfPointer[2];
             long pointer = Long.valueOf(pointerToPosting).longValue();
@@ -63,7 +65,7 @@ public class Searcher {
                 e.printStackTrace();
             }
         }
-        ranker.RankQueryDocs(listOfWords, allRelevantDocsInPosting);
+        ranker.RankQueryDocs(listOfWords, allRelevantDocsInPosting);//if query like niv and loren (the campus dont contain it) this will return null. todo handle it
         return null;
     }
 
@@ -102,7 +104,6 @@ public class Searcher {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
         }
         return docsInCities;
     }
