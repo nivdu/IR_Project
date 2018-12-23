@@ -18,7 +18,7 @@ public class Ranker {
     public Ranker(boolean toStem){
         this.toStem = toStem;
         docs=null;
-        avrLengh = calculateAverageOfDocsLengths();
+        avrLengh = 0;
         k=0;
         b=0;
     }
@@ -45,10 +45,11 @@ public class Ranker {
     public HashMap<String,Double> RankQueryDocs(ArrayList<QueryWord> wordsFromQuery, HashSet<String> docsID){
         if(wordsFromQuery==null || docsID == null)
             return null;
+        avrLengh = calculateAverageOfDocsLengths();
         ArrayList<HashMap<String,Double>> docsRanks = new ArrayList<>();
         docsRanks.add(inTitleCalc(wordsFromQuery, docsID));
         docsRanks.add(BM25(wordsFromQuery, docsID));
-        docsRanks.add(publishDataRank(docsID));
+        try { docsRanks.add(publishDataRank(docsID)); } catch (Exception e){}
         return combineArrayByWights(docsRanks);
     }
 

@@ -93,7 +93,11 @@ public class Parse {
         }
         String city = doc2Parse.getCity();
         //locations in the doc of appearances of the cities from tags , String - city name, ArrayList - locations indexes
+        long Stime = System.currentTimeMillis();
         createDocDate(doc2Parse);
+        long Ftime = System.currentTimeMillis();
+        System.out.println("docdatecreate= " + (Ftime-Stime));
+
         HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc = new HashMap<>();
         if (city!=null && !city.equals("")) {
             ArrayList<Integer> locationArray = new ArrayList<>();
@@ -144,7 +148,7 @@ public class Parse {
         String date = doc2Parse.getPublishDate();
         String[] dateByParts;
         String Syear = null, Smonth = null, Sday = null;
-        if (date != null) {
+        if (date != null && !date.equals("")) {
             dateByParts = date.split(" ");
             //if legal date
             if (dateByParts != null && dateByParts.length == 3) {
@@ -164,6 +168,7 @@ public class Parse {
                     dateByPartsInt[1] = Integer.parseInt(Smonth);
                     dateByPartsInt[2] = Integer.parseInt(Sday);
                     doc2Parse.setDocSplitDate(dateByPartsInt);
+                    doc2Parse.setPublishDate("");
                 }
             }
         }
