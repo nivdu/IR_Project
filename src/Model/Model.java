@@ -270,7 +270,7 @@ public class Model {
         if(!checkIfDirectoryWithOrWithoutStemExist(toStem, pathTo))
             return false;
         ReadFile readfile = new ReadFile(pathQueryFile);
-        ArrayList<Query> queriesArr = readfile.readQueryFile(pathQueryFile);
+            ArrayList<Query> queriesArr = readfile.readQueryFile(pathQueryFile);
         Parse parse1 = new Parse(toStem, pathFrom);
         HashMap<String,document> docsHash = new HashMap<>();
         try {

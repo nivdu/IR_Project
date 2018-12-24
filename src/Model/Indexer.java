@@ -651,9 +651,10 @@ public class Indexer {
         File fileTo = new File(pathTo);
         File[] filesInPathTo = fileTo.listFiles();
         for (File file : filesInPathTo) {
-            if (file.isDirectory() && file.listFiles().length > 0)
+            if (file.isDirectory() && (file.getName().equals("WithoutStemming") || file.getName().equals("WithStemming")) && file.listFiles().length > 0)
                 recDelete(file.listFiles());
-            file.delete();
+            if(file.isDirectory() && (file.getName().equals("WithoutStemming") || file.getName().equals("WithStemming")))
+               file.delete();
         }
         System.gc();
         return true;
