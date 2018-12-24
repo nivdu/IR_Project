@@ -184,7 +184,11 @@ public class Model {
         Parse parse1 = new Parse(toStem, pathFrom);
         HashMap<String,document> docsHash = new HashMap<>();
         try {
-            FileInputStream fis = new FileInputStream(pathTo);
+            FileInputStream fis;
+            if(toStem)
+                fis = new FileInputStream(pathTo + "/WithStemming/docsData.txt");
+            else
+                fis = new FileInputStream(pathTo + "/WithoutStemming/docsData.txt");
             ObjectInputStream objIS = new ObjectInputStream(fis);
             docsHash =(HashMap) objIS.readObject();
             objIS.close();

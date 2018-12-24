@@ -160,6 +160,8 @@ public class Ranker {
         for (QueryWord Qword : wordsFromQuery) {
             rankOfDocQuery = 0;
             HashMap<String, int[]> docsOfWord = Qword.getDocsOfWord();
+            if(docsOfWord==null || docsOfWord.size()==0)
+                continue;
             //foreach doc
             Set<String> keys = docsOfWord.keySet();
             for (String docID : keys) {

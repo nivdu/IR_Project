@@ -177,6 +177,6 @@ public class View {
 
     @FXML
     private void RunQuery(ActionEvent event) throws IOException {
-        controller.RunQuery(queryText.getText(),stemming.isSelected(), pathTo.getText());
+        controller.RunQuery(queryText.getText(),stemming.isSelected(), pathTo.getText(), pathFrom.getText());
     }
 }
