@@ -176,7 +176,7 @@ public class Model {
      * @param query
      * @return
      */
-    public boolean runQuery(String query,boolean toStem, String pathTo, String pathFrom){
+    public boolean runQuery(String query,boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen){
 //        int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
         //check the inserted path from.
         if(!checkIfLegalPaths(pathFrom,pathTo))

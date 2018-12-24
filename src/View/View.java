@@ -79,7 +79,7 @@ public class View {
             BrowseTo.setDisable(false);
             languages.setDisable(false);
             setLanguages();
-            setCities();
+//            setCities();
         }
         else {
             pathFrom.setDisable(false);
