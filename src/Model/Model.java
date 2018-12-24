@@ -192,11 +192,11 @@ public class Model {
      * @return
      */
 
-    public boolean runQuery(String query,boolean toStem, String pathTo){
+    public boolean runQuery(String query,boolean toStem, String pathTo, List<String> citiesChosen){
 //        int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
 
         searcher = new Searcher(parse, ranker);
-        List<String[]> list = searcher.runQuery(query, toStem, pathTo,null);//todo maybe object of queryAns
+        List<String[]> list = searcher.runQuery(query, toStem, pathTo,citiesChosen);//todo maybe object of queryAns
         return false;
     }
 
@@ -205,4 +205,7 @@ public class Model {
     }
 
 
+    public HashSet<String> setCities() {
+        return searcher.setCities();
+    }
 }
