@@ -9,9 +9,8 @@ import java.util.regex.Pattern;
 public class Indexer {
 
 
-//    private ArrayList<document> docList;
-//list of all the documents
-    HashMap<String, document> docsHash = new HashMap();
+    //hashmap of all the documents
+    private HashMap<String, document> docsHash;
     //readFile class
     private ReadFile readFile;
     //parse Class
@@ -26,18 +25,15 @@ public class Indexer {
     private String pathTo;
     private int filesNumber;
     private int numberOfUniqueTerms;
-    private Ranker ranker;
     /**
      * Constructor
      */
-    Indexer(String pathFrom, String pathTo, Parse parse, Ranker ranker) {
+    Indexer(String pathFrom, String pathTo, Parse parse) {
         this.numberOfUniqueTerms = 0;
         this.filesNumber=0;
         this.filesPostedCounter = 0;
         readFile = new ReadFile(pathFrom);
         this.parse = parse;
-        this.ranker = ranker;
-//        docList = new ArrayList<>();
         docsHash = new HashMap<>();
         dictionaryPosting = new HashMap<>();
         tempPostingCounter = 0;
@@ -156,7 +152,6 @@ public class Indexer {
                 saveDocsLenghsForRank(currDoc);
                 Ftime = System.currentTimeMillis();
                 System.out.println("docslengh= " + (Ftime-Stime));
-
                 combineDicDocAndDictionary(currDoc);
                 combineCitiesFromDoc(currDoc);
                 currDoc.removeDic();

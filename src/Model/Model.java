@@ -33,7 +33,7 @@ public class Model {
         if(!checkIfLegalPaths(pathFrom,pathTo))
             return false;
         parse = new Parse(toStem, pathFrom);
-        indexer = new Indexer(pathFrom,pathTo, parse, ranker);
+        indexer = new Indexer(pathFrom,pathTo, parse);
         long Stime = System.currentTimeMillis();
         boolean succGenerate=indexer.createPostingAndDic(toStem);
         long Ftime = System.currentTimeMillis();
@@ -253,5 +253,4 @@ public class Model {
         }
         return true;
     }
-
 }
