@@ -13,6 +13,7 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
@@ -208,5 +209,13 @@ public class View {
             }
         }
         controller.RunQuery(queryText.getText(),stemming.isSelected(), pathTo.getText(), pathFrom.getText(), citiesFromViewList, semantic.isSelected());
+    }
+
+    public void getEntities(ActionEvent event){
+//        HashMap<String,Double> entities = controller.getEntities(docID,pathTo,stemming.isSelected());
+        //todo ******take the first five entities only!!****
+        //todo the function - show the five entities in another fxml
+
+
     }
 }

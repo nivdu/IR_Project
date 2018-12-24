@@ -183,6 +183,7 @@ public class Model {
      * @param query
      * @return
      */
+
     public boolean runQuery(String query,boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic){
 //        int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
         //check the inserted path from.
@@ -318,4 +319,9 @@ public class Model {
     public HashSet<String> setCities() {
         return searcher.setCities();
     }
+
+    public HashMap<String,Double> getEntities(String docID, String pathTo, boolean toStem){
+        return ranker.getEntities(docID,pathTo,toStem);
+    }
+
 }

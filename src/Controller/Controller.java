@@ -3,6 +3,7 @@ package Controller;
 import Model.Model;
 import javafx.scene.control.Alert;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
@@ -27,11 +28,16 @@ public class Controller {
 
     public HashSet<String> languages(){return model.languages();}
 
+
     public void RunQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic) {
         model.runQuery(query, toStem,pathTo, pathFrom, citiesChosen, semantic);
     }
 
     public HashSet<String> setCities() {
         return model.setCities();
+    }
+
+    public HashMap<String,Double> getEntities(String docID, String pathTo, boolean toStem){
+        return model.getEntities(docID,pathTo,toStem);
     }
 }
