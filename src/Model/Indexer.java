@@ -650,7 +650,6 @@ public class Indexer {
     public boolean reset() {
         File fileTo = new File(pathTo);
         File[] filesInPathTo = fileTo.listFiles();
-        boolean succDelete = false;
         for (File file : filesInPathTo) {
             if (file.isDirectory() && file.listFiles().length > 0)
                 recDelete(file.listFiles());

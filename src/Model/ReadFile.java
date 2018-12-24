@@ -55,8 +55,8 @@ public class ReadFile {
                     continue;
                 if (line.length() >= 14 && line.substring(0, 14).equals("<num> Number: ")) {
                     queryNumber = line.substring(14);//todo check if 14
-                    queryNumber = queryNumber.replace("\n", "");//todo add replace " " by ""
-                    queryNumber = queryNumber.replace(" ", "");//todo add replace " " by ""
+                    queryNumber = queryNumber.replace("\n", "");
+                    queryNumber = queryNumber.replace(" ", "");
                     continue;
                 }
                 if (line.length() >= 7 && line.substring(0, 7).equals("<title>")) {

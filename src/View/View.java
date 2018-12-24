@@ -137,7 +137,10 @@ public class View {
             display.setDisable(true);
             load.setDisable(true);
             reset.setDisable(true);
+            runQuery.setDisable(true);
+            chooseFile.setDisable(true);
             languages.setDisable(true);
+            semantic.setDisable(true);
         }
         else{
             showAlert(Alert.AlertType.ERROR, "RESET","Reset Failed!");
