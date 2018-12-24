@@ -192,5 +192,11 @@ public class Searcher {
     }
 
 
+    public HashSet<String> setCities() {//todo function
+        HashSet<String> cities = new HashSet<>();
 
+
+
+        return  cities;
+    }
 }
