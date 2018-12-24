@@ -1,9 +1,10 @@
 package Model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class document {
+public class document implements Serializable {
     private String documentID;
     private int maxTf;
     private int numOfUniqueWords;

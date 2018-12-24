@@ -15,12 +15,11 @@ public class Searcher {
         this.dictionaryPosting = new HashMap<>();
     }
 
-    public List<String[]> runQuery(String query, boolean toStem, String pathTo, List<String> chosenCities) {
+    public List<String[]> runQuery(Query query, boolean toStem, String pathTo, List<String> chosenCities) {
         HashSet<String> citiesDocs = docsOfCities(chosenCities,toStem,pathTo);
-        Query queryDoc = new Query(query, "111");
         ArrayList<QueryWord> listOfWords = new ArrayList<>();
-        queryDoc.setQuerySplited(query.split(" "));//todo
-        HashMap<String, int[]> queryTermsTF = parse.parseMainFunc(null, queryDoc);
+        query.setQuerySplited(query.getData().split(" "));//todo
+        HashMap<String, int[]> queryTermsTF = parse.parseMainFunc(null, query);
         HashSet<String> allRelevantDocsInPosting = new HashSet<>();
         boolean isLoad = loadDictionaryFromDisk(toStem, pathTo);
         if (!isLoad)

@@ -1,8 +1,9 @@
 package Model;
 
 import javafx.scene.control.Alert;
+
+import java.io.*;
 import java.util.*;
-import java.io.File;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.Queue;
@@ -29,26 +30,10 @@ public class Model {
 
     public boolean generateInvertedIndex(String pathFrom,String pathTo,boolean toStem){
         //check the inserted path from.
-        ranker = new Ranker(toStem);
-        File checkStop_Words = new File(pathFrom + "//stop_words.txt");
-        if(!checkStop_Words.exists()) {
-            Alert chooseFile = new Alert(Alert.AlertType.ERROR);
-            chooseFile.setHeaderText("Error with path from");
-            chooseFile.setContentText("The folder in the path from you selected does not contain a text file named stop_words, please choose a new path and try again. (:");
-            chooseFile.show();
+        if(!checkIfLegalPaths(pathFrom,pathTo))
             return false;
-        }
-        //check the inserted path to.
-        File checkPathTo = new File(pathTo);
-        if(!checkPathTo.exists()) {
-            Alert chooseFile = new Alert(Alert.AlertType.ERROR);
-            chooseFile.setHeaderText("Error with path to");
-            chooseFile.setContentText("The path you selected to save at is not legal or not a path of directory. please choose another one before use the commit button :)");
-            chooseFile.show();
-            return false;
-        }
         parse = new Parse(toStem, pathFrom);
-        indexer = new Indexer(pathFrom,pathTo, parse, ranker);
+        indexer = new Indexer(pathFrom,pathTo, parse);
         long Stime = System.currentTimeMillis();
         boolean succGenerate=indexer.createPostingAndDic(toStem);
         long Ftime = System.currentTimeMillis();
@@ -191,20 +176,87 @@ public class Model {
      * @param query
      * @return
      */
-
-    public boolean runQuery(String query,boolean toStem, String pathTo, List<String> citiesChosen){
+    public boolean runQuery(String query,boolean toStem, String pathTo, String pathFrom){
 //        int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
-
-        searcher = new Searcher(parse, ranker);
-        List<String[]> list = searcher.runQuery(query, toStem, pathTo,citiesChosen);//todo maybe object of queryAns
+        //check the inserted path from.
+        if(!checkIfLegalPaths(pathFrom,pathTo))
+            return false;
+        Parse parse1 = new Parse(toStem, pathFrom);
+        HashMap<String,document> docsHash = new HashMap<>();
+        try {
+            FileInputStream fis;
+            if(toStem)
+                fis = new FileInputStream(pathTo + "/WithStemming/docsData.txt");
+            else
+                fis = new FileInputStream(pathTo + "/WithoutStemming/docsData.txt");
+            ObjectInputStream objIS = new ObjectInputStream(fis);
+            docsHash =(HashMap) objIS.readObject();
+            objIS.close();
+            fis.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("problem in writeDocsDataToDisk function (Model");
+        } catch (IOException e) {
+            System.out.println("problem in writeDocsDataToDisk function (Model");
+        } catch (ClassNotFoundException e) {
+            System.out.println("problem in writeDocsDataToDisk function (Model");
+        }
+        ranker = new Ranker(docsHash);
+        searcher = new Searcher(parse1, ranker);
+        Query currQuery = new Query(query, "111");
+        List<String[]> list = searcher.runQuery(currQuery, toStem, pathTo,null);//todo maybe object of queryAns
         return false;
     }
 
-    public boolean runQueryFile(String pathQueryFile){
-        return false;
+    public boolean runQueryFile(String pathQueryFile, String pathFrom, String pathTo){
+        if(!checkIfLegalPaths(pathFrom,pathTo))
+            return false;
+        ReadFile readfile = new ReadFile(pathQueryFile);
+        ArrayList<Query> queriesArr = readfile.readQueryFile();
+        Parse parse1 = new Parse(toStem, pathFrom);
+        HashMap<String,document> docsHash = new HashMap<>();
+        try {
+            FileInputStream fis = new FileInputStream(pathTo);
+            ObjectInputStream objIS = new ObjectInputStream(fis);
+            docsHash =(HashMap) objIS.readObject();
+            objIS.close();
+            fis.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("problem in writeDocsDataToDisk function (Model");
+        } catch (IOException e) {
+            System.out.println("problem in writeDocsDataToDisk function (Model");
+        } catch (ClassNotFoundException e) {
+            System.out.println("problem in writeDocsDataToDisk function (Model");
+        }
+        ranker = new Ranker(docsHash);
+        searcher = new Searcher(parse1, ranker);
+        for (Query query:queriesArr){
+            List<String[]> list = searcher.runQuery(query, toStem, pathTo,null);//todo maybe object of queryAns
+            //todo insert into priority Q and every iteration at loop write to fileAt pathTo : queryID:docID1,docID2,....,docIDN
+            //todo do something with the list because the next loop will override it.
+        }
+        return false;//todo
     }
 
-
+    private boolean checkIfLegalPaths(String pathFrom, String pathTo) {
+        File checkStop_Words = new File(pathFrom + "//stop_words.txt");
+        if (!checkStop_Words.exists()) {
+            Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+            chooseFile.setHeaderText("Error with path from");
+            chooseFile.setContentText("The folder in the path from you selected does not contain a text file named stop_words, please choose a new path and try again. (:");
+            chooseFile.show();
+            return false;
+        }
+        //check the inserted path to.
+        File checkPathTo = new File(pathTo);
+        if (!checkPathTo.exists()) {
+            Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+            chooseFile.setHeaderText("Error with path to");
+            chooseFile.setContentText("The path you selected to save at is not legal or not a path of directory. please choose another one before use the commit button :)");
+            chooseFile.show();
+            return false;
+        }
+        return true;
+}
     public HashSet<String> setCities() {
         return searcher.setCities();
     }

@@ -198,6 +198,6 @@ public class View {
                 citiesFromViewList.add(city);
             }
         }
-        controller.RunQuery(queryText.getText(),stemming.isSelected(), pathTo.getText(),citiesFromViewList);
+        controller.RunQuery(queryText.getText(),stemming.isSelected(), pathTo.getText(), pathFrom.getText(), citiesFromViewList);
     }
 }
