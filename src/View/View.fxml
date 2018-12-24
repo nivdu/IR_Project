@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.RowConstraints?>
 
-<GridPane alignment="center" hgap="10" vgap="10" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="View.View">
+<GridPane alignment="center" hgap="10" vgap="10" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="View.View">
     <columnConstraints>
         <ColumnConstraints />
     </columnConstraints>
@@ -36,11 +36,11 @@
             <Label layoutX="206.0" layoutY="312.0" />
             <TextField fx:id="queryText" layoutX="203.0" layoutY="290.0" />
             <Label layoutX="55.0" layoutY="294.0" text="Insert query:" />
-            <Button layoutX="404.0" layoutY="287.0" mnemonicParsing="false" onAction="#RunQuery" text="run query" />
+            <Button fx:id="runQuery" disable="true" layoutX="404.0" layoutY="287.0" mnemonicParsing="false" onAction="#RunQuery" text="run query" />
             <Label layoutX="55.0" layoutY="343.0" text="Choose query file:" />
-            <Button layoutX="397.0" layoutY="336.0" mnemonicParsing="false" text="Choose File" />
+            <Button fx:id="chooseFile" disable="true" layoutX="397.0" layoutY="336.0" mnemonicParsing="false" text="Choose File" />
             <TextField layoutX="203.0" layoutY="339.0" />
-            <CheckBox layoutX="396.0" layoutY="395.0" mnemonicParsing="false" text="Semantic" />
+            <CheckBox fx:id="semantic" disable="true" layoutX="396.0" layoutY="395.0" mnemonicParsing="false" text="semantic" />
             <ListView fx:id="cities" layoutX="193.0" layoutY="378.0" prefHeight="61.0" prefWidth="172.0" />
             <Label layoutX="55.0" layoutY="400.0" text="Choose cities:" />
             </children>
