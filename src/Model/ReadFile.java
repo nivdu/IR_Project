@@ -40,26 +40,48 @@ public class ReadFile {
      * create arrayList of queries from given path of file
      * @return - array list of queries from the give file path
      */
-    public ArrayList<Query> readQueryFile() {
+    public ArrayList<Query> readQueryFile(String path) {
         ArrayList<Query> queriesFromFile = new ArrayList<>();
         String queryTitle = "";
         String queryNumber = "";
-        String wholeQueryString = file2String(corpusPath);//gonna be the query path when init the readFile for searcher/query
+        String wholeQueryString = file2String(path);//gonna be the query path when init the readFile for searcher/query
         String[] queryByLines = wholeQueryString.split("\r\n|\\\n");
+        boolean tookDesc = false;
+        boolean finish = false;
+        String desc = "";
         if (queryByLines != null && queryByLines.length > 0) {
             for (String line : queryByLines) {
                 if (line.equals("") || line.equals("\n"))
                     continue;
-                if (line.substring(0, 14).equals("<num> Number: ")) {
-                    queryNumber = line.substring(0, 14);//todo check if 14
-                    queryNumber = queryNumber.replace("\n", "");
-                }
-                if (!line.substring(0, 7).equals("<title>"))
+                if (line.length() >= 14 && line.substring(0, 14).equals("<num> Number: ")) {
+                    queryNumber = line.substring(14);//todo check if 14
+                    queryNumber = queryNumber.replace("\n", "");//todo add replace " " by ""
+                    queryNumber = queryNumber.replace(" ", "");//todo add replace " " by ""
                     continue;
-                queryTitle = line.substring(0, 8);
-                queryTitle = queryTitle.replace("\n", "");
-                queriesFromFile.add(new Query(queryTitle, queryNumber));
-                queryNumber = "";
+                }
+                if (line.length() >= 7 && line.substring(0, 7).equals("<title>")) {
+                    queryTitle = line.substring(8);
+                    queryTitle = queryTitle.replace("\n", "");
+                    continue;
+                }
+                if(line.length() >= 19 && line.substring(0,19).equals("<desc> Description:")) {
+                    tookDesc = true;
+                    continue;
+                }
+                if(line.length() >= 17 && line.substring(0,17).equals("<narr> Narrative:")) {
+                    tookDesc = false;
+                    finish = true;
+                }
+                if(tookDesc&&!finish)
+                    desc+=line.replace("\n"," ");
+                if(finish) {
+                    queriesFromFile.add(new Query(queryTitle, queryNumber, desc));
+                    queryNumber = "";
+                    desc="";
+                    queryTitle="";
+                    finish=false;
+                    tookDesc=false;
+                }
             }
         }
         return queriesFromFile;

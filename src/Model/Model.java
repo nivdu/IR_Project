@@ -184,6 +184,7 @@ public class Model {
      * @return
      */
     public boolean runQuery(String query,boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic){
+//        runQueryFile("", pathFrom,pathTo);
 //        int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
         //check the inserted path from.
         if(!checkIfLegalPaths(pathFrom,pathTo))
@@ -257,22 +258,27 @@ public class Model {
                 query = query + " " + s;
             }
         }
-        Query currQuery = new Query(query, "111");
+        Query currQuery = new Query(query, "111", null);
         List<String[]> list = searcher.runQuery(currQuery, toStem, pathTo,null);//todo maybe object of queryAns
         return false;
     }
 
     public boolean runQueryFile(String pathQueryFile, String pathFrom, String pathTo){
+//        pathQueryFile = "C:\\Users\\nivdu\\Desktop\\אחזור\\פרוייקט גוגל\\מנוע חלק ב" + "\\queries.txt";//todo need to take from the user
         if(!checkIfLegalPaths(pathFrom,pathTo))
             return false;
         if(!checkIfDirectoryWithOrWithoutStemExist(toStem, pathTo))
             return false;
         ReadFile readfile = new ReadFile(pathQueryFile);
-        ArrayList<Query> queriesArr = readfile.readQueryFile();
+        ArrayList<Query> queriesArr = readfile.readQueryFile(pathQueryFile);
         Parse parse1 = new Parse(toStem, pathFrom);
         HashMap<String,document> docsHash = new HashMap<>();
         try {
-            FileInputStream fis = new FileInputStream(pathTo);
+            FileInputStream fis;
+            if(toStem)
+                fis = new FileInputStream(pathTo + "/WithStemming/docsData.txt");
+            else
+                fis = new FileInputStream(pathTo + "/WithoutStemming/docsData.txt");
             ObjectInputStream objIS = new ObjectInputStream(fis);
             docsHash =(HashMap) objIS.readObject();
             objIS.close();

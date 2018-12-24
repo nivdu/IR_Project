@@ -4,10 +4,16 @@ public class Query {
     private String data;
     private String queryID;
     private String[] querySplited;
+    private String desc;
 
-    public Query(String data, String queryID) {
+    public Query(String data, String queryID, String description) {
         this.data = data;
-        queryID = queryID;
+        this.queryID = queryID;
+        this.desc = description;
+    }
+
+    public String getDesc() {
+        return desc;
     }
 
     public String getData() {
