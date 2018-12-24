@@ -27,8 +27,8 @@ public class Controller {
 
     public HashSet<String> languages(){return model.languages();}
 
-    public void RunQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen) {
-        model.runQuery(query, toStem,pathTo, pathFrom, citiesChosen);
+    public void RunQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic) {
+        model.runQuery(query, toStem,pathTo, pathFrom, citiesChosen, semantic);
     }
 
     public HashSet<String> setCities() {

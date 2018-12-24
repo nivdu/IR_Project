@@ -3,6 +3,9 @@ package Model;
 import javafx.scene.control.Alert;
 
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.*;
 import java.util.HashMap;
 import java.util.PriorityQueue;
@@ -127,36 +130,8 @@ public class Model {
      * @return true if the loading succeed, else retutn false
      */
     public boolean loadDictionaryFromDiskToMemory(boolean isStem, String pathTo){
-        File checkPathTo = new File(pathTo);
-        if(!checkPathTo.exists()) {
-            Alert chooseFile = new Alert(Alert.AlertType.ERROR);
-            chooseFile.setHeaderText("Error with path to");
-            chooseFile.setContentText("The path you selected is not legal or not a path of directory. please choose another one. :)");
-            chooseFile.show();
+        if(!checkIfDirectoryWithOrWithoutStemExist(isStem, pathTo))
             return false;
-        }
-        else{
-            if(isStem){
-                File withStem = new File(pathTo + "\\withStemming");
-                if(!withStem.exists()){
-                    Alert chooseFile = new Alert(Alert.AlertType.ERROR);
-                    chooseFile.setHeaderText("Error with Stemming");
-                    chooseFile.setContentText("The path you selected does not contain the withStemming directory!");
-                    chooseFile.show();
-                    return false;
-                }
-            }
-            else{
-                File withoutStem = new File(pathTo + "\\withoutStemming");
-                if(!withoutStem.exists()){
-                    Alert chooseFile = new Alert(Alert.AlertType.ERROR);
-                    chooseFile.setHeaderText("Error with Stemming");
-                    chooseFile.setContentText("The path you selected does not contain the withoutStemming directory!");
-                    chooseFile.show();
-                    return false;
-                }
-            }
-        }
         boolean bl=indexer.loadDictionaryFromDiskToMemory(isStem);
         if(bl) return true;
         else{
@@ -165,6 +140,38 @@ public class Model {
             chooseFile.show();
             return false;
         }
+    }
+
+    private boolean checkIfDirectoryWithOrWithoutStemExist(boolean isStem, String pathTo) {
+        File checkPathTo = new File(pathTo);
+        if (!checkPathTo.exists()) {
+            Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+            chooseFile.setHeaderText("Error with path to");
+            chooseFile.setContentText("The path you selected is not legal or not a path of directory. please choose another one. :)");
+            chooseFile.show();
+            return false;
+        } else {
+            if (isStem) {
+                File withStem = new File(pathTo + "\\withStemming");
+                if (!withStem.exists()) {
+                    Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+                    chooseFile.setHeaderText("Error with Stemming");
+                    chooseFile.setContentText("The path you selected does not contain the withStemming directory!");
+                    chooseFile.show();
+                    return false;
+                }
+            } else {
+                File withoutStem = new File(pathTo + "\\withoutStemming");
+                if (!withoutStem.exists()) {
+                    Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+                    chooseFile.setHeaderText("Error with Stemming");
+                    chooseFile.setContentText("The path you selected does not contain the withoutStemming directory!");
+                    chooseFile.show();
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     public HashSet<String> languages(){
@@ -176,10 +183,12 @@ public class Model {
      * @param query
      * @return
      */
-    public boolean runQuery(String query,boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen){
+    public boolean runQuery(String query,boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic){
 //        int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
         //check the inserted path from.
         if(!checkIfLegalPaths(pathFrom,pathTo))
+            return false;
+        if(!checkIfDirectoryWithOrWithoutStemExist(toStem, pathTo))
             return false;
         Parse parse1 = new Parse(toStem, pathFrom);
         HashMap<String,document> docsHash = new HashMap<>();
@@ -202,6 +211,52 @@ public class Model {
         }
         ranker = new Ranker(docsHash);
         searcher = new Searcher(parse1, ranker);
+        //if semantic checkBox have V.
+        if(semantic){
+            //call to api
+            String[] queryWords = query.split(" ");
+            LinkedList<String> queryListWords = new LinkedList<>();
+            if(queryWords.length>0) {
+                for (String word : queryWords) {
+                    URL url = null;
+                    try {
+                        url = new URL("https://api.datamuse.com/words?ml=" + word);
+                        //make connection
+                        URLConnection urlc = url.openConnection();
+                        //use post mode
+                        urlc.setDoOutput(true);
+                        urlc.setAllowUserInteraction(false);
+                        //get result
+                        BufferedReader br = new BufferedReader(new InputStreamReader(urlc.getInputStream()));
+                        String currLine = br.readLine();
+                        if (currLine != null) {
+                            String[] firstLineArr = currLine.split("\"word\":\"");
+                            for (String s : firstLineArr) {
+                                int i = 0;
+                                String currWord = "";
+                                while (s != null && i<s.length() && s.charAt(i) != '\"') {
+                                    if(Character.isLetter(s.charAt(i)))
+                                        currWord += s.charAt(i);
+                                    i++;
+                                }
+                                if (currWord != null && currWord.length() > 0) {
+                                    queryListWords.add(currWord);
+                                    if(queryListWords.size()%2==0)
+                                        break;
+                                }
+                            }
+                        }
+                    } catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            for (String s:queryListWords){
+                query = query + " " + s;
+            }
+        }
         Query currQuery = new Query(query, "111");
         List<String[]> list = searcher.runQuery(currQuery, toStem, pathTo,null);//todo maybe object of queryAns
         return false;
@@ -209,6 +264,8 @@ public class Model {
 
     public boolean runQueryFile(String pathQueryFile, String pathFrom, String pathTo){
         if(!checkIfLegalPaths(pathFrom,pathTo))
+            return false;
+        if(!checkIfDirectoryWithOrWithoutStemExist(toStem, pathTo))
             return false;
         ReadFile readfile = new ReadFile(pathQueryFile);
         ArrayList<Query> queriesArr = readfile.readQueryFile();
@@ -256,7 +313,8 @@ public class Model {
             return false;
         }
         return true;
-}
+    }
+
     public HashSet<String> setCities() {
         return searcher.setCities();
     }

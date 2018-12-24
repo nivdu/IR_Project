@@ -44,7 +44,7 @@ public class Indexer {
 
 
     public boolean createPostingAndDic(boolean toStem) {
-        String pathToCreate = "";
+        String pathToCreate;
         if (toStem) {
             pathToCreate = pathTo + "\\WithStemming";
         } else pathToCreate = pathTo + "\\WithoutStemming";

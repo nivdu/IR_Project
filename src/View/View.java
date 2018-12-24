@@ -39,6 +39,12 @@ public class View {
     private Button reset;
     @FXML
     private ListView<String> cities;
+    @FXML
+    private CheckBox semantic;
+    @FXML
+    private Button runQuery;
+    @FXML
+    private Button chooseFile;
 
 
     private Controller controller = new Controller();
@@ -70,6 +76,9 @@ public class View {
         boolean stem = stemming.isSelected();
         boolean isSucceed = controller.commit(from,to,stem);
         if(isSucceed) {
+            chooseFile.setDisable(false);
+            semantic.setDisable(false);
+            runQuery.setDisable(false);
             reset.setDisable(false);
             load.setDisable(false);
             display.setDisable(false);
@@ -191,13 +200,13 @@ public class View {
 
     @FXML
     private void RunQuery(ActionEvent event) throws IOException {
-        ObservableList<String> citisFromView = cities.getItems();
+        ObservableList<String> citiesFromView = cities.getItems();
         List<String> citiesFromViewList = new ArrayList<>();
-        if(citisFromView!= null){
-            for (String city:citisFromView) {
+        if(citiesFromView!= null){
+            for (String city:citiesFromView) {
                 citiesFromViewList.add(city);
             }
         }
-        controller.RunQuery(queryText.getText(),stemming.isSelected(), pathTo.getText(), pathFrom.getText(), citiesFromViewList);
+        controller.RunQuery(queryText.getText(),stemming.isSelected(), pathTo.getText(), pathFrom.getText(), citiesFromViewList, semantic.isSelected());
     }
 }
