@@ -256,5 +256,8 @@ public class Model {
             return false;
         }
         return true;
+}
+    public HashSet<String> setCities() {
+        return searcher.setCities();
     }
 }

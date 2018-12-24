@@ -27,7 +27,11 @@ public class Controller {
 
     public HashSet<String> languages(){return model.languages();}
 
-    public void RunQuery(String query, boolean toStem, String pathTo, String pathFrom) {
-        model.runQuery(query, toStem, pathTo, pathFrom);
+    public void RunQuery(String query, boolean toStem, String pathTo, List<String> citiesChosen) {
+        model.runQuery(query, toStem,pathTo, citiesChosen);
+    }
+
+    public HashSet<String> setCities() {
+        return model.setCities();
     }
 }

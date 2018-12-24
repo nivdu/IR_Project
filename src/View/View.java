@@ -4,17 +4,15 @@ import Controller.Controller;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -39,6 +37,9 @@ public class View {
     private Button load;
     @FXML
     private Button reset;
+    @FXML
+    private ListView<String> cities;
+
 
     private Controller controller = new Controller();
 
@@ -78,6 +79,7 @@ public class View {
             BrowseTo.setDisable(false);
             languages.setDisable(false);
             setLanguages();
+            setCities();
         }
         else {
             pathFrom.setDisable(false);
@@ -175,8 +177,27 @@ public class View {
         languages.setItems(obList);
     }
 
+    private void setCities(){
+        HashSet<String> listOfCities = controller.setCities();
+        ObservableList<String> citiesObservable;
+        citiesObservable = FXCollections.observableArrayList();
+        for (String city: listOfCities) {
+            citiesObservable.add(city);
+        }
+        cities.setItems(citiesObservable);
+        cities.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+    }
+
+
     @FXML
     private void RunQuery(ActionEvent event) throws IOException {
-        controller.RunQuery(queryText.getText(),stemming.isSelected(), pathTo.getText(), pathFrom.getText());
+        ObservableList<String> citisFromView = cities.getItems();
+        List<String> citiesFromViewList = new ArrayList<>();
+        if(citisFromView!= null){
+            for (String city:citisFromView) {
+                citiesFromViewList.add(city);
+            }
+        }
+        controller.RunQuery(queryText.getText(),stemming.isSelected(), pathTo.getText(), pathFrom.getText(), citiesFromViewList);
     }
 }
