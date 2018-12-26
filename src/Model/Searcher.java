@@ -65,9 +65,12 @@ public class Searcher {
             }
         }
         HashMap<String,Double> funcreturn;
-        
-        Query queryDesc = new Query(query.getDesc(), "desc", "desc");
-        HashMap<String,Double> funcreturn = func1(queryDesc, toStem, pathTo, chosenCities);
+        if(query.getDesc()==null)
+            funcreturn=null;
+        else {
+            Query queryDesc = new Query(query.getDesc(), "desc", "desc");
+            funcreturn = func1(queryDesc, toStem, pathTo, chosenCities);
+        }
         HashMap<String,Double> test = ranker.RankQueryDocs(listOfWords, allRelevantDocsInPosting, funcreturn);//if query like niv and loren (the campus dont contain it) this will return null. todo handle it
         System.out.println("test");//todo
         return null;

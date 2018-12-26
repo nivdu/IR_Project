@@ -18,12 +18,8 @@ public class Ranker {
     public Ranker(HashMap<String,document> docs){
         this.docs=docs;
         avrLengh = 0;
-        k=0;
-        b=0;
-    }
-
-    public void setDocs(HashMap<String, document> docsHash) {
-        this.docs = docsHash;
+        k=1.5;
+        b=0.75;
     }
 
     private double calculateAverageOfDocsLengths() {
@@ -41,15 +37,66 @@ public class Ranker {
         return avrLengh;
     }
 
-    public HashMap<String,Double> RankQueryDocs(ArrayList<QueryWord> wordsFromQuery, HashSet<String> docsID){
+    public HashMap<String,Double> RankQueryDocs(ArrayList<QueryWord> wordsFromQuery, HashSet<String> docsID, HashMap<String,Double> queryDesc){
         if(wordsFromQuery==null || docsID == null)
             return null;
         avrLengh = calculateAverageOfDocsLengths();
         ArrayList<HashMap<String,Double>> docsRanks = new ArrayList<>();
+        ArrayList<HashMap<String,Double>> docsRanks2Return = new ArrayList<>();
+
+        //run all the rank functions
         docsRanks.add(inTitleCalc(wordsFromQuery, docsID));
         docsRanks.add(BM25(wordsFromQuery, docsID));
         try { docsRanks.add(publishDataRank(docsID)); } catch (Exception e){}
-        return combineArrayByWights(docsRanks);
+        if(queryDesc!=null && queryDesc.size()>0)
+            docsRanks.add(queryDesc);//function ranked by description
+        //sort and normalize docs ranks
+        for (HashMap hm:docsRanks){
+            docsRanks2Return.add(sortHashMapByValues(hm));
+        }
+        for (HashMap<String,Double> hm:docsRanks2Return) {
+            Set<String> keys = hm.keySet();
+            int order = 0;
+            double temp2 = 0;
+            for (String currDoc : keys) {
+                double temp = hm.get(currDoc);
+                if (temp != temp2)
+                    order++;
+                if (order == 0)
+                    order++;
+                hm.put(currDoc, (1 / (double) order));
+            }
+        }
+
+        return combineArrayByWights(docsRanks2Return);
+    }
+
+    public LinkedHashMap<String, Double> sortHashMapByValues(
+            HashMap<String, Double> passedMap) {
+        List<String> mapKeys = new ArrayList<>(passedMap.keySet());
+        List<Double> mapValues = new ArrayList<>(passedMap.values());
+        Collections.sort(mapValues);
+        Collections.sort(mapKeys);
+
+        LinkedHashMap<String, Double> sortedMap =
+                new LinkedHashMap<>();
+
+        Iterator<Double> valueIt = mapValues.iterator();
+        while (valueIt.hasNext()) {
+            Double val = valueIt.next();
+            Iterator<String> keyIt = mapKeys.iterator();
+            while (keyIt.hasNext()) {
+                String key = keyIt.next();
+                Double comp1 = passedMap.get(key);
+                Double comp2 = val;
+                if (comp1.equals(comp2)) {
+                    keyIt.remove();
+                    sortedMap.put(key, val);
+                    break;
+                }
+            }
+        }
+        return sortedMap;
     }
 
     /**
@@ -108,10 +155,11 @@ public class Ranker {
         int i = 0;
         double[] weights = new double[docsRanks.size()];
         //todo from here
-        weights[0] = 0.1;//bm25
+        weights[0] = 1;//bm25
         weights[1] = 0.1;//title
         weights[2] = 0.1;//date
-//        weights[3] = 0.1;
+        if(weights.length==4)
+            weights[3] = 0.1;//by description
 //        weights[4] = 0.1;
         // todo until here
         for (HashMap<String,Double> currDocsRank: docsRanks) {
@@ -123,7 +171,7 @@ public class Ranker {
             }
             i++;
         }
-        return combinedDocsRank;
+        return sortHashMapByValues(combinedDocsRank);
     }
 
     /**
