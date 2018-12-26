@@ -64,23 +64,20 @@ public class Indexer {
                         for (String city : currDocCities) {
                             citiesFromTags.add(city);
                         }
-                        parse.setCitiesFromTags(citiesFromTags);
                 }
+                parse.setCitiesFromTags(citiesFromTags);//todo check cities
                 for (String path : allFilesPaths) {
                     ArrayList<document> docsToParse = readFile.spiltFileIntoSeparateDocs2(path);
-                    long stimr = System.currentTimeMillis();
                     parseFile(docsToParse, pathToCreate);
-                    System.out.println(stimr-System.currentTimeMillis());
                 }
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/Postings", pathToCreate + "/Dictionaries", true);
                 unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/citiesPosting", pathToCreate + "/Dictionaries", false);
-//                bringRankerAllDocs();
                 writeDocsDataToDisk(pathToCreate + "/docsData.txt");
                 dictionaryPosting.clear();
             } catch (SecurityException se) {
-                return false;
+                System.out.println("problem line 78 indexer");
             } catch (Exception e) {
-                return false;
+                System.out.println("problem line 80 indexer");
             }
         }
         return true;
@@ -143,18 +140,12 @@ public class Indexer {
     public void parseFile(ArrayList<document> docsToParse, String pathToCreate) {
         for (document currentDoc : docsToParse) {
             if (currentDoc != null){
-                long Stime = System.currentTimeMillis();
                 document currDoc = parse.parseDoc(currentDoc);
-                long Ftime = System.currentTimeMillis();
-                System.out.println("parsetime= " + (Ftime-Stime));
                 if(currDoc==null) {
-                    System.out.println("line 126 indexer");//todo delete this and all the rest prints
+                    System.out.println("line 146 indexer");//todo delete this and all the rest prints
                 }
                 saveEntities(currDoc,pathToCreate);
-                Stime = System.currentTimeMillis();
                 saveDocsLenghsForRank(currDoc);
-                Ftime = System.currentTimeMillis();
-                System.out.println("docslengh= " + (Ftime-Stime));
                 combineDicDocAndDictionary(currDoc);
                 combineCitiesFromDoc(currDoc);
                 currDoc.removeDic();
@@ -165,8 +156,6 @@ public class Indexer {
         }
         filesPostedCounter++;
         if (filesPostedCounter%8==0 || filesPostedCounter == filesNumber) {
-            if(filesPostedCounter==136*8)
-                System.out.println("stop");
             saveAndDeletePosition(dictionaryPosting, pathToCreate);
             saveAndDeleteCitiesPosition(dictionaryCities, pathToCreate);
             tempPostingCounter++;
@@ -180,8 +169,10 @@ public class Indexer {
      */
     private void saveEntities(document currDoc,String pathToCreate) {
         HashMap<String, Integer> allEntities = findEntities(currDoc);
-        if (allEntities == null)
+        if (allEntities == null) {
             System.out.println("line 182 Indexer");
+            return;
+        }
         if (allEntities.size() <= 0)
             return;
         try {
@@ -196,11 +187,12 @@ public class Indexer {
             for (String entitiy: keys) {
                 lineEntity+=entitiy + "," +allEntities.get(entitiy)+";";//todo maybe change shirshur
             }
-            bw.write(lineEntity+"\n");
+            lineEntity+="\n";
+            bw.write(lineEntity);
             bw.flush();
             bw.close();
             currDoc.setPointerToEntities(sumOfPointersInEntities);
-            sumOfPointersInEntities+=lineEntity.getBytes().length+1;//todo naybe add another 1 to enter line
+            sumOfPointersInEntities+=lineEntity.getBytes().length;//todo naybe add another 1 to enter line
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -471,9 +463,7 @@ public class Indexer {
         if(bwOfDic == null)
             System.out.println("balagan");
         long locationIndex = 0;
-        int currDir = 0;
         File unitedPosting;
-//        File docsFile;
         //create file for each temp posting and insert to the temp posting array
         Comparator<String[]> compareLexicographically = new Comparator<String[]>() {
             //letters first (ignoring differences in case), digits are second and marks (like &%^*%) are the last in priority.
@@ -492,9 +482,6 @@ public class Indexer {
             unitedPosting = new File(pathToCreate + "/unitedPosting.txt");
             unitedPosting.createNewFile();
             BufferedWriter bw = new BufferedWriter(new FileWriter(unitedPosting));//write to the correct united posting txt
-//            docsFile = new File(pathToCreate + "/docsFile.txt");
-//            docsFile.createNewFile();
-//            BufferedWriter bwDocsFile = new BufferedWriter(new FileWriter(docsFile));//write to the correct united posting txt
             int i = 0;
             for (File f : tempPostingFiles) {
                 br[i] = new BufferedReader(new FileReader(f));
@@ -526,11 +513,9 @@ public class Indexer {
                     bwOfDic.write(term + ":" + valueOfTerm[0] + ";" + valueOfTerm[2] + ";" + locationIndex + "\n");
                     //write to combined posting file
                     bw.write(insertToOnePostDisk);
-                    //write to docs File
-//                    bwDocsFile.write();//todo
                 }
                 else{
-                    String[] city = dictionaryCities.get(term);
+                    //String[] city = dictionaryCities.get(term);
                     String cityCoinCiv = ApiCity(term);
                     bwOfDic.write(term + ":" + cityCoinCiv + locationIndex + "\n");
                     bw.write(insertToOnePostDisk);
@@ -543,7 +528,7 @@ public class Indexer {
             bw.flush();
             bw.close();
         } catch (Exception e) {
-            System.out.println("boom");
+            System.out.println("line 532 indexer (problem in merge temp postings");
         }
     }
 

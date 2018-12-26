@@ -86,18 +86,14 @@ public class Parse {
         months.put("DEC", "12");
     }
 
-    public document parseDoc(document doc2Parse) {//String[] splitedDoc, String city, String docId, HashSet<String> citiesFromTags, String docTitle
+    public document parseDoc(document doc2Parse) {
         if(doc2Parse==null) {//todo delete this if
             System.out.println("lama ani null parseDoc at Parse func");
             return null;
         }
         String city = doc2Parse.getCity();
         //locations in the doc of appearances of the cities from tags , String - city name, ArrayList - locations indexes
-        long Stime = System.currentTimeMillis();
         createDocDate(doc2Parse);
-        long Ftime = System.currentTimeMillis();
-        System.out.println("docdatecreate= " + (Ftime-Stime));
-
         HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc = new HashMap<>();
         if (city!=null && !city.equals("")) {
             ArrayList<Integer> locationArray = new ArrayList<>();
@@ -106,7 +102,8 @@ public class Parse {
         }
         doc2Parse.setLocationOfCitiesAtCurrDoc(locationOfCitiesAtCurrDoc);
         //temporary dictionary to find the max tf in current doc.
-        HashMap<String, int[]> dicDoc = new HashMap<>();
+        HashMap<String, int[]> dicDoc;
+        //in case of title
         if(doc2Parse.getDocTitle()!=null && !doc2Parse.getDocTitle().equals("")) {
             document documentOfTitle = new document();
             documentOfTitle.setLocationOfCitiesAtCurrDoc(locationOfCitiesAtCurrDoc);
@@ -129,8 +126,6 @@ public class Parse {
                 doc2Parse.setLocationOfCitiesAtCurrDoc(documentOfTitle.getLocationOfCitiesAtCurrDoc());
             }
         }
-
-//        splitedDoc = splitHyphenAndNumberWordWithoutSpace(splitedDoc);
         //parse the full split document and return the dicDoc dictionary contain the terms from it.
         dicDoc = parseMainFunc(doc2Parse, null);
         doc2Parse.setDicDoc(dicDoc);
@@ -140,7 +135,7 @@ public class Parse {
         int maxUnique = getMaxUnique(dicDoc);
         doc2Parse.setNumOfUniqueWords(maxUnique);
         if(doc2Parse==null)
-            System.out.println("hi");
+            System.out.println("line 138 parse");
         return doc2Parse;
     }
 
@@ -173,7 +168,7 @@ public class Parse {
             }
         }
     }
-
+//todo change the eara
     /**
      * parse main function - parse the full split document and return the dicDoc dictionary contain the terms from it.
 //     * @param splitedDoc - the current doc split to tokens
@@ -185,7 +180,7 @@ public class Parse {
 
     public HashMap<String, int[]> parseMainFunc(document doc2Parse, Query query2Parse){//String[] splitedDoc, HashSet<String> citiesFromTags, HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc, HashMap<String, int[]> dicDoc) {
         if(doc2Parse==null && query2Parse==null) {
-            System.out.println("why line 148");
+            System.out.println("parse line 148");
             return null;
         }
         HashMap<String, int[]> dicDoc = new HashMap<>();
@@ -194,15 +189,14 @@ public class Parse {
         if(doc2Parse==null && query2Parse!=null){
             splitedDoc = query2Parse.getDocSplited();
             if(splitedDoc==null) {
-                System.out.println("why i am null parseMain Parse class");
-
+                System.out.println("line 193 parseMain Parse class");
             }
             locationOfCitiesAtCurrDoc=null;
         }
         else{
             splitedDoc = doc2Parse.getDocSplited();
             if(splitedDoc==null && doc2Parse.getDicDoc()==null) {
-                System.out.println("line 163");
+                System.out.println("line 163 Parse");
                 return dicDoc;
             }
             else if(splitedDoc==null) return doc2Parse.getDicDoc();
@@ -211,8 +205,6 @@ public class Parse {
             locationOfCitiesAtCurrDoc = doc2Parse.getLocationOfCitiesAtCurrDoc();
         }
         int jump = 0;
-        //locations in the doc of appearances of the city
-        ArrayList<Integer> locationsOfCity = new ArrayList<>();
         for (int j = 0; j < splitedDoc.length; j++) {
             splitedDoc[j] = deletePunctutations(splitedDoc[j]);
         }
@@ -311,52 +303,52 @@ public class Parse {
         return dicDoc;
     }
 
-    private String[] splitHyphenAndNumberWordWithoutSpace(String [] splitedDoc){
-        ArrayList<String> docSplit2Return = new ArrayList<>();
-        String s2 = "";
-        String [] numberWordArr;
-        boolean makaf=false;
-        //change . and , into space if its not a number.
-        for (String s : splitedDoc) {
-            numberWordArr = checkIfnumberWord(s);
-            if(numberWordArr!=null) {
-                docSplit2Return.add(numberWordArr[0]);
-                docSplit2Return.add(numberWordArr[1]);
-                continue;
-            }
-            makaf=false;
-            if (s.contains("-")){
-                makaf = true;
-                for (int j = 0; j < s.length(); j++) {
-                    char c = s.charAt(j);
-                    if (c != '-')
-                        s2 += c;
-                    else {
-                        docSplit2Return.add(s2);
-                        s2 = "";
-                    }
-                }
-                if(!s2.equals("")) {
-                    docSplit2Return.add(s2);
-                    s2="";
-                }
-            }
-            if(!makaf) {
-                if (s.equals("") || s.equals(" ") || s.equals("\n"))
-                    continue;
-                docSplit2Return.add(s);
-            }
-        }
-        if(docSplit2Return.size()>0) {
-            splitedDoc = new String[docSplit2Return.size()];
-            int i = 0;
-            for (String s3 : docSplit2Return) {
-                splitedDoc[i] = s3;
-                i++;
-            }
-        }
-        return splitedDoc;
-    }
+//    private String[] splitHyphenAndNumberWordWithoutSpace(String [] splitedDoc){//todo delete
+//        ArrayList<String> docSplit2Return = new ArrayList<>();
+//        String s2 = "";
+//        String [] numberWordArr;
+//        boolean makaf=false;
+//        //change . and , into space if its not a number.
+//        for (String s : splitedDoc) {
+//            numberWordArr = checkIfnumberWord(s);
+//            if(numberWordArr!=null) {
+//                docSplit2Return.add(numberWordArr[0]);
+//                docSplit2Return.add(numberWordArr[1]);
+//                continue;
+//            }
+//            makaf=false;
+//            if (s.contains("-")){
+//                makaf = true;
+//                for (int j = 0; j < s.length(); j++) {
+//                    char c = s.charAt(j);
+//                    if (c != '-')
+//                        s2 += c;
+//                    else {
+//                        docSplit2Return.add(s2);
+//                        s2 = "";
+//                    }
+//                }
+//                if(!s2.equals("")) {
+//                    docSplit2Return.add(s2);
+//                    s2="";
+//                }
+//            }
+//            if(!makaf) {
+//                if (s.equals("") || s.equals(" ") || s.equals("\n"))
+//                    continue;
+//                docSplit2Return.add(s);
+//            }
+//        }
+//        if(docSplit2Return.size()>0) {
+//            splitedDoc = new String[docSplit2Return.size()];
+//            int i = 0;
+//            for (String s3 : docSplit2Return) {
+//                splitedDoc[i] = s3;
+//                i++;
+//            }
+//        }
+//        return splitedDoc;
+//    }
 
     private String[] checkIfnumberWord(String s) {
         boolean isNumberWord = false;

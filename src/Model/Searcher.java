@@ -36,7 +36,6 @@ public class Searcher {
             String[] dfTfPointer = dictionaryPosting.get(term);
             String pointerToPosting = dfTfPointer[2];
             long pointer = Long.valueOf(pointerToPosting).longValue();
-            String line = "";
             try {
                 RandomAccessFile raf = new RandomAccessFile(pathToCreate + "/Postings/unitedPosting.txt", "rw");
                 raf.seek(pointer);
