@@ -3,6 +3,7 @@ package Controller;
 import Model.Model;
 import javafx.scene.control.Alert;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class Controller {
 
     public HashSet<String> languages(){return model.languages();}
 
-    public void RunQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic) {
+    public void RunQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic) throws IOException {
         model.runQuery(query, toStem,pathTo, pathFrom, citiesChosen, semantic);
     }
 

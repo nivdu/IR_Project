@@ -64,8 +64,65 @@ public class Searcher {
                 e.printStackTrace();
             }
         }
-        ranker.RankQueryDocs(listOfWords, allRelevantDocsInPosting);//if query like niv and loren (the campus dont contain it) this will return null. todo handle it
+        HashMap<String,Double> funcreturn;
+        
+        Query queryDesc = new Query(query.getDesc(), "desc", "desc");
+        HashMap<String,Double> funcreturn = func1(queryDesc, toStem, pathTo, chosenCities);
+        HashMap<String,Double> test = ranker.RankQueryDocs(listOfWords, allRelevantDocsInPosting, funcreturn);//if query like niv and loren (the campus dont contain it) this will return null. todo handle it
+        System.out.println("test");//todo
         return null;
+    }
+
+    private HashMap<String,Double> func1(Query query, boolean toStem, String pathTo, List<String> chosenCities) {
+        HashSet<String> citiesDocs = docsOfCities(chosenCities,toStem,pathTo);
+        ArrayList<QueryWord> listOfWords = new ArrayList<>();
+        query.setQuerySplited(query.getData().split(" "));//todo
+        HashMap<String, int[]> queryTermsTF = parse.parseMainFunc(null, query);
+        HashSet<String> allRelevantDocsInPosting = new HashSet<>();
+        boolean isLoad = loadDictionaryFromDisk(toStem, pathTo);
+        if (!isLoad)
+            System.out.println("problem");
+        String pathToCreate;
+        if (toStem) {
+            pathToCreate = pathTo + "\\WithStemming";
+        } else pathToCreate = pathTo + "\\WithoutStemming";
+        Set<String> keys = queryTermsTF.keySet();
+        //foreach word in query
+        for (String term : keys) {
+            if(!dictionaryPosting.containsKey(term))
+                continue;
+            String[] dfTfPointer = dictionaryPosting.get(term);
+            String pointerToPosting = dfTfPointer[2];
+            long pointer = Long.valueOf(pointerToPosting).longValue();
+            String line = "";
+            try {
+                RandomAccessFile raf = new RandomAccessFile(pathToCreate + "/Postings/unitedPosting.txt", "rw");
+                raf.seek(pointer);
+                String linePosting = raf.readLine();
+                String[] lineSplitedByTerm = linePosting.split(":");
+                String[] docsSplitedInLine = lineSplitedByTerm[1].split(";");
+                HashMap<String, int[]> docsOfWord = new HashMap<>();
+                for (String doc : docsSplitedInLine) {
+                    String[] docIDTFTitle = doc.split(",");
+                    if (docIDTFTitle.length < 3)
+                        System.out.println("problem");
+                    int[] tfTitle = {Integer.parseInt(docIDTFTitle[1]), Integer.parseInt(docIDTFTitle[2])};//TF overall, title
+                    docsOfWord.put(docIDTFTitle[0], tfTitle);//docID,TF,Title
+                    //Insert docID to HashSet
+                    if (citiesDocs == null)
+                        allRelevantDocsInPosting.add(docIDTFTitle[0]);
+                    else if (citiesDocs.contains(docIDTFTitle[0]))
+                        allRelevantDocsInPosting.add(docIDTFTitle[0]);
+                }
+                QueryWord queryWord = new QueryWord(term, docsOfWord, queryTermsTF.get(term)[0], Integer.parseInt(dfTfPointer[0]));
+                listOfWords.add(queryWord);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return ranker.RankQueryDocs(listOfWords, allRelevantDocsInPosting, null);//if query like niv and loren (the campus dont contain it) this will return null. todo handle it
     }
 
     private HashSet<String> docsOfCities(List<String> chosenCities, boolean toStem, String pathTo) {
