@@ -15,7 +15,7 @@ public class Searcher {
         this.dictionaryPosting = new HashMap<>();
     }
 
-    public List<String[]> runQuery(Query query, boolean toStem, String pathTo, List<String> chosenCities) {
+    public HashMap<String,Double> runQuery(Query query, boolean toStem, String pathTo, List<String> chosenCities) {
         HashSet<String> citiesDocs = docsOfCities(chosenCities,toStem,pathTo);
         ArrayList<QueryWord> listOfWords = new ArrayList<>();
         query.setQuerySplited(query.getData().split(" "));//todo
@@ -71,8 +71,7 @@ public class Searcher {
             funcreturn = func1(queryDesc, toStem, pathTo, chosenCities);
         }
         HashMap<String,Double> test = ranker.RankQueryDocs(listOfWords, allRelevantDocsInPosting, funcreturn);//if query like niv and loren (the campus dont contain it) this will return null. todo handle it
-        System.out.println("test");//todo
-        return null;
+        return test;
     }
 
     private HashMap<String,Double> func1(Query query, boolean toStem, String pathTo, List<String> chosenCities) {

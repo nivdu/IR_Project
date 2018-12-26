@@ -259,8 +259,9 @@ public class Model {
             }
         }
         Query currQuery = new Query(query, "111", null);
-        List<String[]> list = searcher.runQuery(currQuery, toStem, pathTo,null);//todo maybe object of queryAns
-        return false;
+        HashMap<String,Double> queryResults = searcher.runQuery(currQuery, toStem, pathTo,null);
+        //todo view results in gui
+        return true;
     }
 
     public boolean runQueryFile(String pathQueryFile, String pathFrom, String pathTo){
@@ -292,12 +293,43 @@ public class Model {
         }
         ranker = new Ranker(docsHash);
         searcher = new Searcher(parse1, ranker);
+
         for (Query query:queriesArr){
-            List<String[]> list = searcher.runQuery(query, toStem, pathTo,null);//todo maybe object of queryAns
-            //todo insert into priority Q and every iteration at loop write to fileAt pathTo : queryID:docID1,docID2,....,docIDN
-            //todo do something with the list because the next loop will override it.
+            HashMap<String,Double> queryResults = searcher.runQuery(query, toStem, pathTo,null);//todo maybe object of queryAns
+            //todo if button save results pressed{
+            boolean pressed = false;//todo take from the bottom instead of the false
+            if(pressed){
+                File resultsFile = new File(pathTo + "\\results.txt");//todo maby need other name to the result file
+                if (!resultsFile.exists()) {
+                    try {
+                        resultsFile.createNewFile();
+
+                BufferedWriter bw = new BufferedWriter(new FileWriter(resultsFile,true));
+                //todo pointer to entities
+                Set<String> keys = queryResults.keySet();
+
+                //create line of entity : DocId:rank\n
+                int count = 0;
+                for (String docID: keys) {
+                    String writeMe = query.getQueryID() + " : " + docID + "\n";//todo change to trec style
+                    bw.write(writeMe);
+                    count++;
+                    //write only the first 50 docs by rank order
+                    if(count==50)
+                        break;
+                }
+                bw.flush();
+                bw.close();
+                    } catch (IOException e) {
+                        System.out.println("317 model (write query results)");
+                    }
+                }
+            }
+            //todo write it to the gui or something
+            //todo insert into priority Q and every iteration at loop write to fileAt pathTo : queryID:docID1,docID2,....,docIDN. V
+            //todo do something with the list because the next loop will override it. V
         }
-        return false;//todo
+        return true;//todo
     }
 
     private boolean checkIfLegalPaths(String pathFrom, String pathTo) {
