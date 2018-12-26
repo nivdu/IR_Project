@@ -153,7 +153,7 @@ public class Ranker {
     private HashMap<String,Double> combineArrayByWights(ArrayList<HashMap<String,Double>> docsRanks) {
         HashMap<String,Double> combinedDocsRank = new HashMap<>();
         int i = 0;
-        double[] weights = new double[docsRanks.size()];
+        double[] weights = new double[docsRanks.size()];//+1 for the describe query, sometimes contained and sometimes not.
         //todo from here
         weights[0] = 1;//bm25
         weights[1] = 0.1;//title
