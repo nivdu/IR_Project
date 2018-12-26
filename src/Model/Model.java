@@ -183,7 +183,6 @@ public class Model {
      * @param query
      * @return
      */
-
     public boolean runQuery(String query,boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic){
 //        runQueryFile("", pathFrom,pathTo);
 //        int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
@@ -231,7 +230,7 @@ public class Model {
                         //get result
                         BufferedReader br = new BufferedReader(new InputStreamReader(urlc.getInputStream()));
                         String currLine = br.readLine();
-                        if (currLine != null) {
+                        if (currLine != null && !currLine.equals("")) {
                             String[] firstLineArr = currLine.split("\"word\":\"");
                             for (String s : firstLineArr) {
                                 int i = 0;
