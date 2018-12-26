@@ -183,8 +183,8 @@ public class Model {
      * @param query
      * @return
      */
-    public boolean runQuery(String query,boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic) throws IOException {
-        runQueryFile("", pathFrom,pathTo);
+
+    public boolean runQuery(String query,boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic){
 //        int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
         //check the inserted path from.
         if(!checkIfLegalPaths(pathFrom,pathTo))
@@ -258,27 +258,22 @@ public class Model {
                 query = query + " " + s;
             }
         }
-        Query currQuery = new Query(query, "111", null);
+        Query currQuery = new Query(query, "111");
         List<String[]> list = searcher.runQuery(currQuery, toStem, pathTo,null);//todo maybe object of queryAns
         return false;
     }
 
-    public boolean runQueryFile(String pathQueryFile, String pathFrom, String pathTo) throws IOException {
-        pathQueryFile = "C:\\Users\\nivdu\\Desktop\\אחזור\\פרוייקט גוגל\\מנוע חלק ב" + "\\queries.txt";//todo need to take from the user
+    public boolean runQueryFile(String pathQueryFile, String pathFrom, String pathTo){
         if(!checkIfLegalPaths(pathFrom,pathTo))
             return false;
         if(!checkIfDirectoryWithOrWithoutStemExist(toStem, pathTo))
             return false;
         ReadFile readfile = new ReadFile(pathQueryFile);
-            ArrayList<Query> queriesArr = readfile.readQueryFile(pathQueryFile);
+        ArrayList<Query> queriesArr = readfile.readQueryFile();
         Parse parse1 = new Parse(toStem, pathFrom);
         HashMap<String,document> docsHash = new HashMap<>();
         try {
-            FileInputStream fis;
-            if(toStem)
-                fis = new FileInputStream(pathTo + "/WithStemming/docsData.txt");
-            else
-                fis = new FileInputStream(pathTo + "/WithoutStemming/docsData.txt");
+            FileInputStream fis = new FileInputStream(pathTo);
             ObjectInputStream objIS = new ObjectInputStream(fis);
             docsHash =(HashMap) objIS.readObject();
             objIS.close();
@@ -324,4 +319,9 @@ public class Model {
     public HashSet<String> setCities() {
         return searcher.setCities();
     }
+
+    public HashMap<String,Double> getEntities(String docID, String pathTo, boolean toStem){
+        return ranker.getEntities(docID,pathTo,toStem);
+    }
+
 }

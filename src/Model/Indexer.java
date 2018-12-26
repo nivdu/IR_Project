@@ -25,6 +25,7 @@ public class Indexer {
     private String pathTo;
     private int filesNumber;
     private int numberOfUniqueTerms;
+    private long sumOfPointersInEntities;
     /**
      * Constructor
      */
@@ -40,6 +41,7 @@ public class Indexer {
         citiesFromTags = new HashSet<>();
         dictionaryCities = new HashMap<>();
         this.pathTo = pathTo;
+        sumOfPointersInEntities=0;
     }
 
 
@@ -148,6 +150,7 @@ public class Indexer {
                 if(currDoc==null) {
                     System.out.println("line 126 indexer");//todo delete this and all the rest prints
                 }
+                saveEntities(currDoc,pathToCreate);
                 Stime = System.currentTimeMillis();
                 saveDocsLenghsForRank(currDoc);
                 Ftime = System.currentTimeMillis();
@@ -169,6 +172,57 @@ public class Indexer {
             tempPostingCounter++;
         }
         docsToParse.clear();
+    }
+
+    /**
+     * Save the entities of current doc
+     * @param currDoc - current doc
+     */
+    private void saveEntities(document currDoc,String pathToCreate) {
+        HashMap<String, Integer> allEntities = findEntities(currDoc);
+        if (allEntities == null)
+            System.out.println("line 182 Indexer");
+        if (allEntities.size() <= 0)
+            return;
+        try {
+            File entitiesFile = new File(pathToCreate + "\\Entities.txt");
+            if (!entitiesFile.exists())
+                entitiesFile.createNewFile();
+            BufferedWriter bw = new BufferedWriter(new FileWriter(entitiesFile,true));
+            //todo pointer to entities
+            Set<String> keys = allEntities.keySet();
+            //create line of entity : DocId:entity1,tf;entity2,tf...
+            String lineEntity = currDoc.getDocumentID() +": ";
+            for (String entitiy: keys) {
+                lineEntity+=entitiy + "," +allEntities.get(entitiy)+";";//todo maybe change shirshur
+            }
+            bw.write(lineEntity+"\n");
+            bw.flush();
+            bw.close();
+            currDoc.setPointerToEntities(sumOfPointersInEntities);
+            sumOfPointersInEntities+=lineEntity.getBytes().length+1;//todo naybe add another 1 to enter line
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+    private HashMap<String,Integer> findEntities(document currDoc) {
+        HashMap<String,int[]> dicDoc = currDoc.getDicDoc();
+        HashMap<String,Integer> allEntities = new HashMap<>();
+        Set<String> keys = dicDoc.keySet();
+        for (String term : keys) {
+            int[] termValues = dicDoc.get(term);//tf,title
+            if (termValues == null || termValues.length<2){
+                System.out.println("line 190 Indexer");
+                continue;
+            }
+            if(term.equals(term.toUpperCase()) && Pattern.matches("[a-zA-Z]+", term)){
+                allEntities.put(term,termValues[0]);
+            }
+        }
+        return allEntities;
     }
 
 //    private void bringRankerAllDocs() {

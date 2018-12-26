@@ -16,6 +16,28 @@ public class document implements Serializable {
     private String[] docTitle;
     private int docLength;
     private int[] docSplitDate;
+    private long pointerToEntities;
+
+    public document(){
+        this.documentID="";
+        this.maxTf=0;
+        this.numOfUniqueWords=0;
+        this.city="";
+        this.publishDate="";
+        this.dicDoc=null;
+        this.locationOfCitiesAtCurrDoc=null;
+        this.docSplited=null;
+        this.docTitle=null;
+        this.docSplitDate=null;
+    }
+
+    public long getPointerToEntities() {
+        return pointerToEntities;
+    }
+
+    public void setPointerToEntities(long pointerToEntities) {
+        this.pointerToEntities = pointerToEntities;
+    }
 
     public void setDocLength(int docLength) {
         this.docLength = docLength;
@@ -65,18 +87,7 @@ public class document implements Serializable {
     }
     
 
-    public document(){
-        this.documentID="";
-        this.maxTf=0;
-        this.numOfUniqueWords=0;
-        this.city="";
-        this.publishDate="";
-        this.dicDoc=null;
-        this.locationOfCitiesAtCurrDoc=null;
-        this.docSplited=null;
-        this.docTitle=null;
-        this.docSplitDate=null;
-    }
+
 //
 //    public document(String documentID, int maxTf, int numOfUniqueWords, String city, HashMap<String,int[]> tempDic, HashMap locationOfCitiesAtCurrDoc) {
 ////        this.locationOfCitiesAtCurrDoc = new HashMap<>(locationOfCitiesAtCurrDoc);
