@@ -9,10 +9,8 @@ public class Searcher {
     private HashMap<String,String[]> dictionaryPosting; //df,tf_overall,pointerToPosting
 
 
-    public Searcher(Parse parse, Ranker ranker){
-        this.ranker = ranker;
+    public Searcher(Parse parse){
         this.parse = parse;
-        this.dictionaryPosting = new HashMap<>();
     }
 
     public HashMap<String,Double> runQuery(Query query, boolean toStem, String pathTo, List<String> chosenCities) {
@@ -21,9 +19,10 @@ public class Searcher {
         query.setQuerySplited(query.getData().split(" "));//todo
         HashMap<String, int[]> queryTermsTF = parse.parseMainFunc(null, query);
         HashSet<String> allRelevantDocsInPosting = new HashSet<>();
-        boolean isLoad = loadDictionaryFromDisk(toStem, pathTo);
-        if (!isLoad)
-            System.out.println("problem");
+        boolean isLoad = dictionaryPosting!=null;//todo check
+        if (!isLoad){
+            loadDictionaryFromDisk(toStem, pathTo);
+        }
         String pathToCreate;
         if (toStem) {
             pathToCreate = pathTo + "\\WithStemming";
@@ -74,13 +73,17 @@ public class Searcher {
         return test;
     }
 
+    public HashMap<String, String[]> getDictionaryPosting() {
+        return dictionaryPosting;
+    }
+
     private HashMap<String,Double> func1(Query query, boolean toStem, String pathTo, List<String> chosenCities) {
         HashSet<String> citiesDocs = docsOfCities(chosenCities,toStem,pathTo);
         ArrayList<QueryWord> listOfWords = new ArrayList<>();
         query.setQuerySplited(query.getData().split(" "));//todo
         HashMap<String, int[]> queryTermsTF = parse.parseMainFunc(null, query);
         HashSet<String> allRelevantDocsInPosting = new HashSet<>();
-        boolean isLoad = loadDictionaryFromDisk(toStem, pathTo);
+        boolean isLoad = dictionaryPosting!=null;//todo check
         if (!isLoad)
             System.out.println("problem");
         String pathToCreate;
@@ -95,7 +98,6 @@ public class Searcher {
             String[] dfTfPointer = dictionaryPosting.get(term);
             String pointerToPosting = dfTfPointer[2];
             long pointer = Long.valueOf(pointerToPosting).longValue();
-            String line = "";
             try {
                 RandomAccessFile raf = new RandomAccessFile(pathToCreate + "/Postings/unitedPosting.txt", "rw");
                 raf.seek(pointer);
@@ -199,10 +201,8 @@ public class Searcher {
         return cityAndPointer;
     }
 
-
-
-
     public boolean loadDictionaryFromDisk(boolean toStem,String pathTo) {
+        dictionaryPosting = new HashMap<>();
         String pathToCreate = "";
         if (toStem) {
             pathToCreate = pathTo + "\\WithStemming";
@@ -225,6 +225,8 @@ public class Searcher {
                 dictionaryPosting.put(splitedLineInDictionaryByTerm[0], dfPostingTF);
                 line = bf.readLine();
             }
+            HashMap<String, document> docsHash = loadDocsFile(toStem, pathTo);
+            this.ranker = new Ranker(docsHash);
             return true;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -234,7 +236,27 @@ public class Searcher {
         return false;
     }
 
-
+    private HashMap<String,document> loadDocsFile(boolean toStem, String pathTo) {
+        HashMap<String, document> docsHash = new HashMap<>();
+        try {
+            FileInputStream fis;
+            if (toStem)
+                fis = new FileInputStream(pathTo + "/WithStemming/docsData.txt");
+            else
+                fis = new FileInputStream(pathTo + "/WithoutStemming/docsData.txt");
+            ObjectInputStream objIS = new ObjectInputStream(fis);
+            docsHash = (HashMap) objIS.readObject();
+            objIS.close();
+            fis.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("problem in writeDocsDataToDisk function (Model");
+        } catch (IOException e) {
+            System.out.println("problem in writeDocsDataToDisk function (Model");
+        } catch (ClassNotFoundException e) {
+            System.out.println("problem in writeDocsDataToDisk function (Model");
+        }
+        return docsHash;
+    }
 
     /**
      * cut the Query string by tags

@@ -303,6 +303,4 @@ public class Ranker {
         }
         return null;
     }
-
-
 }

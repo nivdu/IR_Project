@@ -77,9 +77,9 @@ public class View {
         boolean stem = stemming.isSelected();
         boolean isSucceed = controller.commit(from,to,stem);
         if(isSucceed) {
-            chooseFile.setDisable(false);
+            //chooseFile.setDisable(false);
             semantic.setDisable(false);
-            runQuery.setDisable(false);
+            //runQuery.setDisable(false);
             reset.setDisable(false);
             load.setDisable(false);
             display.setDisable(false);
@@ -150,9 +150,11 @@ public class View {
 
     @FXML
     private void Load(ActionEvent event) throws IOException {
-        boolean isSucceed = controller.Load(stemming.isSelected(),pathTo.getText());
+        boolean isSucceed = controller.Load(stemming.isSelected(),pathTo.getText(), pathFrom.getText());
         if(isSucceed) {
             showAlert(Alert.AlertType.INFORMATION,"Load","Load succeed!");
+            runQuery.setDisable(false);//todo here the set disable queryfile to
+            chooseFile.setDisable(false);
         }
 //        else{
 //            showAlert(Alert.AlertType.ERROR, "Load","Load Failed!");
