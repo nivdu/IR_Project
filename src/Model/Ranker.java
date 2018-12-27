@@ -155,12 +155,11 @@ public class Ranker {
         int i = 0;
         double[] weights = new double[docsRanks.size()];//+1 for the describe query, sometimes contained and sometimes not.
         //todo from here
-        weights[0] = 1;//bm25
-        weights[1] = 0.1;//title
-        weights[2] = 0.1;//date
+        weights[0] = 0.5;//bm25
+        weights[1] = 0.25;//title
+        weights[2] = 0.05;//date
         if(weights.length==4)
-            weights[3] = 0.1;//by description
-//        weights[4] = 0.1;
+            weights[3] = 0.2;//by description
         // todo until here
         for (HashMap<String,Double> currDocsRank: docsRanks) {
             Set<String> keys = currDocsRank.keySet();
@@ -304,6 +303,4 @@ public class Ranker {
         }
         return null;
     }
-
-
 }

@@ -189,14 +189,14 @@ public class Parse {
         if(doc2Parse==null && query2Parse!=null){
             splitedDoc = query2Parse.getDocSplited();
             if(splitedDoc==null) {
-                System.out.println("line 193 parseMain Parse class");
+                System.out.println("line 192 parseMain Parse class");
             }
             locationOfCitiesAtCurrDoc=null;
         }
         else{
             splitedDoc = doc2Parse.getDocSplited();
             if(splitedDoc==null && doc2Parse.getDicDoc()==null) {
-                System.out.println("line 163 Parse");
+                System.out.println("line 199 Parse");
                 return dicDoc;
             }
             else if(splitedDoc==null) return doc2Parse.getDicDoc();
