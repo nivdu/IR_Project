@@ -143,9 +143,6 @@ public class View {
             languages.setDisable(true);
             semantic.setDisable(true);
         }
-        else{
-            showAlert(Alert.AlertType.ERROR, "RESET","Reset Failed!");
-        }
     }
 
     @FXML

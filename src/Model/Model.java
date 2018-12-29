@@ -1,6 +1,7 @@
 package Model;
 
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -74,7 +75,24 @@ public class Model {
      * @return true if the reset succeed' else return false
      */
     public boolean reset(){
-        return indexer.reset();
+        Alert verification = new Alert(Alert.AlertType.CONFIRMATION);
+        verification.setHeaderText("verification:");
+        verification.setContentText("Are You Sure You Want To Reset?");
+        verification.showAndWait();
+        ButtonType s = verification.getResult();
+        if(s.getButtonData().getTypeCode().equals("C")){
+            return false;
+            }
+
+        if(indexer.reset())
+            return true;
+        else{
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setHeaderText("RESET");
+            alert.setContentText("Reset Failed!");
+            alert.showAndWait();
+            return false;
+        }
     }
 
 
@@ -265,22 +283,22 @@ public class Model {
                     try {
                         resultsFile.createNewFile();
 
-                BufferedWriter bw = new BufferedWriter(new FileWriter(resultsFile,true));
-                //todo pointer to entities
-                Set<String> keys = queryResults.keySet();
+                        BufferedWriter bw = new BufferedWriter(new FileWriter(resultsFile, true));
+                        //todo pointer to entities
+                        Set<String> keys = queryResults.keySet();
 
-                //create line of entity : DocId:rank\n
-                int count = 0;
-                for (String docID: keys) {
-                    String writeMe = query.getQueryID() + " : " + docID + "\n";//todo change to trec style
-                    bw.write(writeMe);
-                    count++;
-                    //write only the first 50 docs by rank order
-                    if(count==50)
-                        break;
-                }
-                bw.flush();
-                bw.close();
+                        //create line of entity : DocId:rank\n
+                        int count = 0;
+                        for (String docID : keys) {
+                            String writeMe = query.getQueryID() + " : " + docID + "\n";//todo change to trec style
+                            bw.write(writeMe);
+                            count++;
+                            //write only the first 50 docs by rank order
+                            if (count == 50)
+                                break;
+                        }
+                        bw.flush();
+                        bw.close();
                     } catch (IOException e) {
                         System.out.println("285 model (write query results)");
                     }
