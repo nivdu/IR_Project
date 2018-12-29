@@ -1,8 +1,6 @@
 package Controller;
 
 import Model.Model;
-import javafx.scene.control.Alert;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;

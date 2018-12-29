@@ -1,7 +1,6 @@
 package Model;
 
 import javafx.scene.control.Alert;
-
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -88,7 +87,7 @@ public class Parse {
 
     public document parseDoc(document doc2Parse) {
         if(doc2Parse==null) {//todo delete this if
-            System.out.println("lama ani null parseDoc at Parse func");
+            System.out.println("parser line 91");
             return null;
         }
         String city = doc2Parse.getCity();
@@ -196,7 +195,6 @@ public class Parse {
         else{
             splitedDoc = doc2Parse.getDocSplited();
             if(splitedDoc==null && doc2Parse.getDicDoc()==null) {
-                System.out.println("line 199 Parse");
                 return dicDoc;
             }
             else if(splitedDoc==null) return doc2Parse.getDicDoc();
@@ -302,79 +300,6 @@ public class Parse {
             doc2Parse.setLocationOfCitiesAtCurrDoc(locationOfCitiesAtCurrDoc);
         return dicDoc;
     }
-
-//    private String[] splitHyphenAndNumberWordWithoutSpace(String [] splitedDoc){//todo delete
-//        ArrayList<String> docSplit2Return = new ArrayList<>();
-//        String s2 = "";
-//        String [] numberWordArr;
-//        boolean makaf=false;
-//        //change . and , into space if its not a number.
-//        for (String s : splitedDoc) {
-//            numberWordArr = checkIfnumberWord(s);
-//            if(numberWordArr!=null) {
-//                docSplit2Return.add(numberWordArr[0]);
-//                docSplit2Return.add(numberWordArr[1]);
-//                continue;
-//            }
-//            makaf=false;
-//            if (s.contains("-")){
-//                makaf = true;
-//                for (int j = 0; j < s.length(); j++) {
-//                    char c = s.charAt(j);
-//                    if (c != '-')
-//                        s2 += c;
-//                    else {
-//                        docSplit2Return.add(s2);
-//                        s2 = "";
-//                    }
-//                }
-//                if(!s2.equals("")) {
-//                    docSplit2Return.add(s2);
-//                    s2="";
-//                }
-//            }
-//            if(!makaf) {
-//                if (s.equals("") || s.equals(" ") || s.equals("\n"))
-//                    continue;
-//                docSplit2Return.add(s);
-//            }
-//        }
-//        if(docSplit2Return.size()>0) {
-//            splitedDoc = new String[docSplit2Return.size()];
-//            int i = 0;
-//            for (String s3 : docSplit2Return) {
-//                splitedDoc[i] = s3;
-//                i++;
-//            }
-//        }
-//        return splitedDoc;
-//    }
-
-    private String[] checkIfnumberWord(String s) {
-        boolean isNumberWord = false;
-        boolean isNumberWord2 = false;
-        String s2 = "";
-        String s3 = "";
-        int i = 0;
-        while (i < s.length() && Character.isDigit(s.charAt(i)) && !isNumberWord2) {
-            s2 += s.charAt(i);
-            isNumberWord = true;
-            i++;
-        }
-        while (i < s.length() && Character.isLetter(s.charAt(i))) {
-            s3 += s.charAt(i);
-            isNumberWord2 = true;
-            i++;
-        }
-        if (isNumberWord && isNumberWord2 && (s2.length()+s3.length())==s.length()) {
-            String[] toReturn = new String[2];
-            toReturn[0] = s2;
-            toReturn[1] = s3;
-            return toReturn;
-        }
-        return null;
-    }
-
 
     //add the currdocindex to the array list of this city location at the this doc
     private void checkIfCityToken(String checkIfCityToken, HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc, HashSet<String> citiesFromTags, int currDocIndex) {
@@ -531,7 +456,6 @@ public class Parse {
             for (String SW : currStopWord)
                 stopWords.add(SW);
         }
-        System.out.println(stopWords.size());
     }
 
     /**
