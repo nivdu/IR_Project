@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.RowConstraints?>
 
-<GridPane alignment="center" hgap="10" vgap="10" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="View.View">
+<GridPane alignment="center" hgap="10" vgap="10" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="View.View">
     <columnConstraints>
         <ColumnConstraints />
     </columnConstraints>
@@ -19,30 +19,31 @@
         <RowConstraints />
     </rowConstraints>
     <children>
-        <Pane prefHeight="469.0" prefWidth="552.0">
+        <Pane prefHeight="494.0" prefWidth="577.0">
             <children>
                 <Label layoutX="60.0" layoutY="37.0" text="Path to take from:" />
                 <Label layoutX="60.0" layoutY="81.0" text="Path to create to:" />
                 <TextField fx:id="pathFrom" layoutX="203.0" layoutY="31.0" />
                 <TextField fx:id="pathTo" layoutX="203.0" layoutY="75.0" />
-                <Button fx:id="BrowseFrom" layoutX="427.0" layoutY="31.0" mnemonicParsing="false" onAction="#browseFrom" text="Browse" />
-                <Button fx:id="BrowseTo" layoutX="429.0" layoutY="75.0" mnemonicParsing="false" onAction="#browseTo" text="Browse" />
-                <CheckBox fx:id="stemming" layoutX="64.0" layoutY="131.0" mnemonicParsing="false" text="Stemming" />
-                <ComboBox fx:id="languages" disable="true" layoutX="240.0" layoutY="129.0" prefWidth="150.0" promptText="Languages" />
-                <Button fx:id="display" disable="true" layoutX="59.0" layoutY="180.0" mnemonicParsing="false" onAction="#Display" text="Display Dictionary" />
-                <Button fx:id="load" disable="true" layoutX="59.0" layoutY="235.0" mnemonicParsing="false" onAction="#Load" text="Load Dictionary" />
-                <Button fx:id="invertIndex" layoutX="315.0" layoutY="180.0" mnemonicParsing="false" onAction="#Commit" text="Commit" />
-                <Button fx:id="reset" disable="true" layoutX="320.0" layoutY="235.0" mnemonicParsing="false" onAction="#Reset" text="Reset" />
+                <Button fx:id="BrowseFrom" layoutX="365.0" layoutY="30.0" mnemonicParsing="false" onAction="#browseFrom" text="Browse" />
+                <Button fx:id="BrowseTo" layoutX="365.0" layoutY="74.0" mnemonicParsing="false" onAction="#browseTo" text="Browse" />
+                <CheckBox fx:id="stemming" layoutX="156.0" layoutY="131.0" mnemonicParsing="false" text="Stemming" />
+                <ComboBox fx:id="languages" disable="true" layoutX="320.0" layoutY="129.0" prefWidth="150.0" promptText="Languages" />
+                <Button fx:id="display" disable="true" layoutX="141.0" layoutY="180.0" mnemonicParsing="false" onAction="#Display" text="Display Dictionary" />
+                <Button fx:id="load" disable="true" layoutX="148.0" layoutY="235.0" mnemonicParsing="false" onAction="#Load" text="Load Dictionary" />
+                <Button fx:id="invertIndex" layoutX="363.0" layoutY="180.0" mnemonicParsing="false" onAction="#Commit" text="Commit" />
+                <Button fx:id="reset" disable="true" layoutX="368.0" layoutY="241.0" mnemonicParsing="false" onAction="#Reset" text="Reset" />
             <Label layoutX="206.0" layoutY="312.0" />
             <TextField fx:id="queryText" layoutX="203.0" layoutY="290.0" />
             <Label layoutX="55.0" layoutY="294.0" text="Insert query:" />
-            <Button fx:id="runQuery" disable="true" layoutX="404.0" layoutY="287.0" mnemonicParsing="false" onAction="#RunQuery" text="run query" />
+            <Button fx:id="runQuery" disable="true" layoutX="437.0" layoutY="287.0" mnemonicParsing="false" onAction="#RunQuery" prefHeight="32.0" prefWidth="101.0" text="Run Query" />
             <Label layoutX="55.0" layoutY="343.0" text="Choose query file:" />
-            <Button fx:id="chooseFile" disable="true" layoutX="397.0" layoutY="336.0" mnemonicParsing="false" text="Choose File" />
+            <Button fx:id="chooseFile" disable="true" layoutX="365.0" layoutY="336.0" mnemonicParsing="false" text="Browse" />
             <TextField layoutX="203.0" layoutY="339.0" />
-            <CheckBox fx:id="semantic" disable="true" layoutX="396.0" layoutY="395.0" mnemonicParsing="false" text="semantic" />
-            <ListView fx:id="cities" layoutX="193.0" layoutY="378.0" prefHeight="61.0" prefWidth="172.0" />
-            <Label layoutX="55.0" layoutY="400.0" text="Choose cities:" />
+            <CheckBox fx:id="semantic" disable="true" layoutX="437.0" layoutY="407.0" mnemonicParsing="false" text="semantic" />
+            <ListView fx:id="cities" layoutX="203.0" layoutY="389.0" prefHeight="94.0" prefWidth="172.0" />
+            <Label layoutX="50.0" layoutY="411.0" text="Choose cities:" />
+            <Button fx:id="RunQueryFile" layoutX="437.0" layoutY="336.0" mnemonicParsing="false" text="Run Query File" />
             </children>
         </Pane>
     </children>

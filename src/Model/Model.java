@@ -37,6 +37,8 @@ public class Model {
             return false;
         parse = new Parse(toStem, pathFrom);
         indexer = new Indexer(pathFrom,pathTo, parse);
+        ranker = new Ranker(null);//todo delete this!!!!!!!
+        searcher = new Searcher(parse,ranker);//todo delete this!!!!!!!
         long Stime = System.currentTimeMillis();
         boolean succGenerate=indexer.createPostingAndDic(toStem);
         long Ftime = System.currentTimeMillis();
@@ -183,14 +185,14 @@ public class Model {
      * @param query
      * @return
      */
-    public boolean runQuery(String query,boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic){
+    public HashMap<String,Double> runQuery(String query,boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic){
 //        runQueryFile("", pathFrom,pathTo);
 //        int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
         //check the inserted path from.
         if(!checkIfLegalPaths(pathFrom,pathTo))
-            return false;
+            return null;//todo add alert error
         if(!checkIfDirectoryWithOrWithoutStemExist(toStem, pathTo))
-            return false;
+            return null;//todo alert error
         Parse parse1 = new Parse(toStem, pathFrom);
         HashMap<String,document> docsHash = new HashMap<>();
         try {
@@ -259,8 +261,8 @@ public class Model {
             }
         }
         Query currQuery = new Query(query, "111", null);
-        List<String[]> list = searcher.runQuery(currQuery, toStem, pathTo,null);//todo maybe object of queryAns
-        return false;
+        HashMap<String,Double> docsAndRank = searcher.runQuery(currQuery, toStem, pathTo,citiesChosen);//todo maybe object of queryAns
+        return docsAndRank;
     }
 
     public boolean runQueryFile(String pathQueryFile, String pathFrom, String pathTo){
@@ -293,7 +295,7 @@ public class Model {
         ranker = new Ranker(docsHash);
         searcher = new Searcher(parse1, ranker);
         for (Query query:queriesArr){
-            List<String[]> list = searcher.runQuery(query, toStem, pathTo,null);//todo maybe object of queryAns
+            HashMap<String,Double> docsAndRank = searcher.runQuery(query, toStem, pathTo,null);//todo maybe object of queryAns
             //todo insert into priority Q and every iteration at loop write to fileAt pathTo : queryID:docID1,docID2,....,docIDN
             //todo do something with the list because the next loop will override it.
         }
@@ -321,8 +323,8 @@ public class Model {
         return true;
     }
 
-    public HashSet<String> setCities() {
-        return searcher.setCities();
+    public HashSet<String> setCities(String pathTo, boolean toStem) {
+        return searcher.setCities(pathTo,toStem);
     }
 
     public HashMap<String,Double> getEntities(String docID, String pathTo, boolean toStem){

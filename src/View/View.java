@@ -12,10 +12,7 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class View {
     @FXML
@@ -89,7 +86,7 @@ public class View {
             BrowseTo.setDisable(false);
             languages.setDisable(false);
             setLanguages();
-//            setCities();
+            setCities();
         }
         else {
             pathFrom.setDisable(false);
@@ -191,12 +188,13 @@ public class View {
     }
 
     private void setCities(){
-        HashSet<String> listOfCities = controller.setCities();
+        HashSet<String> listOfCities = controller.setCities(pathTo.getText(),stemming.isSelected());
         ObservableList<String> citiesObservable;
         citiesObservable = FXCollections.observableArrayList();
         for (String city: listOfCities) {
             citiesObservable.add(city);
         }
+        citiesObservable.sort(String::compareToIgnoreCase);
         cities.setItems(citiesObservable);
         cities.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
     }
@@ -204,14 +202,41 @@ public class View {
 
     @FXML
     private void RunQuery(ActionEvent event) throws IOException {
-        ObservableList<String> citiesFromView = cities.getItems();
+        ObservableList<String> citiesFromView = cities.getSelectionModel().getSelectedItems();
         List<String> citiesFromViewList = new ArrayList<>();
-        if(citiesFromView!= null){
-            for (String city:citiesFromView) {
+        if(citiesFromView!= null) {
+            for (String city : citiesFromView) {
                 citiesFromViewList.add(city);
             }
         }
-        controller.RunQuery(queryText.getText(),stemming.isSelected(), pathTo.getText(), pathFrom.getText(), citiesFromViewList, semantic.isSelected());
+        HashMap<String,Double> docsAndRank = controller.RunQuery(queryText.getText(),stemming.isSelected(), pathTo.getText(), pathFrom.getText(), citiesFromViewList, semantic.isSelected());
+        ObservableList<String> docsObservable = FXCollections.observableArrayList();
+        Set<String> keys = docsAndRank.keySet();
+        for (String doc : keys) {
+            docsObservable.add(doc);
+        }
+        docsObservable.sort(String::compareToIgnoreCase);
+        TableView tableView = new TableView();
+
+        TableColumn firstNameCol = new TableColumn("Query ID");
+        TableColumn secondNameCol = new TableColumn("Doc ID");
+        TableColumn thirdNameCol = new TableColumn("Entities");
+
+        tableView.getColumns().addAll(firstNameCol,secondNameCol,thirdNameCol);
+
+
+        tableView.setItems(docsObservable);
+
+        Stage stage = new Stage();
+        AnchorPane anchorPane = new AnchorPane();
+        anchorPane.getChildren().addAll(tableView);
+        AnchorPane.setRightAnchor(tableView,0.0);
+        AnchorPane.setLeftAnchor(tableView,0.0);
+        anchorPane.setPrefWidth(500.0);
+        anchorPane.setPrefHeight(400.0);
+        Scene scene = new Scene(anchorPane,500,400);
+        stage.setScene(scene);
+        stage.show();
     }
 
     public void getEntities(ActionEvent event){

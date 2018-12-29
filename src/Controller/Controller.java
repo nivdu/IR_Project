@@ -29,12 +29,12 @@ public class Controller {
     public HashSet<String> languages(){return model.languages();}
 
 
-    public void RunQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic) {
-        model.runQuery(query, toStem,pathTo, pathFrom, citiesChosen, semantic);
+    public HashMap<String,Double> RunQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic) {
+        return model.runQuery(query, toStem,pathTo, pathFrom, citiesChosen, semantic);
     }
 
-    public HashSet<String> setCities() {
-        return model.setCities();
+    public HashSet<String> setCities(String pathTo, boolean toStem) {
+        return model.setCities(pathTo,toStem);
     }
 
     public HashMap<String,Double> getEntities(String docID, String pathTo, boolean toStem){
