@@ -190,6 +190,7 @@ public class Searcher {
                 if(splitedLineInDicByTerm.length<2)
                     System.out.println("problem in size of cityDictionary");
                 cityAndPointer.put(splitedLineInDicByTerm[0],splitedLineInDicByTerm[splitedLineInDicByTerm.length-1]);//city,pointer
+                line=bf.readLine();
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -269,10 +270,31 @@ public class Searcher {
     }
 
 
-    public HashSet<String> setCities() {//todo function
+    public HashSet<String> setCities(String pathTo, boolean toStem) {//todo check function
         HashSet<String> cities = new HashSet<>();
-
-
+        String path = "";
+        if (toStem) {
+            path= pathTo + "\\WithStemming\\Dictionaries\\cityDictionary.txt";
+        } else path= pathTo + "\\WithoutStemming\\Dictionaries\\cityDictionary.txt";
+        File fileCityDictionary = new File (path);
+        if(!fileCityDictionary.exists()){
+            System.out.println("line 261 searcher");
+        }
+        try {
+            BufferedReader br= new BufferedReader(new FileReader(fileCityDictionary));
+            String line = br.readLine();
+            while (line != null && line != "") {
+                String[] splitedLineByCity = line.split(":");
+                if(splitedLineByCity.length<2)
+                    System.out.println("problem in size of cityDictionary");
+                cities.add(splitedLineByCity[0]);
+                line = br.readLine();
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         return  cities;
     }

@@ -329,8 +329,8 @@ public class Model {
         return true;
     }
 
-    public HashSet<String> setCities() {
-        return searcher.setCities();
+    public HashSet<String> setCities(String pathTo, boolean toStem) {
+        return searcher.setCities(pathTo,toStem);
     }
 
     public HashMap<String,Double> getEntities(String docID, String pathTo, boolean toStem){
