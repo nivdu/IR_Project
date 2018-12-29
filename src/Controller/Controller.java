@@ -1,8 +1,6 @@
 package Controller;
 
 import Model.Model;
-import javafx.scene.control.Alert;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -18,8 +16,8 @@ public class Controller {
         return model.reset();
     }
 
-    public boolean Load(boolean stem,String pathTo) {
-        return model.loadDictionaryFromDiskToMemory(stem,pathTo);
+    public boolean Load(boolean stem,String pathTo,String pathFrom) {
+        return model.loadDictionaryFromDiskToMemory(stem,pathTo,pathFrom);
     }
 
     public List<String> Display(boolean stem, String pathTo) {

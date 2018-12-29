@@ -40,7 +40,7 @@ public class Ranker {
     public HashMap<String,Double> RankQueryDocs(ArrayList<QueryWord> wordsFromQuery, HashSet<String> docsID, HashMap<String,Double> queryDesc){
         if(wordsFromQuery==null || docsID == null)
             return null;
-        avrLengh = calculateAverageOfDocsLengths();
+        avrLengh = calculateAverageOfDocsLengths();//todo calc it one time
         ArrayList<HashMap<String,Double>> docsRanks = new ArrayList<>();
         ArrayList<HashMap<String,Double>> docsRanks2Return = new ArrayList<>();
 
@@ -71,8 +71,24 @@ public class Ranker {
         return combineArrayByWights(docsRanks2Return);
     }
 
-    public LinkedHashMap<String, Double> sortHashMapByValues(
-            HashMap<String, Double> passedMap) {
+    public HashMap<String, Double> sortHashMapByValues(HashMap<String, Double> passedMap) {
+        //Sorting the HashMap by values
+        List<Map.Entry<String, Double> > list = new LinkedList<Map.Entry<String, Double> >(passedMap.entrySet());
+        Collections.sort(list, new Comparator<Map.Entry<String, Double> >() {
+            public int compare(Map.Entry<String, Double> o1, Map.Entry<String, Double> o2)
+            {
+                return (o2.getValue()).compareTo(o1.getValue());
+            }
+        });
+        //todo check the sorting is working
+        HashMap<String, Double> sortedHashMap = new LinkedHashMap<String, Double>();
+        for (Map.Entry<String, Double> aa : list) {
+            sortedHashMap.put(aa.getKey(), aa.getValue());
+        }
+        return sortedHashMap;
+
+
+        /*
         List<String> mapKeys = new ArrayList<>(passedMap.keySet());
         List<Double> mapValues = new ArrayList<>(passedMap.values());
         Collections.sort(mapValues);
@@ -97,6 +113,7 @@ public class Ranker {
             }
         }
         return sortedMap;
+        */
     }
 
     /**
@@ -155,12 +172,11 @@ public class Ranker {
         int i = 0;
         double[] weights = new double[docsRanks.size()];//+1 for the describe query, sometimes contained and sometimes not.
         //todo from here
-        weights[0] = 1;//bm25
-        weights[1] = 0.1;//title
-        weights[2] = 0.1;//date
+        weights[0] = 0.5;//bm25
+        weights[1] = 0.25;//title
+        weights[2] = 0.05;//date
         if(weights.length==4)
-            weights[3] = 0.1;//by description
-//        weights[4] = 0.1;
+            weights[3] = 0.2;//by description
         // todo until here
         for (HashMap<String,Double> currDocsRank: docsRanks) {
             Set<String> keys = currDocsRank.keySet();
@@ -304,6 +320,4 @@ public class Ranker {
         }
         return null;
     }
-
-
 }

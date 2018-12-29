@@ -461,7 +461,7 @@ public class Indexer {
         else temp= "\\cityDictionary";
         BufferedWriter bwOfDic = initDirsForDictionary(pathOfDic, temp);//write to the correct dictionary txt
         if(bwOfDic == null)
-            System.out.println("balagan");
+            System.out.println("problem in line 464 Indexer");
         long locationIndex = 0;
         File unitedPosting;
         //create file for each temp posting and insert to the temp posting array
