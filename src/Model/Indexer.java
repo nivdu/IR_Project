@@ -65,14 +65,37 @@ public class Indexer {
                         }
                 }
                 parse.setCitiesFromTags(citiesFromTags);
-                citiesFromTags.clear();
                 for (String path : allFilesPaths) {
                     ArrayList<document> docsToParse = readFile.spiltFileIntoSeparateDocs2(path);
                     parseFile(docsToParse, pathToCreate);
                 }
-                unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/Postings", pathToCreate + "/Dictionaries", true);
-                unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/citiesPosting", pathToCreate + "/Dictionaries", false);
-                writeDocsDataToDisk(pathToCreate + "/docsData.txt");
+                Thread t1 = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/Postings", pathToCreate + "/Dictionaries", true);
+                    }
+                });
+                Thread t2 = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/citiesPosting", pathToCreate + "/Dictionaries", false);
+                    }
+                });
+                Thread t3 = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        writeDocsDataToDisk(pathToCreate + "/docsData.txt");
+                    }
+                });
+                t1.start();
+                t2.start();
+                t3.start();
+                t1.join();
+                t2.join();
+                t3.join();
+//                unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/Postings", pathToCreate + "/Dictionaries", true);
+//                unitAllTempPostingsToOnePostingInDisk(pathToCreate + "/citiesPosting", pathToCreate + "/Dictionaries", false);
+//                writeDocsDataToDisk(pathToCreate + "/docsData.txt");
                 dictionaryPosting.clear();
             } catch (SecurityException se) {
                 System.out.println("problem line 78 indexer");
@@ -137,17 +160,31 @@ public class Indexer {
         return term;
     }
 
-    public void parseFile(ArrayList<document> docsToParse, String pathToCreate) {
+    public void parseFile(ArrayList<document> docsToParse, String pathToCreate) throws InterruptedException {
         for (document currentDoc : docsToParse) {
-            if (currentDoc != null){
+            if (currentDoc != null) {
                 document currDoc = parse.parseDoc(currentDoc);
-                if(currDoc==null) {
+                if (currDoc == null) {
                     System.out.println("line 146 indexer");//todo delete this and all the rest prints
                 }
-                saveEntities(currDoc,pathToCreate);
+                saveEntities(currDoc, pathToCreate);
                 saveDocsLenghsForRank(currDoc);
-                combineDicDocAndDictionary(currDoc);
-                combineCitiesFromDoc(currDoc);
+                Thread t1 = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        combineDicDocAndDictionary(currDoc);
+                    }
+                });
+                Thread t2 = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        combineCitiesFromDoc(currDoc);
+                    }
+                });
+                t1.start();
+                t2.start();
+                t1.join();
+                t2.join();
                 currDoc.removeDic();
                 currDoc.removeLocationOfCities();
                 currDoc.removeDocSplitedArr();
@@ -155,9 +192,24 @@ public class Indexer {
             }
         }
         filesPostedCounter++;
-        if (filesPostedCounter%8==0 || filesPostedCounter == filesNumber) {
-            saveAndDeletePosition(dictionaryPosting, pathToCreate);
-            saveAndDeleteCitiesPosition(dictionaryCities, pathToCreate);
+        if (filesPostedCounter % 8 == 0 || filesPostedCounter == filesNumber) {
+            Thread t1 = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    saveAndDeletePosition(dictionaryPosting, pathToCreate);
+                }
+            });
+            Thread t2 = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    saveAndDeleteCitiesPosition(dictionaryCities, pathToCreate);
+                }
+            });
+            t1.start();
+            t2.start();
+            t1.join();
+            t2.join();
+
             tempPostingCounter++;
         }
         docsToParse.clear();
@@ -216,16 +268,6 @@ public class Indexer {
         }
         return allEntities;
     }
-
-//    private void bringRankerAllDocs() {
-//        HashMap<String, document> docsHash = new HashMap();
-//        Set<String> keys = docsHash.keySet();
-//        for (document doc:keys){
-//            if(doc!=null && doc.getDocumentID()!=null)
-//            docsHash.put(doc.getDocumentID(),doc);
-//        }
-//        ranker.setDocs(docsHash);
-//    }
 
     private void saveDocsLenghsForRank(document currDoc) {
         HashMap<String,int[]> dicDoc = currDoc.getDicDoc();

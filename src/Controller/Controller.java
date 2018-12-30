@@ -16,7 +16,7 @@ public class Controller {
         return model.reset();
     }
 
-    public boolean Load(boolean stem,String pathTo,String pathFrom) {
+    public boolean Load(boolean stem,String pathTo,String pathFrom) throws InterruptedException {
         return model.loadDictionaryFromDiskToMemory(stem,pathTo,pathFrom);
     }
 

@@ -9,8 +9,6 @@ public class Ranker {
 
     private HashMap<String,document> docs;
     private double avrLengh;
-    private double k;
-    private double b;
 
     /**
      * contractor
@@ -18,8 +16,6 @@ public class Ranker {
     public Ranker(HashMap<String,document> docs){
         this.docs=docs;
         avrLengh = calculateAverageOfDocsLengths();
-        k=1.2;
-        b=0.75;
     }
 
     private double calculateAverageOfDocsLengths() {
@@ -42,8 +38,8 @@ public class Ranker {
             return null;
         ArrayList<HashMap<String,Double>> docsRanks = new ArrayList<>();
         ArrayList<HashMap<String,Double>> docsRanks2Return = new ArrayList<>();
-
         //run all the rank functions
+
         docsRanks.add(inTitleCalc(wordsFromQuery, docsID));
         docsRanks.add(BM25(wordsFromQuery, docsID));
         try { docsRanks.add(publishDataRank(docsID)); } catch (Exception e){}
@@ -180,6 +176,8 @@ public class Ranker {
     }
 
     public HashMap<String,Double> BM25(ArrayList<QueryWord> wordsFromQuery, HashSet<String> docsID){
+        double k=1.2;
+        double b=0.75;
         double avdl = avrLengh;
         int m = docs.size();
         //best match doc will be the first, second be the after him.....

@@ -119,7 +119,7 @@ public class Searcher {
      * @param pathTo
      * @return
      */
-    private HashMap<String, String> loadCitiesDictionaryFromDisk(boolean toStem, String pathTo) {
+        private HashMap<String, String> loadCitiesDictionaryFromDisk(boolean toStem, String pathTo) {
         HashMap<String,String> cityAndPointer = new HashMap<>();
         String pathToCreate = "";
         if (toStem) {
@@ -146,13 +146,13 @@ public class Searcher {
 
     public boolean loadDictionaryFromDisk(boolean toStem,String pathTo) {
         dictionaryPosting = new HashMap<>();
-        String pathToCreate = "";
-        if (toStem) {
-            pathToCreate = pathTo + "\\WithStemming";
-        } else pathToCreate = pathTo + "\\WithoutStemming";
-        File fileDictionary = new File(pathToCreate + "/Dictionaries/Dictionary.txt");
         try {
+            String pathToCreate;
+            if (toStem) {
+                pathToCreate = pathTo + "\\WithStemming";
+            } else pathToCreate = pathTo + "\\WithoutStemming";
             String line = "";
+            File fileDictionary = new File(pathToCreate + "/Dictionaries/Dictionary.txt");
             BufferedReader bf = new BufferedReader(new FileReader(fileDictionary));
             line = bf.readLine();
             while (line != null && line != "") {
@@ -168,8 +168,7 @@ public class Searcher {
                 dictionaryPosting.put(splitedLineInDictionaryByTerm[0], dfPostingTF);
                 line = bf.readLine();
             }
-            HashMap<String, document> docsHash = loadDocsFile(toStem, pathToCreate);
-            this.ranker = new Ranker(docsHash);
+//            this.ranker = new Ranker(loadDocsFile(toStem, pathToCreate));
             return true;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -179,11 +178,15 @@ public class Searcher {
         return false;
     }
 
-    private HashMap<String,document> loadDocsFile(boolean toStem, String pathTo) {
+    public HashMap<String, document> loadDocsFile(boolean toStem, String pathTo) {
+            String pathToCreate;
+        if (toStem) {
+            pathToCreate = pathTo + "\\WithStemming";
+        } else pathToCreate = pathTo + "\\WithoutStemming";
         HashMap<String, document> docsHash = new HashMap<>();
         try {
             FileInputStream fis;
-            fis = new FileInputStream(pathTo + "/docsData.txt");
+            fis = new FileInputStream(pathToCreate + "/docsData.txt");
             ObjectInputStream objIS = new ObjectInputStream(fis);
             docsHash = (HashMap) objIS.readObject();
             objIS.close();
@@ -195,6 +198,7 @@ public class Searcher {
         } catch (ClassNotFoundException e) {
             System.out.println("problem in writeDocsDataToDisk function (Model");
         }
+        this.ranker = new Ranker(docsHash);
         return docsHash;
     }
 

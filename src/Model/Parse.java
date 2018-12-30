@@ -1,6 +1,8 @@
 package Model;
 
 import javafx.scene.control.Alert;
+import sun.awt.Mutex;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -178,6 +180,7 @@ public class Parse {
      */
 
     public HashMap<String, int[]> parseMainFunc(document doc2Parse, Query query2Parse){//String[] splitedDoc, HashSet<String> citiesFromTags, HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc, HashMap<String, int[]> dicDoc) {
+        Mutex m1 = new Mutex();
         if(doc2Parse==null && query2Parse==null) {
             System.out.println("parse line 148");
             return null;
@@ -217,12 +220,14 @@ public class Parse {
             if(doc2Parse!=null)
                 checkIfCityToken(currToken.toLowerCase(), locationOfCitiesAtCurrDoc, citiesFromTags, currDocIndex);
             //stem if needed
+            m1.lock();
             if (toStem) {
                 stemmer.setTerm(currToken);
                 stemmer.stem();
                 currToken = stemmer.getTerm();
                 currToken = deletePunctutations(currToken);
             }
+            m1.unlock();
             //get prev and next tokens if there isn't next token (the end of the array) return nextToken="", if index==0 return prevToken="".
             String nextToken = getNextToken(splitedDoc, currDocIndex);
             String nextNextToken = getNextToken(splitedDoc, currDocIndex + 1);
