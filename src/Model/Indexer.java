@@ -19,8 +19,6 @@ public class Indexer {
     private HashMap<String, String[]> dictionaryPosting;
     private int tempPostingCounter;
     private int filesPostedCounter;
-    //contain all the cities from tags <F P=104> (if the city have two words, save the first one).
-    private HashSet<String> citiesFromTags;
     private HashMap<String, String[]> dictionaryCities;
     private String pathTo;
     private int filesNumber;
@@ -38,7 +36,6 @@ public class Indexer {
         docsHash = new HashMap<>();
         dictionaryPosting = new HashMap<>();
         tempPostingCounter = 0;
-        citiesFromTags = new HashSet<>();
         dictionaryCities = new HashMap<>();
         this.pathTo = pathTo;
         sumOfPointersInEntities=0;
@@ -46,6 +43,8 @@ public class Indexer {
 
 
     public boolean createPostingAndDic(boolean toStem) {
+        //contain all the cities from tags <F P=104> (if the city have two words, save the first one).
+        HashSet<String> citiesFromTags = new HashSet<>();
         String pathToCreate;
         if (toStem) {
             pathToCreate = pathTo + "\\WithStemming";
@@ -65,7 +64,8 @@ public class Indexer {
                             citiesFromTags.add(city);
                         }
                 }
-                parse.setCitiesFromTags(citiesFromTags);//todo check cities
+                parse.setCitiesFromTags(citiesFromTags);
+                citiesFromTags.clear();
                 for (String path : allFilesPaths) {
                     ArrayList<document> docsToParse = readFile.spiltFileIntoSeparateDocs2(path);
                     parseFile(docsToParse, pathToCreate);

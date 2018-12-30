@@ -91,6 +91,7 @@ public class Parse {
             return null;
         }
         String city = doc2Parse.getCity();
+        doc2Parse.setCity("");
         //locations in the doc of appearances of the cities from tags , String - city name, ArrayList - locations indexes
         createDocDate(doc2Parse);
         HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc = new HashMap<>();
@@ -131,8 +132,6 @@ public class Parse {
         //delete start and end char punctutations from the terms.
         int tf = getMaxTF(dicDoc);
         doc2Parse.setMaxTf(tf);
-        int maxUnique = getMaxUnique(dicDoc);
-        doc2Parse.setNumOfUniqueWords(maxUnique);
         if(doc2Parse==null)
             System.out.println("line 138 parse");
         return doc2Parse;
@@ -140,6 +139,7 @@ public class Parse {
 
     private void createDocDate(document doc2Parse) {
         String date = doc2Parse.getPublishDate();
+        doc2Parse.setPublishDate("");
         String[] dateByParts;
         String Syear = null, Smonth = null, Sday = null;
         if (date != null && !date.equals("")) {
@@ -411,13 +411,6 @@ public class Parse {
                 max = temp[0];
         }
         return max;
-    }
-
-    /**
-     * return the size of dicDoc - the number of unique words from current dictionary of document.
-     */
-    private int getMaxUnique(HashMap<String, int[]> dicDoc) {
-        return dicDoc.size();
     }
 
     /**
