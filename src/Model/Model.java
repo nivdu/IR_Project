@@ -201,7 +201,7 @@ public class Model {
      * @param query
      * @return
      */
-    public boolean runQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic) {
+    public HashMap<String,Double> runQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic) {
 //        try {//todo delete this try catch
 //            runQueryFile("", pathFrom, pathTo);
 //        }
@@ -211,9 +211,9 @@ public class Model {
 //        int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
         //check the inserted path from.
         if (!checkIfLegalPaths(pathFrom, pathTo))
-            return false;
+            return null;
         if (!checkIfDirectoryWithOrWithoutStemExist(toStem, pathTo))
-            return false;
+            return null;
         //if semantic checkBox have V.
         if (semantic) {
             //call to api
@@ -261,9 +261,9 @@ public class Model {
             }
         }
         Query currQuery = new Query(query, "111", null);
-        HashMap<String, Double> queryResults = searcher.runQuery(currQuery, toStem, pathTo, null);
+        HashMap<String, Double> queryResults = searcher.runQuery(currQuery, toStem, pathTo, citiesChosen);
         //todo view results in gui
-        return true;
+        return queryResults;
     }
 
     public boolean runQueryFile(String pathQueryFile, String pathFrom, String pathTo) throws IOException {
@@ -334,7 +334,7 @@ public class Model {
     }
 
     public HashMap<String,Double> getEntities(String docID, String pathTo, boolean toStem){
-        return ranker.getEntities(docID,pathTo,toStem);
+        return searcher.getEntities(docID,pathTo,toStem);
     }
 
 }

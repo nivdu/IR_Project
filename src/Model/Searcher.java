@@ -7,6 +7,7 @@ public class Searcher {
     private Parse parse;
     private Ranker ranker;
     private HashMap<String,String[]> dictionaryPosting; //df,tf_overall,pointerToPosting
+    private HashMap<String, document> docsHash;
 
 
     public Searcher(Parse parse){
@@ -19,7 +20,7 @@ public class Searcher {
         query.setQuerySplited(query.getData().split(" "));//todo
         HashMap<String, int[]> queryTermsTF = parse.parseMainFunc(null, query);
         HashSet<String> allRelevantDocsInPosting = new HashSet<>();
-        boolean isLoad = dictionaryPosting!=null;//todo check
+        boolean isLoad = (dictionaryPosting!=null);//todo check
         if (!isLoad){
             loadDictionaryFromDisk(toStem, pathTo);
         }
@@ -47,12 +48,16 @@ public class Searcher {
                     if (docIDTFTitle.length < 3)
                         System.out.println("problem line 48 Searcher");
                     int[] tfTitle = {Integer.parseInt(docIDTFTitle[1]), Integer.parseInt(docIDTFTitle[2])};//TF overall, title
-                    docsOfWord.put(docIDTFTitle[0], tfTitle);//docID,TF,Title
+
                     //Insert docID to HashSet
-                    if (citiesDocs == null)
+                    if (citiesDocs == null) {
+                        docsOfWord.put(docIDTFTitle[0], tfTitle);//docID,TF,Title
                         allRelevantDocsInPosting.add(docIDTFTitle[0]);
-                    else if (citiesDocs.contains(docIDTFTitle[0]))
+                    }
+                    else if (citiesDocs.contains(docIDTFTitle[0])) {
+                        docsOfWord.put(docIDTFTitle[0], tfTitle);//docID,TF,Title
                         allRelevantDocsInPosting.add(docIDTFTitle[0]);
+                    }
                 }
                 QueryWord queryWord = new QueryWord(term, docsOfWord, queryTermsTF.get(term)[0], Integer.parseInt(dfTfPointer[0]));
                 listOfWords.add(queryWord);
@@ -142,7 +147,7 @@ public class Searcher {
             long pointerLong = Long.valueOf(pointer).longValue();
             String line = "";
             try {
-                RandomAccessFile raf = new RandomAccessFile(pathToCreate + "/citiesPostings/unitedPosting.txt", "rw");
+                RandomAccessFile raf = new RandomAccessFile(pathToCreate + "/citiesPosting/unitedPosting.txt", "rw");
                 raf.seek(pointerLong);
                 String linePosting = raf.readLine();
                 String[] lineSplitedByCity = linePosting.split(":");
@@ -152,8 +157,6 @@ public class Searcher {
                 docsInCities = new HashSet<>();
                 for (String doc : docsSplitedInLine) {
                     String[] docIDTFTitle = doc.split(",");
-                    if (docIDTFTitle.length < 3)
-                        System.out.println("line 98 Searcher");
                     docsInCities.add(docIDTFTitle[0]);
                 }
             } catch (FileNotFoundException e) {
@@ -224,7 +227,7 @@ public class Searcher {
                 dictionaryPosting.put(splitedLineInDictionaryByTerm[0], dfPostingTF);
                 line = bf.readLine();
             }
-            HashMap<String, document> docsHash = loadDocsFile(toStem, pathTo);
+            docsHash = loadDocsFile(toStem, pathTo);
             this.ranker = new Ranker(docsHash);
             return true;
         } catch (FileNotFoundException e) {
@@ -297,5 +300,70 @@ public class Searcher {
         }
 
         return  cities;
+    }
+
+
+    /**
+     * URL - "https://www.geeksforgeeks.org/sorting-a-hashmap-according-to-values" of sorting hashmap
+     * @param docID
+     * @param pathTo
+     * @param toStem
+     */
+    public HashMap<String,Double> getEntities(String docID, String pathTo, boolean toStem){
+        document docEntities = docsHash.get(docID);
+        HashMap<String,Double> entitiesTF = new HashMap<>();
+        String path = "";
+        if (toStem) {
+            path= pathTo + "\\WithStemming\\Entities.txt";
+        } else path= pathTo + "\\WithoutStemming\\Entities.txt";
+        File fileEntities = new File (path);
+        if(!fileEntities.exists()){
+            System.out.println("problem");
+        }
+        try {
+            RandomAccessFile raf = new RandomAccessFile(path,"rw");
+            raf.seek(docEntities.getPointerToEntities());
+            String line = raf.readLine();
+            String[] lineSplited = line.split(":");
+            if(lineSplited.length<2)
+                System.out.println("line 211 Ranker");
+            String[] lineSplitedByEnt = lineSplited[1].split(";");
+            for (String entity:lineSplitedByEnt) {
+                String[] currEntityTF = entity.split(",");
+                if(currEntityTF.length<2)
+                    System.out.println("line 217 Ranker");
+                double tf = Double.parseDouble(currEntityTF[1]);
+                entitiesTF.put(currEntityTF[0],(tf/docEntities.getMaxTf()));
+            }
+            //Sorting the HashMap by values
+            List<Map.Entry<String, Double> > list = new LinkedList<Map.Entry<String, Double> >(entitiesTF.entrySet());
+            Collections.sort(list, new Comparator<Map.Entry<String, Double> >() {
+                public int compare(Map.Entry<String, Double> o1, Map.Entry<String, Double> o2)
+                {
+                    return (o2.getValue()).compareTo(o1.getValue());
+                }
+            });
+            //todo check the sorting is working
+            HashMap<String, Double> entitiesList = new LinkedHashMap<String, Double>();
+            for (Map.Entry<String, Double> aa : list) {
+                entitiesList.put(aa.getKey(), aa.getValue());
+            }
+            return entitiesList;
+//            int countEntities = 0;
+//            HashMap<String,Double> fiveEntities = new HashMap<>();
+//            for (Map.Entry<String, Double> en : entitiesList.entrySet()) {
+//                if(countEntities<5){
+//                    fiveEntities.put(en.getKey(),en.getValue());
+//                    countEntities++;
+//                }
+//                else break;
+//            }
+//            return fiveEntities;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
