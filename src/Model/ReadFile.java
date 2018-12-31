@@ -1,11 +1,17 @@
 package Model;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 
 public class ReadFile {
 
@@ -34,17 +40,66 @@ public class ReadFile {
         return filePaths;
     }
 
+    private String addSemanticWords(String query) {
+        //call to api
+        String[] queryWords = query.split(" ");
+        LinkedList<String> queryListWords = new LinkedList<>();
+        if (queryWords.length > 0) {
+            for (String word : queryWords) {
+                URL url = null;
+                try {
+                    url = new URL("https://api.datamuse.com/words?ml=" + word);
+                    //make connection
+                    URLConnection urlc = url.openConnection();
+                    //use post mode
+                    urlc.setDoOutput(true);
+                    urlc.setAllowUserInteraction(false);
+                    //get result
+                    BufferedReader br = new BufferedReader(new InputStreamReader(urlc.getInputStream()));
+                    String currLine = br.readLine();
+                    if (currLine != null && !currLine.equals("")) {
+                        String[] firstLineArr = currLine.split("\"word\":\"");
+                        for (String s : firstLineArr) {
+                            int i = 0;
+                            String currWord = "";
+                            while (s != null && i < s.length() && s.charAt(i) != '\"') {
+                                if (Character.isLetter(s.charAt(i)))
+                                    currWord += s.charAt(i);
+                                i++;
+                            }
+                            if (currWord != null && currWord.length() >= 1) {
+                                queryListWords.add(currWord);
+                                if (queryListWords.size() % 2 == 0)
+                                    break;
+                            }
+                        }
+                    }
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        for (String s : queryListWords) {
+            query = query + " " + s;
+        }
+        return query;
+    }
+
+
     /**
      * create arrayList of queries from given path of file
      * @return - array list of queries from the give file path
      */
-    public ArrayList<Query> readQueryFile(String path) {
+    public ArrayList<Query> readQueryFile(String path, boolean semantic) {
         ArrayList<Query> queriesFromFile = new ArrayList<>();
         String queryTitle = "";
         String queryNumber = "";
         String wholeQueryString = file2String(path);//gonna be the query path when init the readFile for searcher/query
         String[] queryByLines = wholeQueryString.split("\r\n|\\\n");
         boolean tookDesc = false;
+        boolean tookNarrative = false;
         boolean finish = false;
         String desc = "";
         if (queryByLines != null && queryByLines.length > 0) {
@@ -53,32 +108,75 @@ public class ReadFile {
                     continue;
                 if (line.length() >= 14 && line.substring(0, 14).equals("<num> Number: ")) {
                     queryNumber = line.substring(14);//todo check if 14
-                    queryNumber = queryNumber.replace("\n", "");
                     queryNumber = queryNumber.replace(" ", "");
                     continue;
                 }
                 if (line.length() >= 7 && line.substring(0, 7).equals("<title>")) {
                     queryTitle = line.substring(8);
-                    queryTitle = queryTitle.replace("\n", "");
+                    if (queryTitle.charAt(queryTitle.length() - 1) != ' ')
+                        queryTitle += " ";
+                    if (semantic) {
+                        queryTitle += addSemanticWords(queryTitle);
+                    }
                     continue;
                 }
-                if(line.length() >= 19 && line.substring(0,19).equals("<desc> Description:")) {
+                if (line.length() >= 19 && line.substring(0, 19).equals("<desc> Description:")) {
                     tookDesc = true;
                     continue;
                 }
-                if(line.length() >= 17 && line.substring(0,17).equals("<narr> Narrative:")) {
+                if (line.length() >= 17 && line.substring(0, 17).equals("<narr> Narrative:")) {
+                    tookNarrative = true;
                     tookDesc = false;
-                    finish = true;
+                    continue;
                 }
-                if(tookDesc&&!finish)
-                    desc+=line.replace("\n"," ");
-                if(finish) {
+                if (line.length() >= 6 && line.substring(0, 6).equals("</top>")) {//todo or line.equals <top>
+                    finish = true;
+                    tookNarrative = false;
+                    tookDesc = false;
+                }
+                String queryData = line;
+                //remove non relevant words with high appearance rate
+                queryData = queryData.replace("documents", "");
+                queryData = queryData.replace("discussing", "");
+                queryData = queryData.replace("Discussing", "");
+                queryData = queryData.replace("Documents", "");
+                queryData = queryData.replace("Relevant", "");
+                queryData = queryData.replace("relevant", "");
+                queryData = queryData.replace("non-relevant", "");
+                queryData = queryData.replace("Non-Relevant", "");
+                queryData = queryData.replace("Identify", "");
+                queryData = queryData.replace("identify", "");
+                queryData = queryData.replace("document", "");
+                queryData = queryData.replace("Document", "");
+                queryData = queryData.replace("discuss", "");
+                queryData = queryData.replace("concerns", "");
+                queryData = queryData.replace("concern", "");
+                queryData = queryData.replace("information", "");
+                queryData = queryData.replace("Information", "");
+                queryData = queryData.replace("Find", "");
+                queryData = queryData.replace("discuss", "");
+                queryData = queryData.replace("issues", "");
+                queryData = queryData.replace("following", "");
+                queryData = queryData.replace("- ", " ");
+                queryData = queryData.replace(",", " ");
+                queryData = queryData.replace(".", " ");
+                queryData = queryData.replace("?", " ");
+                queryData = queryData.replace("/", " ");
+                queryData = queryData.replace(":", " ");
+                queryData = queryData.replace(")", " ");
+
+                if (tookDesc && !finish)
+                    queryTitle += queryData + " ";
+                if (tookNarrative && !tookDesc && !finish)
+                    queryTitle += queryData + " ";
+                if (finish) {
                     queriesFromFile.add(new Query(queryTitle, queryNumber, desc));
                     queryNumber = "";
-                    desc="";
-                    queryTitle="";
-                    finish=false;
-                    tookDesc=false;
+                    desc = "";
+                    queryTitle = "";
+                    finish = false;
+                    tookDesc = false;
+                    tookNarrative = false;
                 }
             }
         }
