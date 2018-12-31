@@ -179,7 +179,7 @@ public class Parse {
      * @return - the dicDoc dictionary contain the terms from the current given array.
      */
 
-    public HashMap<String, int[]> parseMainFunc(document doc2Parse, Query query2Parse){//String[] splitedDoc, HashSet<String> citiesFromTags, HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc, HashMap<String, int[]> dicDoc) {
+    public HashMap<String, int[]> parseMainFunc(document doc2Parse, Query query2Parse){
         Mutex m1 = new Mutex();
         if(doc2Parse==null && query2Parse==null) {
             System.out.println("parse line 148");
@@ -222,6 +222,7 @@ public class Parse {
             //stem if needed
             m1.lock();
             if (toStem) {
+                System.out.println(currToken);
                 stemmer.setTerm(currToken);
                 stemmer.stem();
                 currToken = stemmer.getTerm();

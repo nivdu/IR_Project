@@ -1,5 +1,7 @@
 package Model;
 
+import sun.awt.Mutex;
+
 import java.io.*;
 import java.util.*;
 
@@ -7,6 +9,7 @@ public class Searcher {
     private Parse parse;
     private Ranker ranker;
     private HashMap<String,String[]> dictionaryPosting; //df,tf_overall,pointerToPosting
+    Mutex mutex = new Mutex();
 
 
     public Searcher(Parse parse){
@@ -16,23 +19,32 @@ public class Searcher {
     public HashMap<String,Double> runQuery(Query query, boolean toStem, String pathTo, List<String> chosenCities) {
         HashSet<String> citiesDocs = docsOfCities(chosenCities,toStem,pathTo);
         ArrayList<QueryWord> listOfWords = new ArrayList<>();
-        query.setQuerySplited(query.getData().split(" "));//todo
+        query.setQuerySplited(query.getData().split(" "));
+        mutex.lock();
         HashMap<String, int[]> queryTermsTF = parse.parseMainFunc(null, query);
+        mutex.unlock();
         HashSet<String> allRelevantDocsInPosting = new HashSet<>();
         boolean isLoad = dictionaryPosting!=null;//todo check
+        mutex.lock();
         if (!isLoad){
             loadDictionaryFromDisk(toStem, pathTo);
         }
+        mutex.unlock();
         String pathToCreate;
         if (toStem) {
             pathToCreate = pathTo + "\\WithStemming";
         } else pathToCreate = pathTo + "\\WithoutStemming";
         Set<String> keys = queryTermsTF.keySet();
+        String termLikeDic = "";
         //foreach word in query
         for (String term : keys) {
-            if(!dictionaryPosting.containsKey(term))
-                continue;
-            String[] dfTfPointer = dictionaryPosting.get(term);
+            if(dictionaryPosting.containsKey(term.toLowerCase())) {
+                termLikeDic = term.toLowerCase();
+            }
+            else if(dictionaryPosting.containsKey(term.toUpperCase()))
+                termLikeDic = term.toUpperCase();
+            else continue;
+            String[] dfTfPointer = dictionaryPosting.get(termLikeDic);
             String pointerToPosting = dfTfPointer[2];
             long pointer = Long.valueOf(pointerToPosting).longValue();
             try {
@@ -54,7 +66,7 @@ public class Searcher {
                     else if (citiesDocs.contains(docIDTFTitle[0]))
                         allRelevantDocsInPosting.add(docIDTFTitle[0]);
                 }
-                QueryWord queryWord = new QueryWord(term, docsOfWord, queryTermsTF.get(term)[0], Integer.parseInt(dfTfPointer[0]));
+                QueryWord queryWord = new QueryWord(termLikeDic, docsOfWord, queryTermsTF.get(term)[0], Integer.parseInt(dfTfPointer[0]));
                 listOfWords.add(queryWord);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -200,6 +212,13 @@ public class Searcher {
         }
         this.ranker = new Ranker(docsHash);
         return docsHash;
+    }
+
+    /**
+     * remove the dictionary posting
+     */
+    public void clearDic(){
+            dictionaryPosting.clear();
     }
 
     /**

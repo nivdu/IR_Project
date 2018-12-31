@@ -2,14 +2,12 @@ package Model;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
-import jdk.nashorn.internal.ir.Block;
 import sun.awt.Mutex;
 
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.sql.Time;
 import java.util.*;
 import java.util.HashMap;
 import java.util.concurrent.*;
@@ -17,7 +15,6 @@ import java.util.concurrent.*;
 public class Model {
     private Indexer indexer;
     private Searcher searcher;
-    private Parse parse;
     private Ranker ranker;//todo delete this
     private boolean loadedStem;
     private boolean loadedWithoutStem;
@@ -29,7 +26,7 @@ public class Model {
         //check the inserted path from.
         if (!checkIfLegalPaths(pathFrom, pathTo))
             return false;
-        parse = new Parse(toStem, pathFrom);
+        Parse parse = new Parse(toStem, pathFrom);
         indexer = new Indexer(pathFrom, pathTo, parse);
         long Stime = System.currentTimeMillis();
         boolean succGenerate = indexer.createPostingAndDic(toStem);
@@ -136,6 +133,11 @@ public class Model {
     public boolean loadDictionaryFromDiskToMemory(boolean isStem, String pathTo, String pathFrom) throws InterruptedException {
         if (!checkIfDirectoryWithOrWithoutStemExist(isStem, pathTo))
             return false;
+        if ((loadedStem && !isStem) || (loadedWithoutStem && isStem)) {
+            searcher.clearDic();
+        }
+        loadedStem = isStem;
+        loadedWithoutStem = !isStem;
         Parse parse1 = new Parse(isStem, pathFrom);
         searcher = new Searcher(parse1);
         long Stime = System.currentTimeMillis();
@@ -149,13 +151,10 @@ public class Model {
         boolean bl = searcher.loadDictionaryFromDisk(isStem, pathTo);
         t1.join();
         long Ftime = System.currentTimeMillis();
-        System.out.println((Ftime-Stime)/1000);
-        if (bl){
-            loadedStem=isStem;
-            loadedWithoutStem=!isStem;
+        System.out.println((Ftime - Stime) / 1000);
+        if (bl) {
             return true;
-        }
-        else {
+        } else {
             Alert chooseFile = new Alert(Alert.AlertType.ERROR);
             chooseFile.setContentText("Loading failed!");
             chooseFile.show();
@@ -299,7 +298,7 @@ public class Model {
         if (!checkIfDirectoryWithOrWithoutStemExist(toStem, pathTo))
             return false;
         ReadFile readfile = new ReadFile(pathQueryFile);
-        ArrayList<Query> queriesArr = readfile.readQueryFile(pathQueryFile);
+        ArrayList<Query> queriesArr = readfile.readQueryFile(pathQueryFile, semantic);
         final ExecutorService executor = Executors.newFixedThreadPool(4); // it's just an arbitrary number
 //        final List<Future<?>> futures = new ArrayList<>();
         Mutex m1 = new Mutex();
@@ -307,11 +306,6 @@ public class Model {
         HashMap<Query, HashMap<String, Double>> ttt = new HashMap<Query, HashMap<String, Double>>();
         Queue<Query> QQ = new LinkedList<Query>();
         for (Query query : queriesArr) {
-            if (semantic) {
-                String queryData = query.getData();
-                queryData += addSemanticWords(query.getData());
-                query.setData(queryData);
-            }
             ((LinkedList<Query>) QQ).add(query);
             Future<?> future = executor.submit(() -> {
                 HashMap<String, Double> queryResults = searcher.runQuery(query, toStem, pathTo, null);//todo maybe object of queryAns
@@ -326,6 +320,7 @@ public class Model {
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
+        futures.clear();
         executor.shutdown();
         executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.MINUTES);
         int size = queriesArr.size();

@@ -37,19 +37,20 @@ public class Ranker {
         if(wordsFromQuery==null || docsID == null)
             return null;
         ArrayList<HashMap<String,Double>> docsRanks = new ArrayList<>();
-        ArrayList<HashMap<String,Double>> docsRanks2Return = new ArrayList<>();
+//        ArrayList<HashMap<String,Double>> docsRanks2Return = new ArrayList<>();
         //run all the rank functions
 
-        docsRanks.add(inTitleCalc(wordsFromQuery, docsID));
+//        docsRanks.add(inTitleCalc(wordsFromQuery, docsID));
         docsRanks.add(BM25(wordsFromQuery, docsID));
-        try { docsRanks.add(publishDataRank(docsID)); } catch (Exception e){}
-//        if(queryDesc!=null && queryDesc.size()>0)
-//            docsRanks.add(queryDesc);//function ranked by description
+//        try { docsRanks.add(publishDataRank(docsID)); } catch (Exception e){}
         //sort and normalize docs ranks
-        for (HashMap hm:docsRanks){
-            docsRanks2Return.add(sortHashMapByValues(hm));
-        }
-        return combineArrayByWights(docsRanks2Return);
+//        for (HashMap hm:docsRanks){
+//            if(hm.size()>0)
+//                docsRanks2Return.add(sortHashMapByValues(hm));
+//        }
+//        if(docsRanks.size()==1)
+        return sortHashMapByValues(docsRanks.get(0));
+//        return combineArrayByWights(docsRanks2Return);
     }
 
     public HashMap<String, Double> sortHashMapByValues(HashMap<String, Double> passedMap) {
@@ -124,12 +125,12 @@ public class Ranker {
         double[] weights = new double[docsRanks.size()];//+1 for the describe query, sometimes contained and sometimes not.
         //todo from here
         //title,bm25,date,description
-        weights[0] = 0.01;//title
-        weights[1] = 0.55;//bm25
-        weights[2] = 0.01;//date
-        if (weights.length == 4)
-            weights[3] = 0.45;//by description
-        // todo until here
+//        weights[0] = 0.1;//title
+        weights[0] = 0.9;//bm25
+//        weights[2] = 0.01;//date
+//        if (weights.length == 4)
+//            weights[3] = 0.45;//by description
+
         for (int j = 0; j < docsRanks.size(); j++) {
             int order = 0;
             double temp2 = 0;
