@@ -222,7 +222,6 @@ public class Parse {
             //stem if needed
             m1.lock();
             if (toStem) {
-                System.out.println(currToken);
                 stemmer.setTerm(currToken);
                 stemmer.stem();
                 currToken = stemmer.getTerm();
