@@ -61,12 +61,36 @@ public class Ranker {
                 return (o2.getValue()).compareTo(o1.getValue());
             }
         });
-        //todo check the sorting is working
-        HashMap<String, Double> sortedHashMap = new LinkedHashMap<String, Double>();
-        for (Map.Entry<String, Double> aa : list) {
-            sortedHashMap.put(aa.getKey(), aa.getValue());
+        HashMap<String, Double> sortedHashMap50 = new LinkedHashMap<String, Double>();
+        double max = 0;
+        double prevMax = Integer.MAX_VALUE;
+        String currMaxDoc="";
+        int numOfDocs = passedMap.size();
+        if(numOfDocs>50)
+            numOfDocs=50;
+        while(sortedHashMap50.size()<numOfDocs) {
+            for (Map.Entry<String, Double> aa : list) {
+                if (aa.getValue() > max && aa.getValue()<=prevMax && !sortedHashMap50.containsKey(aa.getKey())) {
+                    max = aa.getValue();
+                    currMaxDoc = aa.getKey();
+                }
+            }
+            sortedHashMap50.put(currMaxDoc, max);
+            prevMax=max;
+            max=0;
+            currMaxDoc="";
         }
-        return sortedHashMap;
+        return sortedHashMap50;
+        //for reduce memory use and runtime return only the first 50 docs.
+//        int limitTo50 = 0;
+//        HashMap<String, Double> sortedHashMap = new LinkedHashMap<String, Double>();
+//        for (Map.Entry<String, Double> aa : list) {
+//            limitTo50++;
+//            sortedHashMap.put(aa.getKey(), aa.getValue());
+//            if(limitTo50==50)
+//                break;
+//        }
+//        return sortedHashMap;
     }
 
     /**
