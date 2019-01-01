@@ -1,6 +1,7 @@
 package View;
 
 import Controller.Controller;
+import Model.Query;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -12,6 +13,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
@@ -35,6 +37,8 @@ public class View {
     @FXML
     private ComboBox languages;
     @FXML
+    private CheckBox saveResults;
+    @FXML
     private Button display;
     @FXML
     private Button load;
@@ -47,8 +51,15 @@ public class View {
     @FXML
     private Button runQuery;
     @FXML
-    private Button chooseFile;
-
+    private Button RunQueryFile;
+    @FXML
+    private TextField QueryFileText;
+    @FXML
+    private Button BrowseQueryFile;
+    @FXML
+    private TextField pathResults;
+    @FXML
+    private Button BrowseQueryPath;
 
     private Controller controller = new Controller();
 
@@ -90,6 +101,7 @@ public class View {
             BrowseFrom.setDisable(false);
             BrowseTo.setDisable(false);
             languages.setDisable(false);
+            saveResults.setDisable(false);
             setLanguages();
         }
         else {
@@ -120,6 +132,32 @@ public class View {
     }
 
     @FXML
+    private void browseResults(ActionEvent event) throws IOException {
+        Stage stage = new Stage();
+        DirectoryChooser directoryChooser = new DirectoryChooser();
+        File selectedDirectory = directoryChooser.showDialog(stage);
+        if (selectedDirectory == null) {
+            pathResults.setText("No Directory selected");
+        } else {
+            pathResults.setText(selectedDirectory.getAbsolutePath());
+        }
+    }
+
+
+
+    @FXML
+    private void BrowseQueryFile(ActionEvent event) throws IOException {
+        Stage stage = new Stage();
+        FileChooser fileChooser = new FileChooser();
+        File selectedFile = fileChooser.showOpenDialog(stage);
+        if (selectedFile == null) {
+            QueryFileText.setText("No Directory selected");
+        } else {
+            QueryFileText.setText(selectedFile.getAbsolutePath());
+        }
+    }
+
+    @FXML
     private void browseTo(ActionEvent event) throws IOException {
         Stage stage = new Stage();
         DirectoryChooser directoryChooser = new DirectoryChooser();
@@ -140,7 +178,7 @@ public class View {
             load.setDisable(true);
             reset.setDisable(true);
             runQuery.setDisable(true);
-            chooseFile.setDisable(true);
+            BrowseQueryFile.setDisable(true);
             languages.setDisable(true);
             semantic.setDisable(true);
         }
@@ -153,7 +191,9 @@ public class View {
             setCities();
             showAlert(Alert.AlertType.INFORMATION,"Load","Load succeed!");
             runQuery.setDisable(false);//todo here the set disable queryfile to
-            chooseFile.setDisable(false);
+            RunQueryFile.setDisable(false);
+            BrowseQueryFile.setDisable(false);
+            BrowseQueryPath.setDisable(false);
         }
 //        else{
 //            showAlert(Alert.AlertType.ERROR, "Load","Load Failed!");
@@ -204,26 +244,8 @@ public class View {
     }
 
 
-    @FXML
-    private void RunQuery(ActionEvent event) throws IOException {
-        ObservableList<String> citiesFromView = cities.getSelectionModel().getSelectedItems();
-        List<String> citiesFromViewList = new ArrayList<>();
-        if(citiesFromView!= null) {
-            for (String city : citiesFromView) {
-                citiesFromViewList.add(city);
-            }
-        }
-        HashMap<String,Double> docsAndRank = controller.RunQuery(queryText.getText(),stemming.isSelected(), pathTo.getText(), pathFrom.getText(), citiesFromViewList, semantic.isSelected());
-
+    private void tableViewQueries(ObservableList<MyDataType> docsAndQueries){
         TableView<MyDataType> tableView = new TableView<MyDataType>();
-        final ObservableList<MyDataType> docsList = FXCollections.observableArrayList();
-        Set<String> keys = docsAndRank.keySet();
-        for (String doc : keys) {
-            docsList.add(new MyDataType("111",doc));
-        }
-//        docsObservable.sort(String::compareToIgnoreCase);
-
-
         TableColumn queryCol = new TableColumn("Query ID");
         queryCol.setCellValueFactory(new PropertyValueFactory<MyDataType,String>("queryID"));
         TableColumn docCol = new TableColumn("Doc ID");
@@ -289,7 +311,7 @@ public class View {
                     }
                 };
         entitiesCol.setCellFactory(cellFactory);
-        tableView.setItems(docsList);
+        tableView.setItems(docsAndQueries);
         tableView.getColumns().addAll(queryCol,docCol,entitiesCol);
 
         VBox vbox = new VBox();
@@ -309,6 +331,70 @@ public class View {
         Scene scene = new Scene(vbox,500,400);
         stage.setScene(scene);
         stage.show();
+    }
+
+    @FXML
+    private void RunQuery(ActionEvent event) throws IOException {
+        ObservableList<String> citiesFromView = cities.getSelectionModel().getSelectedItems();
+        List<String> citiesFromViewList = new ArrayList<>();
+        if(citiesFromView!= null) {
+            for (String city : citiesFromView) {
+                citiesFromViewList.add(city);
+            }
+        }
+        HashMap<String,Double> docsAndRank = controller.RunQuery(queryText.getText(),stemming.isSelected(), pathTo.getText(), pathFrom.getText(), citiesFromViewList, semantic.isSelected(),saveResults.isSelected(),pathResults.getText());
+
+        final ObservableList<MyDataType> docsList = FXCollections.observableArrayList();
+        Set<String> keys = docsAndRank.keySet();
+        for (String doc : keys) {
+            docsList.add(new MyDataType("111",doc));//todo random query ID
+        }
+
+        tableViewQueries(docsList);
+    }
+
+    @FXML
+    private void RunQueryFile(ActionEvent event) throws IOException {
+        ObservableList<String> citiesFromView = cities.getSelectionModel().getSelectedItems();
+        List<String> citiesFromViewList = new ArrayList<>();
+        if(citiesFromView!= null) {
+            for (String city : citiesFromView) {
+                citiesFromViewList.add(city);
+            }
+        }
+        HashMap<Query, HashMap<String, Double>> queryAndDocID=controller.RunQueryFile(QueryFileText.getText(),stemming.isSelected(),pathFrom.getText(),pathTo.getText(),semantic.isSelected(),citiesFromViewList,saveResults.isSelected(),pathResults.getText());
+
+        List<Map.Entry<Query, HashMap<String, Double>>> list = new LinkedList<>(queryAndDocID.entrySet());
+        final ObservableList<MyDataType> docsAndQueries = FXCollections.observableArrayList();
+        for (Map.Entry<Query, HashMap<String, Double>> aa : list) {
+            HashMap<String,Double> docsAndRateOfCurrQuery=queryAndDocID.get(aa.getKey());
+            Set<String> docs = docsAndRateOfCurrQuery.keySet();
+            for (String doc:docs) {
+                docsAndQueries.add(new MyDataType(aa.getKey().getQueryID(),doc));
+            }
+
+        }
+
+        Set<Query> keys = queryAndDocID.keySet();
+        for (Query query : keys) {
+            HashMap<String,Double> docsAndRateOfCurrQuery=queryAndDocID.get(query);
+            Set<String> docs = docsAndRateOfCurrQuery.keySet();
+            for (String doc:docs) {
+                docsAndQueries.add(new MyDataType(query.getQueryID(),doc));
+            }
+        }
+        Comparator<MyDataType> compareData = new Comparator<MyDataType>() {
+            @Override
+            public int compare(MyDataType s1, MyDataType s2) {
+                String n1 = s1.getQueryID();
+                String n2 = s2.getQueryID();
+                return n1.compareToIgnoreCase(n2);
+            }
+        };
+        FXCollections.sort(docsAndQueries,compareData);
+        //docsAndQueries.sort((str, str2) -> MyDataType.compareToIgnoreCase(str, str2));
+
+        tableViewQueries(docsAndQueries);
     }
 
 

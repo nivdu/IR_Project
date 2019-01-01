@@ -251,7 +251,7 @@ public class Model {
      * @param query
      * @return
      */
-    public HashMap<String,Double> runQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic) {
+    public HashMap<String,Double> runQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic,boolean toSaveResults,String pathForResults) {
         try {
             long Stime = System.currentTimeMillis();
             if(toStem && !loadedStem){
@@ -286,20 +286,39 @@ public class Model {
         if (semantic) {
             query += addSemanticWords(query);
         }
-        Query currQuery = new Query(query, "111", null);
+        Query currQuery = new Query(query, "111");
         HashMap<String, Double> queryResults = searcher.runQuery(currQuery, toStem, pathTo, citiesChosen);
+
+        if(toSaveResults){
+            try {
+                File file = new File(pathForResults);
+                if (!file.exists()){
+                    Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+                    chooseFile.setHeaderText("Error with path for saving results");
+                    chooseFile.setContentText("The path you selected is not legal or not a path of directory. please choose another one. :)");
+                    chooseFile.show();
+                } else {
+                    File resultsFile = new File(pathForResults + "\\QueryResults.txt");
+                    if (resultsFile.exists())
+                        resultsFile.delete();
+                    writeToRes(pathForResults, queryResults, currQuery);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         //todo view results in gui
         return queryResults;
     }
 
-    public boolean runQueryFile(String pathQueryFile,boolean toStem, String pathFrom, String pathTo, boolean semantic) throws IOException, InterruptedException {
-        pathQueryFile = "C:\\Users\\nivdu\\Desktop\\אחזור\\פרוייקט גוגל\\מנוע חלק ב" + "\\queries.txt";//todo need to take from the user
+    public HashMap<Query, HashMap<String, Double>> runQueryFile(String pathQueryFile,boolean toStem, String pathFrom, String pathTo, boolean semantic,List<String> citiesFromViewList,boolean toSaveResults,String pathForResults) throws IOException, InterruptedException {
         if (!checkIfLegalPaths(pathFrom, pathTo))
-            return false;
+            return null;
         if (!checkIfDirectoryWithOrWithoutStemExist(toStem, pathTo))
-            return false;
+            return null;
         ReadFile readfile = new ReadFile(pathQueryFile);
+        //HashMap<String,String> queriesAndDocs = new HashMap<>();
         ArrayList<Query> queriesArr = readfile.readQueryFile(pathQueryFile, semantic);
         final ExecutorService executor = Executors.newFixedThreadPool(4); // it's just an arbitrary number
 //        final List<Future<?>> futures = new ArrayList<>();
@@ -310,7 +329,7 @@ public class Model {
         for (Query query : queriesArr) {
             ((LinkedList<Query>) QQ).add(query);
             Future<?> future = executor.submit(() -> {
-                HashMap<String, Double> queryResults = searcher.runQuery(query, toStem, pathTo, null);//todo maybe object of queryAns
+                HashMap<String, Double> queryResults = searcher.runQuery(query, toStem, pathTo, citiesFromViewList);//todo maybe object of queryAns
                 ttt.put(query, queryResults);
             });
             futures.add(future);
@@ -325,24 +344,33 @@ public class Model {
         futures.clear();
         executor.shutdown();
         executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.MINUTES);
-        int size = queriesArr.size();
-        for (int i = 0; i < size; i++) {
-            Query tempQ = QQ.remove();
-            writeToRes(toStem, pathTo, ttt.get(tempQ), tempQ);
+        if(toSaveResults) {
+            File file = new File(pathForResults);
+            if (!file.exists()){
+                Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+                chooseFile.setHeaderText("Error with path for saving results");
+                chooseFile.setContentText("The path you selected is not legal or not a path of directory. please choose another one. :)");
+                chooseFile.show();
+            } else {
+                File resultsFile = new File(pathForResults + "\\QueryResults.txt");
+                if (resultsFile.exists())
+                    resultsFile.delete();
+                int size = queriesArr.size();
+                for (int i = 0; i < size; i++) {
+                    Query tempQ = QQ.remove();
+                    writeToRes(pathForResults, ttt.get(tempQ), tempQ);
+
+                }
+            }
         }
-        return true;
+        //
+        return ttt;
     }
 //            HashMap<String, Double> queryResults = searcher.runQuery(query, toStem, pathTo, null);//todo maybe object of queryAns
 //            todo if button save results pressed{
-    public void writeToRes(boolean toStem, String pathTo, HashMap<String, Double> queryResults, Query query) throws IOException {
-            boolean pressed = true;//todo take from the bottom instead of the false
-            if (pressed) {
+    public void writeToRes(String pathForResults, HashMap<String, Double> queryResults, Query query) throws IOException {
                 File resultsFile;
-                if (toStem) {
-                    resultsFile = new File(pathTo + "\\WithStemming\\results.txt");//todo maby need other name to the result file
-                } else {
-                    resultsFile = new File(pathTo + "\\WithoutStemming\\results.txt");//todo maby need other name to the result file
-                }
+                resultsFile = new File(pathForResults + "\\QueryResults.txt");
                 if (!resultsFile.exists()) {
                     resultsFile.createNewFile();
                 }
@@ -360,7 +388,6 @@ public class Model {
                 }
                 bw.flush();
                 bw.close();
-            }
             //todo write it to the gui or something
             //todo insert into priority Q and every iteration at loop write to fileAt pathTo : queryID:docID1,docID2,....,docIDN. V
             //todo do something with the list because the next loop will override it. V

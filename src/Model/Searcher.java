@@ -16,6 +16,15 @@ public class Searcher {
         this.parse = parse;
     }
 
+
+    /**
+     * Parse the query and return HashMap of all the documents relevant to the query and their ranks.
+     * @param query
+     * @param toStem
+     * @param pathTo
+     * @param chosenCities
+     * @return
+     */
     public HashMap<String,Double> runQuery(Query query, boolean toStem, String pathTo, List<String> chosenCities) {
         HashSet<String> citiesDocs = docsOfCities(chosenCities,toStem,pathTo);
         ArrayList<QueryWord> listOfWords = new ArrayList<>();
@@ -78,15 +87,18 @@ public class Searcher {
                 e.printStackTrace();
             }
         }
-//        HashMap<String,Double> funcQueryDesc=null;
-//        if(query.getDesc()!= null && !query.getQueryID().equals("desc") && !query.getDesc().equals("desc")) {
-//            Query queryDesc = new Query(query.getDesc(), "desc", "desc");
-//            funcQueryDesc = runQuery(queryDesc, toStem, pathTo, chosenCities);
-//        }
         HashMap<String,Double> test = ranker.RankQueryDocs(listOfWords, allRelevantDocsInPosting);//if query like niv and loren (the campus dont contain it) this will return null. todo handle it
         return test;
     }
 
+
+    /**
+     * Get a List of chosen cities by the user  and return the documents that connect to these cities
+     * @param chosenCities - list of the chosen cities by user
+     * @param toStem - true if to do stemming, else false
+     * @param pathTo - path to create
+     * @return - all the DOCID of the relevant documents.
+     */
     private HashSet<String> docsOfCities(List<String> chosenCities, boolean toStem, String pathTo) {
         if (chosenCities == null || chosenCities.size() == 0)
             return null;
@@ -126,12 +138,13 @@ public class Searcher {
 
 
     /**
+     * Responsible for loading the city dictionary from disk
      * First String is name of city
      * Second string is pointer to cityPosting
      *
-     * @param toStem
-     * @param pathTo
-     * @return
+     * @param toStem - true if to do Stemming, else false
+     * @param pathTo - path to create to
+     * @return all the cities and their pointers to the cities posting
      */
         private HashMap<String, String> loadCitiesDictionaryFromDisk(boolean toStem, String pathTo) {
         HashMap<String,String> cityAndPointer = new HashMap<>();
@@ -159,6 +172,12 @@ public class Searcher {
         return cityAndPointer;
     }
 
+    /**
+     * Responsible for loading the dictionary from disk
+     * @param toStem - true if to do Stemming, else false
+     * @param pathTo - path to create to
+     * @return - true if succeed, else return false
+     */
     public boolean loadDictionaryFromDisk(boolean toStem,String pathTo) {
         dictionaryPosting = new HashMap<>();
         try {
@@ -192,6 +211,12 @@ public class Searcher {
         return false;
     }
 
+    /**
+     * responsible for loading the docs file from disk
+     * @param toStem - true if to do Stemming, else false
+     * @param pathTo - path to create to
+     * @return all the docId and it's document object
+     */
     public HashMap<String, document> loadDocsFile(boolean toStem, String pathTo) {
             String pathToCreate;
         if (toStem) {
@@ -206,11 +231,11 @@ public class Searcher {
             objIS.close();
             fis.close();
         } catch (FileNotFoundException e) {
-            System.out.println("problem in writeDocsDataToDisk function (Model");
+            System.out.println("problem in writeDocsDataToDisk function (Searcher)");
         } catch (IOException e) {
-            System.out.println("problem in writeDocsDataToDisk function (Model");
+            System.out.println("problem in writeDocsDataToDisk function (Searcher)");
         } catch (ClassNotFoundException e) {
-            System.out.println("problem in writeDocsDataToDisk function (Model");
+            System.out.println("problem in writeDocsDataToDisk function (Searcher)");
         }
         this.ranker = new Ranker(docsHash);
         return docsHash;
@@ -224,18 +249,11 @@ public class Searcher {
     }
 
     /**
-     * cut the Query string by tags
-     * @param query - Query to cut
-     * @return - String array of the Query contents.
+     *
+     * @param toStem - true if to do Stemming, else false
+     * @param pathTo - path to create to
+     * @return HashSet of all the cities in the corpus
      */
-    private document queryCut(String query){
-        if(query==null || query.equals(""))
-            return null;
-        document queryDoc = null;
-        return queryDoc;
-    }
-
-
     public HashSet<String> setCities(String pathTo, boolean toStem) {//todo check function
         HashSet<String> cities = new HashSet<>();
         String path = "";
@@ -267,66 +285,12 @@ public class Searcher {
 
 
     /**
-     * URL - "https://www.geeksforgeeks.org/sorting-a-hashmap-according-to-values" of sorting hashmap
+     *
      * @param docID
      * @param pathTo
      * @param toStem
      */
     public HashMap<String,Double> getEntities(String docID, String pathTo, boolean toStem){
-        document docEntities = docsHash.get(docID);
-        HashMap<String,Double> entitiesTF = new HashMap<>();
-        String path = "";
-        if (toStem) {
-            path= pathTo + "\\WithStemming\\Entities.txt";
-        } else path= pathTo + "\\WithoutStemming\\Entities.txt";
-        File fileEntities = new File (path);
-        if(!fileEntities.exists()){
-            System.out.println("problem");
-        }
-        try {
-            RandomAccessFile raf = new RandomAccessFile(path,"rw");
-            raf.seek(docEntities.getPointerToEntities());
-            String line = raf.readLine();
-            String[] lineSplited = line.split(":");
-            if(lineSplited.length<2)
-                System.out.println("line 211 Ranker");
-            String[] lineSplitedByEnt = lineSplited[1].split(";");
-            for (String entity:lineSplitedByEnt) {
-                String[] currEntityTF = entity.split(",");
-                if(currEntityTF.length<2)
-                    System.out.println("line 217 Ranker");
-                double tf = Double.parseDouble(currEntityTF[1]);
-                entitiesTF.put(currEntityTF[0],(tf/docEntities.getMaxTf()));
-            }
-            //Sorting the HashMap by values
-            List<Map.Entry<String, Double> > list = new LinkedList<Map.Entry<String, Double> >(entitiesTF.entrySet());
-            Collections.sort(list, new Comparator<Map.Entry<String, Double> >() {
-                public int compare(Map.Entry<String, Double> o1, Map.Entry<String, Double> o2)
-                {
-                    return (o2.getValue()).compareTo(o1.getValue());
-                }
-            });
-            //todo check the sorting is working
-            HashMap<String, Double> entitiesList = new LinkedHashMap<String, Double>();
-            for (Map.Entry<String, Double> aa : list) {
-                entitiesList.put(aa.getKey(), aa.getValue());
-            }
-            return entitiesList;
-//            int countEntities = 0;
-//            HashMap<String,Double> fiveEntities = new HashMap<>();
-//            for (Map.Entry<String, Double> en : entitiesList.entrySet()) {
-//                if(countEntities<5){
-//                    fiveEntities.put(en.getKey(),en.getValue());
-//                    countEntities++;
-//                }
-//                else break;
-//            }
-//            return fiveEntities;
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return ranker.getEntities(docID,pathTo,toStem);
     }
 }
