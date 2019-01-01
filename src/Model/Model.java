@@ -251,7 +251,7 @@ public class Model {
      * @param query
      * @return
      */
-    public boolean runQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic) {
+    public HashMap<String,Double> runQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic) {
         try {
             long Stime = System.currentTimeMillis();
             if(toStem && !loadedStem){
@@ -259,36 +259,38 @@ public class Model {
                 chooseFile.setHeaderText("load dictionary before query");
                 chooseFile.setContentText("You must load again after choose withStem and then run a query!");
                 chooseFile.show();
-                return false;
+                return null;
             }
             if(!toStem && !loadedWithoutStem){
                 Alert chooseFile = new Alert(Alert.AlertType.ERROR);
                 chooseFile.setHeaderText("load dictionary before query");
                 chooseFile.setContentText("You must load again after choose withoutStem and then run a query!");
                 chooseFile.show();
-                return false;
+                return null;
             }
-            runQueryFile("", toStem, pathFrom, pathTo, semantic);
+            //runQueryFile("", toStem, pathFrom, pathTo, semantic);
             long Ftime = System.currentTimeMillis();
             System.out.println((Ftime-Stime)/1000);
         }
         catch (Exception e){
             e.printStackTrace();
         }
+
 //        int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
         //check the inserted path from.
         if (!checkIfLegalPaths(pathFrom, pathTo))
-            return false;
+            return null;
         if (!checkIfDirectoryWithOrWithoutStemExist(toStem, pathTo))
-            return false;
+            return null;
         //if semantic checkBox have V.
         if (semantic) {
             query += addSemanticWords(query);
         }
         Query currQuery = new Query(query, "111", null);
-        //HashMap<String, Double> queryResults = searcher.runQuery(currQuery, toStem, pathTo, null);
+        HashMap<String, Double> queryResults = searcher.runQuery(currQuery, toStem, pathTo, citiesChosen);
+
         //todo view results in gui
-        return true;
+        return queryResults;
     }
 
     public boolean runQueryFile(String pathQueryFile,boolean toStem, String pathFrom, String pathTo, boolean semantic) throws IOException, InterruptedException {
@@ -390,7 +392,7 @@ public class Model {
     }
 
     public HashMap<String,Double> getEntities(String docID, String pathTo, boolean toStem){
-        return ranker.getEntities(docID,pathTo,toStem);
+        return searcher.getEntities(docID,pathTo,toStem);
     }
 
 }
