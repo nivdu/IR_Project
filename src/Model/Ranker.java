@@ -243,5 +243,57 @@ public class Ranker {
     }
 
 
+    /**
+     * Get the entities of a given doc
+     * @param docID - ID od current doc
+     * @param pathTo - The path to create to
+     * @param toStem - true if to do with stemming, else false.
+     */
+    public HashMap<String,Double> getEntities(String docID, String pathTo, boolean toStem){
+        document docEntities = docs.get(docID);
+        HashMap<String,Double> entitiesTF = new HashMap<>();
+        String path = "";
+        if (toStem) {
+            path= pathTo + "\\WithStemming\\Entities.txt";
+        } else path= pathTo + "\\WithoutStemming\\Entities.txt";
+        File fileEntities = new File (path);
+        if(!fileEntities.exists()){
+            System.out.println("problem");
+        }
+        try {
+            RandomAccessFile raf = new RandomAccessFile(path,"rw");
+            raf.seek(docEntities.getPointerToEntities());
+            String line = raf.readLine();
+            String[] lineSplited = line.split(":");
+            if(lineSplited.length<2)
+                System.out.println("line 211 Ranker");
+            String[] lineSplitedByEnt = lineSplited[1].split(";");
+            for (String entity:lineSplitedByEnt) {
+                String[] currEntityTF = entity.split(",");
+                if(currEntityTF.length<2)
+                    System.out.println("line 217 Ranker");
+                double tf = Double.parseDouble(currEntityTF[1]);
+                entitiesTF.put(currEntityTF[0],(tf/docEntities.getMaxTf()));
+            }
+            //Sorting the HashMap by values
+            List<Map.Entry<String, Double> > list = new LinkedList<Map.Entry<String, Double> >(entitiesTF.entrySet());
+            Collections.sort(list, new Comparator<Map.Entry<String, Double> >() {
+                public int compare(Map.Entry<String, Double> o1, Map.Entry<String, Double> o2)
+                {
+                    return (o2.getValue()).compareTo(o1.getValue());
+                }
+            });
+            HashMap<String, Double> entitiesList = new LinkedHashMap<String, Double>();
+            for (Map.Entry<String, Double> aa : list) {
+                entitiesList.put(aa.getKey(), aa.getValue());
+            }
+            return entitiesList;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
 }
