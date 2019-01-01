@@ -7,7 +7,6 @@ import java.util.HashMap;
 public class document implements Serializable {
     private String documentID;
     private int maxTf;
-    private int numOfUniqueWords;
     private String city;
     private String publishDate;
     private HashMap<String,int[]> dicDoc;
@@ -21,7 +20,6 @@ public class document implements Serializable {
     public document(){
         this.documentID="";
         this.maxTf=0;
-        this.numOfUniqueWords=0;
         this.city="";
         this.publishDate="";
         this.dicDoc=null;
@@ -74,10 +72,6 @@ public class document implements Serializable {
         this.maxTf = maxTf;
     }
 
-    public void setNumOfUniqueWords(int numOfUniqueWords) {
-        this.numOfUniqueWords = numOfUniqueWords;
-    }
-
     public void setCity(String city) {
         this.city = city;
     }
@@ -85,19 +79,6 @@ public class document implements Serializable {
     public void setLocationOfCitiesAtCurrDoc(HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc) {
         this.locationOfCitiesAtCurrDoc = locationOfCitiesAtCurrDoc;
     }
-    
-
-
-//
-//    public document(String documentID, int maxTf, int numOfUniqueWords, String city, HashMap<String,int[]> tempDic, HashMap locationOfCitiesAtCurrDoc) {
-////        this.locationOfCitiesAtCurrDoc = new HashMap<>(locationOfCitiesAtCurrDoc);
-//        this.locationOfCitiesAtCurrDoc = locationOfCitiesAtCurrDoc;
-//        this.maxTf = maxTf;
-//        this.numOfUniqueWords = numOfUniqueWords;
-//        this.city = city;
-//        this.dicDoc = tempDic;
-//        this.documentID=documentID;
-//    }
 
     public HashMap<String,ArrayList<Integer>> getLocationOfCities() {
         return locationOfCitiesAtCurrDoc;
@@ -124,10 +105,6 @@ public class document implements Serializable {
 
     public int getMaxTf() {
         return maxTf;
-    }
-
-    public int getNumOfUniqueWords() {
-        return numOfUniqueWords;
     }
 
     public String getCity() {

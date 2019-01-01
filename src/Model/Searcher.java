@@ -1,5 +1,7 @@
 package Model;
 
+import sun.awt.Mutex;
+
 import java.io.*;
 import java.util.*;
 
@@ -7,7 +9,7 @@ public class Searcher {
     private Parse parse;
     private Ranker ranker;
     private HashMap<String,String[]> dictionaryPosting; //df,tf_overall,pointerToPosting
-    private HashMap<String, document> docsHash;
+    private Mutex mutex = new Mutex();
 
 
     public Searcher(Parse parse){
@@ -17,23 +19,32 @@ public class Searcher {
     public HashMap<String,Double> runQuery(Query query, boolean toStem, String pathTo, List<String> chosenCities) {
         HashSet<String> citiesDocs = docsOfCities(chosenCities,toStem,pathTo);
         ArrayList<QueryWord> listOfWords = new ArrayList<>();
-        query.setQuerySplited(query.getData().split(" "));//todo
+        query.setQuerySplited(query.getData().split(" "));
+        mutex.lock();
         HashMap<String, int[]> queryTermsTF = parse.parseMainFunc(null, query);
+        mutex.unlock();
         HashSet<String> allRelevantDocsInPosting = new HashSet<>();
-        boolean isLoad = (dictionaryPosting!=null);//todo check
+        boolean isLoad = dictionaryPosting!=null;//todo check
+        mutex.lock();
         if (!isLoad){
             loadDictionaryFromDisk(toStem, pathTo);
         }
+        mutex.unlock();
         String pathToCreate;
         if (toStem) {
             pathToCreate = pathTo + "\\WithStemming";
         } else pathToCreate = pathTo + "\\WithoutStemming";
         Set<String> keys = queryTermsTF.keySet();
+        String termLikeDic = "";
         //foreach word in query
         for (String term : keys) {
-            if(!dictionaryPosting.containsKey(term))
-                continue;
-            String[] dfTfPointer = dictionaryPosting.get(term);
+            if(dictionaryPosting.containsKey(term.toLowerCase())) {
+                termLikeDic = term.toLowerCase();
+            }
+            else if(dictionaryPosting.containsKey(term.toUpperCase()))
+                termLikeDic = term.toUpperCase();
+            else continue;
+            String[] dfTfPointer = dictionaryPosting.get(termLikeDic);
             String pointerToPosting = dfTfPointer[2];
             long pointer = Long.valueOf(pointerToPosting).longValue();
             try {
@@ -59,7 +70,7 @@ public class Searcher {
                         allRelevantDocsInPosting.add(docIDTFTitle[0]);
                     }
                 }
-                QueryWord queryWord = new QueryWord(term, docsOfWord, queryTermsTF.get(term)[0], Integer.parseInt(dfTfPointer[0]));
+                QueryWord queryWord = new QueryWord(termLikeDic, docsOfWord, queryTermsTF.get(term)[0], Integer.parseInt(dfTfPointer[0]));
                 listOfWords.add(queryWord);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -67,69 +78,14 @@ public class Searcher {
                 e.printStackTrace();
             }
         }
-        HashMap<String,Double> funcQueryDesc=null;
-        if(query.getDesc()!= null && !query.getQueryID().equals("desc") && !query.getDesc().equals("desc")) {
-            Query queryDesc = new Query(query.getDesc(), "desc", "desc");
-            funcQueryDesc = runQuery(queryDesc, toStem, pathTo, chosenCities);
-        }
-        HashMap<String,Double> test = ranker.RankQueryDocs(listOfWords, allRelevantDocsInPosting, funcQueryDesc);//if query like niv and loren (the campus dont contain it) this will return null. todo handle it
+//        HashMap<String,Double> funcQueryDesc=null;
+//        if(query.getDesc()!= null && !query.getQueryID().equals("desc") && !query.getDesc().equals("desc")) {
+//            Query queryDesc = new Query(query.getDesc(), "desc", "desc");
+//            funcQueryDesc = runQuery(queryDesc, toStem, pathTo, chosenCities);
+//        }
+        HashMap<String,Double> test = ranker.RankQueryDocs(listOfWords, allRelevantDocsInPosting);//if query like niv and loren (the campus dont contain it) this will return null. todo handle it
         return test;
     }
-
-    public HashMap<String, String[]> getDictionaryPosting() {
-        return dictionaryPosting;
-    }
-
-//    private HashMap<String,Double> func1(Query query, boolean toStem, String pathTo, List<String> chosenCities) {
-//        HashSet<String> citiesDocs = docsOfCities(chosenCities,toStem,pathTo);
-//        ArrayList<QueryWord> listOfWords = new ArrayList<>();
-//        query.setQuerySplited(query.getData().split(" "));//todo
-//        HashMap<String, int[]> queryTermsTF = parse.parseMainFunc(null, query);
-//        HashSet<String> allRelevantDocsInPosting = new HashSet<>();
-//        boolean isLoad = dictionaryPosting!=null;//todo check
-//        if (!isLoad)
-//            System.out.println("problem");
-//        String pathToCreate;
-//        if (toStem) {
-//            pathToCreate = pathTo + "\\WithStemming";
-//        } else pathToCreate = pathTo + "\\WithoutStemming";
-//        Set<String> keys = queryTermsTF.keySet();
-//        //foreach word in query
-//        for (String term : keys) {
-//            if(!dictionaryPosting.containsKey(term))
-//                continue;
-//            String[] dfTfPointer = dictionaryPosting.get(term);
-//            String pointerToPosting = dfTfPointer[2];
-//            long pointer = Long.valueOf(pointerToPosting).longValue();
-//            try {
-//                RandomAccessFile raf = new RandomAccessFile(pathToCreate + "/Postings/unitedPosting.txt", "rw");
-//                raf.seek(pointer);
-//                String linePosting = raf.readLine();
-//                String[] lineSplitedByTerm = linePosting.split(":");
-//                String[] docsSplitedInLine = lineSplitedByTerm[1].split(";");
-//                HashMap<String, int[]> docsOfWord = new HashMap<>();
-//                for (String doc : docsSplitedInLine) {
-//                    String[] docIDTFTitle = doc.split(",");
-//                    if (docIDTFTitle.length < 3)
-//                        System.out.println("problem");
-//                    int[] tfTitle = {Integer.parseInt(docIDTFTitle[1]), Integer.parseInt(docIDTFTitle[2])};//TF overall, title
-//                    docsOfWord.put(docIDTFTitle[0], tfTitle);//docID,TF,Title
-//                    //Insert docID to HashSet
-//                    if (citiesDocs == null)
-//                        allRelevantDocsInPosting.add(docIDTFTitle[0]);
-//                    else if (citiesDocs.contains(docIDTFTitle[0]))
-//                        allRelevantDocsInPosting.add(docIDTFTitle[0]);
-//                }
-//                QueryWord queryWord = new QueryWord(term, docsOfWord, queryTermsTF.get(term)[0], Integer.parseInt(dfTfPointer[0]));
-//                listOfWords.add(queryWord);
-//            } catch (FileNotFoundException e) {
-//                e.printStackTrace();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//        return ranker.RankQueryDocs(listOfWords, allRelevantDocsInPosting, null);//if query like niv and loren (the campus dont contain it) this will return null. todo handle it
-//    }
 
     private HashSet<String> docsOfCities(List<String> chosenCities, boolean toStem, String pathTo) {
         if (chosenCities == null || chosenCities.size() == 0)
@@ -177,7 +133,7 @@ public class Searcher {
      * @param pathTo
      * @return
      */
-    private HashMap<String, String> loadCitiesDictionaryFromDisk(boolean toStem, String pathTo) {
+        private HashMap<String, String> loadCitiesDictionaryFromDisk(boolean toStem, String pathTo) {
         HashMap<String,String> cityAndPointer = new HashMap<>();
         String pathToCreate = "";
         if (toStem) {
@@ -205,13 +161,13 @@ public class Searcher {
 
     public boolean loadDictionaryFromDisk(boolean toStem,String pathTo) {
         dictionaryPosting = new HashMap<>();
-        String pathToCreate = "";
-        if (toStem) {
-            pathToCreate = pathTo + "\\WithStemming";
-        } else pathToCreate = pathTo + "\\WithoutStemming";
-        File fileDictionary = new File(pathToCreate + "/Dictionaries/Dictionary.txt");
         try {
+            String pathToCreate;
+            if (toStem) {
+                pathToCreate = pathTo + "\\WithStemming";
+            } else pathToCreate = pathTo + "\\WithoutStemming";
             String line = "";
+            File fileDictionary = new File(pathToCreate + "/Dictionaries/Dictionary.txt");
             BufferedReader bf = new BufferedReader(new FileReader(fileDictionary));
             line = bf.readLine();
             while (line != null && line != "") {
@@ -227,8 +183,6 @@ public class Searcher {
                 dictionaryPosting.put(splitedLineInDictionaryByTerm[0], dfPostingTF);
                 line = bf.readLine();
             }
-            docsHash = loadDocsFile(toStem, pathTo);
-            this.ranker = new Ranker(docsHash);
             return true;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -238,14 +192,15 @@ public class Searcher {
         return false;
     }
 
-    private HashMap<String,document> loadDocsFile(boolean toStem, String pathTo) {
+    public HashMap<String, document> loadDocsFile(boolean toStem, String pathTo) {
+            String pathToCreate;
+        if (toStem) {
+            pathToCreate = pathTo + "\\WithStemming";
+        } else pathToCreate = pathTo + "\\WithoutStemming";
         HashMap<String, document> docsHash = new HashMap<>();
         try {
             FileInputStream fis;
-            if (toStem)
-                fis = new FileInputStream(pathTo + "/WithStemming/docsData.txt");
-            else
-                fis = new FileInputStream(pathTo + "/WithoutStemming/docsData.txt");
+            fis = new FileInputStream(pathToCreate + "/docsData.txt");
             ObjectInputStream objIS = new ObjectInputStream(fis);
             docsHash = (HashMap) objIS.readObject();
             objIS.close();
@@ -257,7 +212,15 @@ public class Searcher {
         } catch (ClassNotFoundException e) {
             System.out.println("problem in writeDocsDataToDisk function (Model");
         }
+        this.ranker = new Ranker(docsHash);
         return docsHash;
+    }
+
+    /**
+     * remove the dictionary posting
+     */
+    public void clearDic(){
+            dictionaryPosting.clear();
     }
 
     /**

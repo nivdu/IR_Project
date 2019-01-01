@@ -147,7 +147,7 @@ public class View {
     }
 
     @FXML
-    private void Load(ActionEvent event) throws IOException {
+    private void Load(ActionEvent event) throws IOException, InterruptedException {
         boolean isSucceed = controller.Load(stemming.isSelected(),pathTo.getText(), pathFrom.getText());
         if(isSucceed) {
             setCities();

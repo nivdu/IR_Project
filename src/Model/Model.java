@@ -2,28 +2,22 @@ package Model;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import sun.awt.Mutex;
+
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.*;
 import java.util.HashMap;
+import java.util.concurrent.*;
 
 public class Model {
     private Indexer indexer;
     private Searcher searcher;
-    private boolean toStem;
-    private Parse parse;
     private Ranker ranker;//todo delete this
-
-
-    /**
-     * constructor
-     */
-    public Model() {
-        this.toStem = false;
-    }
-
+    private boolean loadedStem;
+    private boolean loadedWithoutStem;
     /**
      * creating the dictionary and the posting of the inverted index
      */
@@ -32,7 +26,7 @@ public class Model {
         //check the inserted path from.
         if (!checkIfLegalPaths(pathFrom, pathTo))
             return false;
-        parse = new Parse(toStem, pathFrom);
+        Parse parse = new Parse(toStem, pathFrom);
         indexer = new Indexer(pathFrom, pathTo, parse);
         long Stime = System.currentTimeMillis();
         boolean succGenerate = indexer.createPostingAndDic(toStem);
@@ -56,14 +50,6 @@ public class Model {
             alert.show();
             return false;
         }
-    }
-
-    public void showWhenFinishIndexing(long indexRunTime) {//todo delete this
-        int indexedDocNumber = indexer.getIndexedDocNumber();
-        int uniqueTermsNumber = indexer.getUniqueTermsNumber();
-        System.out.println("runtime by seconds: " + indexRunTime / 1000);
-        System.out.println("number Indexed docs: " + indexedDocNumber);
-        System.out.println("number unique Terms: " + uniqueTermsNumber);
     }
 
     /**
@@ -144,14 +130,31 @@ public class Model {
      *
      * @return true if the loading succeed, else retutn false
      */
-    public boolean loadDictionaryFromDiskToMemory(boolean isStem, String pathTo, String pathFrom) {
+    public boolean loadDictionaryFromDiskToMemory(boolean isStem, String pathTo, String pathFrom) throws InterruptedException {
         if (!checkIfDirectoryWithOrWithoutStemExist(isStem, pathTo))
             return false;
-        Parse parse1 = new Parse(toStem, pathFrom);
+        if ((loadedStem && !isStem) || (loadedWithoutStem && isStem)) {
+            searcher.clearDic();
+        }
+        loadedStem = isStem;
+        loadedWithoutStem = !isStem;
+        Parse parse1 = new Parse(isStem, pathFrom);
         searcher = new Searcher(parse1);
+        long Stime = System.currentTimeMillis();
+        Thread t1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                searcher.loadDocsFile(isStem, pathTo);
+            }
+        });
+        t1.start();
         boolean bl = searcher.loadDictionaryFromDisk(isStem, pathTo);
-        if (bl) return true;
-        else {
+        t1.join();
+        long Ftime = System.currentTimeMillis();
+        System.out.println((Ftime - Stime) / 1000);
+        if (bl) {
+            return true;
+        } else {
             Alert chooseFile = new Alert(Alert.AlertType.ERROR);
             chooseFile.setContentText("Loading failed!");
             chooseFile.show();
@@ -195,6 +198,53 @@ public class Model {
         return indexer.languages();
     }
 
+    private String addSemanticWords(String query) {
+        //call to api
+        String[] queryWords = query.split(" ");
+        LinkedList<String> queryListWords = new LinkedList<>();
+        if (queryWords.length > 0) {
+            for (String word : queryWords) {
+                URL url = null;
+                try {
+                    url = new URL("https://api.datamuse.com/words?ml=" + word);
+                    //make connection
+                    URLConnection urlc = url.openConnection();
+                    //use post mode
+                    urlc.setDoOutput(true);
+                    urlc.setAllowUserInteraction(false);
+                    //get result
+                    BufferedReader br = new BufferedReader(new InputStreamReader(urlc.getInputStream()));
+                    String currLine = br.readLine();
+                    if (currLine != null && !currLine.equals("")) {
+                        String[] firstLineArr = currLine.split("\"word\":\"");
+                        for (String s : firstLineArr) {
+                            int i = 0;
+                            String currWord = "";
+                            while (s != null && i < s.length() && s.charAt(i) != '\"') {
+                                if (Character.isLetter(s.charAt(i)))
+                                    currWord += s.charAt(i);
+                                i++;
+                            }
+                            if (currWord != null && currWord.length() > 0) {
+                                queryListWords.add(currWord);
+                                if (queryListWords.size() % 2 == 0)
+                                    break;
+                            }
+                        }
+                    }
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        for (String s : queryListWords) {
+            query = query + " " + s;
+        }
+        return query;
+    }
+
     /**
      * can call only after inverted index is created//todo disable this functions (buttons) untill create inverted index.
      *
@@ -202,12 +252,30 @@ public class Model {
      * @return
      */
     public HashMap<String,Double> runQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic) {
-//        try {//todo delete this try catch
-//            runQueryFile("", pathFrom, pathTo);
-//        }
-//        catch (Exception e){
-//            e.printStackTrace();
-//        }
+        try {
+            long Stime = System.currentTimeMillis();
+            if(toStem && !loadedStem){
+                Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+                chooseFile.setHeaderText("load dictionary before query");
+                chooseFile.setContentText("You must load again after choose withStem and then run a query!");
+                chooseFile.show();
+                return null;
+            }
+            if(!toStem && !loadedWithoutStem){
+                Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+                chooseFile.setHeaderText("load dictionary before query");
+                chooseFile.setContentText("You must load again after choose withoutStem and then run a query!");
+                chooseFile.show();
+                return null;
+            }
+            //runQueryFile("", toStem, pathFrom, pathTo, semantic);
+            long Ftime = System.currentTimeMillis();
+            System.out.println((Ftime-Stime)/1000);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+
 //        int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
         //check the inserted path from.
         if (!checkIfLegalPaths(pathFrom, pathTo))
@@ -216,87 +284,79 @@ public class Model {
             return null;
         //if semantic checkBox have V.
         if (semantic) {
-            //call to api
-            String[] queryWords = query.split(" ");
-            LinkedList<String> queryListWords = new LinkedList<>();
-            if (queryWords.length > 0) {
-                for (String word : queryWords) {
-                    URL url = null;
-                    try {
-                        url = new URL("https://api.datamuse.com/words?ml=" + word);
-                        //make connection
-                        URLConnection urlc = url.openConnection();
-                        //use post mode
-                        urlc.setDoOutput(true);
-                        urlc.setAllowUserInteraction(false);
-                        //get result
-                        BufferedReader br = new BufferedReader(new InputStreamReader(urlc.getInputStream()));
-                        String currLine = br.readLine();
-                        if (currLine != null && !currLine.equals("")) {
-                            String[] firstLineArr = currLine.split("\"word\":\"");
-                            for (String s : firstLineArr) {
-                                int i = 0;
-                                String currWord = "";
-                                while (s != null && i < s.length() && s.charAt(i) != '\"') {
-                                    if (Character.isLetter(s.charAt(i)))
-                                        currWord += s.charAt(i);
-                                    i++;
-                                }
-                                if (currWord != null && currWord.length() > 0) {
-                                    queryListWords.add(currWord);
-                                    if (queryListWords.size() % 2 == 0)
-                                        break;
-                                }
-                            }
-                        }
-                    } catch (MalformedURLException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-            for (String s : queryListWords) {
-                query = query + " " + s;
-            }
+            query += addSemanticWords(query);
         }
         Query currQuery = new Query(query, "111", null);
         HashMap<String, Double> queryResults = searcher.runQuery(currQuery, toStem, pathTo, citiesChosen);
+
         //todo view results in gui
         return queryResults;
     }
 
-    public boolean runQueryFile(String pathQueryFile, String pathFrom, String pathTo) throws IOException {
+    public boolean runQueryFile(String pathQueryFile,boolean toStem, String pathFrom, String pathTo, boolean semantic) throws IOException, InterruptedException {
         pathQueryFile = "C:\\Users\\nivdu\\Desktop\\אחזור\\פרוייקט גוגל\\מנוע חלק ב" + "\\queries.txt";//todo need to take from the user
         if (!checkIfLegalPaths(pathFrom, pathTo))
             return false;
         if (!checkIfDirectoryWithOrWithoutStemExist(toStem, pathTo))
             return false;
         ReadFile readfile = new ReadFile(pathQueryFile);
-        ArrayList<Query> queriesArr = readfile.readQueryFile(pathQueryFile);
+        ArrayList<Query> queriesArr = readfile.readQueryFile(pathQueryFile, semantic);
+        final ExecutorService executor = Executors.newFixedThreadPool(4); // it's just an arbitrary number
+//        final List<Future<?>> futures = new ArrayList<>();
+        Mutex m1 = new Mutex();
+        final List<Future<?>> futures = new ArrayList<>();
+        HashMap<Query, HashMap<String, Double>> ttt = new HashMap<Query, HashMap<String, Double>>();
+        Queue<Query> QQ = new LinkedList<Query>();
         for (Query query : queriesArr) {
-            HashMap<String, Double> queryResults = searcher.runQuery(query, toStem, pathTo, null);//todo maybe object of queryAns
-            //todo if button save results pressed{
+            ((LinkedList<Query>) QQ).add(query);
+            Future<?> future = executor.submit(() -> {
+                HashMap<String, Double> queryResults = searcher.runQuery(query, toStem, pathTo, null);//todo maybe object of queryAns
+                ttt.put(query, queryResults);
+            });
+            futures.add(future);
+        }
+        try {
+            for (Future<?> future : futures) {
+                future.get();
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+        futures.clear();
+        executor.shutdown();
+        executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.MINUTES);
+        int size = queriesArr.size();
+        for (int i = 0; i < size; i++) {
+            Query tempQ = QQ.remove();
+            writeToRes(toStem, pathTo, ttt.get(tempQ), tempQ);
+        }
+        return true;
+    }
+//            HashMap<String, Double> queryResults = searcher.runQuery(query, toStem, pathTo, null);//todo maybe object of queryAns
+//            todo if button save results pressed{
+    public void writeToRes(boolean toStem, String pathTo, HashMap<String, Double> queryResults, Query query) throws IOException {
             boolean pressed = true;//todo take from the bottom instead of the false
             if (pressed) {
                 File resultsFile;
                 if (toStem) {
                     resultsFile = new File(pathTo + "\\WithStemming\\results.txt");//todo maby need other name to the result file
-                } else resultsFile = new File(pathTo + "\\WithoutStemming\\results.txt");//todo maby need other name to the result file
-                if (!resultsFile.exists())
+                } else {
+                    resultsFile = new File(pathTo + "\\WithoutStemming\\results.txt");//todo maby need other name to the result file
+                }
+                if (!resultsFile.exists()) {
                     resultsFile.createNewFile();
+                }
                 BufferedWriter bw = new BufferedWriter(new FileWriter(resultsFile, true));
                 //todo pointer to entities
-                Set<String> keys = queryResults.keySet();
                 //todo create line of entity : DocId:rank\n
                 int count = 0;
-                for (String docID : keys) {
-                    String writeMe = query.getQueryID() +" 0 " + docID + " 1 42.38 mt\n";
-                    bw.write(writeMe);
+                for (Map.Entry<String, Double> aa : queryResults.entrySet()) {
+                    String writeMe = query.getQueryID() +" 0 " + aa.getKey() + " 1 42.38 mt\n";
                     count++;
                     //write only the first 50 docs by rank order
-//                    if (count == 50)//todo cancel the "//"
-//                        break;
+                    if (count <= 50) {//todo cancel the "//"
+                        bw.write(writeMe);
+                    }
                 }
                 bw.flush();
                 bw.close();
@@ -305,8 +365,6 @@ public class Model {
             //todo insert into priority Q and every iteration at loop write to fileAt pathTo : queryID:docID1,docID2,....,docIDN. V
             //todo do something with the list because the next loop will override it. V
         }
-        return true;//todo
-    }
 
     private boolean checkIfLegalPaths(String pathFrom, String pathTo) {
         File checkStop_Words = new File(pathFrom + "//stop_words.txt");
