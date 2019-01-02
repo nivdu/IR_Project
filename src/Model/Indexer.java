@@ -165,7 +165,7 @@ public class Indexer {
             if (currentDoc != null) {
                 document currDoc = parse.parseDoc(currentDoc);
                 if (currDoc == null) {
-                    System.out.println("line 146 indexer");//todo delete this and all the rest prints
+                    System.out.println("line 146 indexer");
                 }
                 saveEntities(currDoc, pathToCreate);
                 saveDocsLenghsForRank(currDoc);

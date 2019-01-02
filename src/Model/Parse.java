@@ -22,6 +22,7 @@ public class Parse {
     Stemmer stemmer;
     //all the cities from document tags (F P=104)
     HashSet<String> citiesFromTags;
+    Mutex m1;
     /**
      * Parse Constructor.
      */
@@ -30,6 +31,7 @@ public class Parse {
         this.toStem = toStem;
         this.stopWordPath = pathFrom;
         this.stopWords = new HashSet<String>();
+        this.m1 = new Mutex();
         getStopWordsIntoHastSet();
         this.months = new HashMap<String, String>();
         createMonthHS();
@@ -180,7 +182,6 @@ public class Parse {
      */
 
     public HashMap<String, int[]> parseMainFunc(document doc2Parse, Query query2Parse){
-        Mutex m1 = new Mutex();
         if(doc2Parse==null && query2Parse==null) {
             System.out.println("parse line 148");
             return null;
@@ -420,7 +421,6 @@ public class Parse {
 
     /**
      * read file to String line by line
-     *
      * @param file - The path of the file to read into String
      * @return - String of the context of the file
      */

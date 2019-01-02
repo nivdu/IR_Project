@@ -86,7 +86,7 @@ public class View {
             BrowseTo.setDisable(false);
             languages.setDisable(false);
             setLanguages();
-            setCities();
+//            setCities();
         }
         else {
             pathFrom.setDisable(false);
@@ -208,34 +208,35 @@ public class View {
                 citiesFromViewList.add(city);
             }
         }
-        HashMap<String,Double> docsAndRank = controller.RunQuery(queryText.getText(),stemming.isSelected(), pathTo.getText(), pathFrom.getText(), citiesFromViewList, semantic.isSelected());
+//        HashMap<String,Double> docsAndRank = controller.RunQuery(queryText.getText(),stemming.isSelected(), pathTo.getText(), pathFrom.getText(), citiesFromViewList, semantic.isSelected());
+        boolean docsAndRank = controller.RunQuery(queryText.getText(),stemming.isSelected(), pathTo.getText(), pathFrom.getText(), citiesFromViewList, semantic.isSelected());
         ObservableList<String> docsObservable = FXCollections.observableArrayList();
-        Set<String> keys = docsAndRank.keySet();
-        for (String doc : keys) {
-            docsObservable.add(doc);
-        }
-        docsObservable.sort(String::compareToIgnoreCase);
-        TableView tableView = new TableView();
-
-        TableColumn firstNameCol = new TableColumn("Query ID");
-        TableColumn secondNameCol = new TableColumn("Doc ID");
-        TableColumn thirdNameCol = new TableColumn("Entities");
-
-        tableView.getColumns().addAll(firstNameCol,secondNameCol,thirdNameCol);
-
-
-        tableView.setItems(docsObservable);
-
-        Stage stage = new Stage();
-        AnchorPane anchorPane = new AnchorPane();
-        anchorPane.getChildren().addAll(tableView);
-        AnchorPane.setRightAnchor(tableView,0.0);
-        AnchorPane.setLeftAnchor(tableView,0.0);
-        anchorPane.setPrefWidth(500.0);
-        anchorPane.setPrefHeight(400.0);
-        Scene scene = new Scene(anchorPane,500,400);
-        stage.setScene(scene);
-        stage.show();
+//        Set<String> keys = docsAndRank.keySet();
+//        for (String doc : keys) {
+//            docsObservable.add(doc);
+//        }
+//        docsObservable.sort(String::compareToIgnoreCase);
+//        TableView tableView = new TableView();
+//
+//        TableColumn firstNameCol = new TableColumn("Query ID");
+//        TableColumn secondNameCol = new TableColumn("Doc ID");
+//        TableColumn thirdNameCol = new TableColumn("Entities");
+//
+//        tableView.getColumns().addAll(firstNameCol,secondNameCol,thirdNameCol);
+//
+//
+//        tableView.setItems(docsObservable);
+//
+//        Stage stage = new Stage();
+//        AnchorPane anchorPane = new AnchorPane();
+//        anchorPane.getChildren().addAll(tableView);
+//        AnchorPane.setRightAnchor(tableView,0.0);
+//        AnchorPane.setLeftAnchor(tableView,0.0);
+//        anchorPane.setPrefWidth(500.0);
+//        anchorPane.setPrefHeight(400.0);
+//        Scene scene = new Scene(anchorPane,500,400);
+//        stage.setScene(scene);
+//        stage.show();
     }
 
     public void getEntities(ActionEvent event){

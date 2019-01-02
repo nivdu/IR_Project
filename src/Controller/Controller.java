@@ -27,15 +27,16 @@ public class Controller {
     public HashSet<String> languages(){return model.languages();}
 
 
-    public HashMap<String,Double> RunQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic) {
+    public boolean RunQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic) {
         return model.runQuery(query, toStem,pathTo, pathFrom, citiesChosen, semantic);
+//        return null;//todo
     }
 
     public HashSet<String> setCities(String pathTo, boolean toStem) {
         return model.setCities(pathTo,toStem);
     }
 
-    public HashMap<String,Double> getEntities(String docID, String pathTo, boolean toStem){
-        return model.getEntities(docID,pathTo,toStem);
-    }
+//    public HashMap<String,Double> getEntities(String docID, String pathTo, boolean toStem){
+//        return model.getEntities(docID,pathTo,toStem);
+//    }
 }

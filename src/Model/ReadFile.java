@@ -107,7 +107,7 @@ public class ReadFile {
                 if (line.equals("") || line.equals("\n"))
                     continue;
                 if (line.length() >= 14 && line.substring(0, 14).equals("<num> Number: ")) {
-                    queryNumber = line.substring(14);//todo check if 14
+                    queryNumber = line.substring(14);
                     queryNumber = queryNumber.replace(" ", "");
                     continue;
                 }
@@ -129,33 +129,41 @@ public class ReadFile {
                     tookDesc = false;
                     continue;
                 }
-                if (line.length() >= 6 && line.substring(0, 6).equals("</top>")) {//todo or line.equals <top>
+                if (line.length() >= 6 && line.substring(0, 6).equals("</top>")) {
                     finish = true;
                     tookNarrative = false;
                     tookDesc = false;
                 }
                 String queryData = line;
+                if(!finish && !tookDesc && !tookNarrative)
+                    continue;
                 //remove non relevant words with high appearance rate
                 queryData = queryData.replace("documents", "");
                 queryData = queryData.replace("discussing", "");
                 queryData = queryData.replace("Discussing", "");
+                queryData = queryData.replace(" must ", "");
                 queryData = queryData.replace("Documents", "");
                 queryData = queryData.replace("Relevant", "");
                 queryData = queryData.replace("relevant", "");
                 queryData = queryData.replace("non-relevant", "");
                 queryData = queryData.replace("Non-Relevant", "");
                 queryData = queryData.replace("Identify", "");
+                queryData = queryData.replace("identified", "");
                 queryData = queryData.replace("identify", "");
                 queryData = queryData.replace("document", "");
                 queryData = queryData.replace("Document", "");
                 queryData = queryData.replace("discuss", "");
                 queryData = queryData.replace("concerns", "");
+                queryData = queryData.replace("considered", "");
                 queryData = queryData.replace("concern", "");
+                queryData = queryData.replace("contain", "");
+                queryData = queryData.replace("contains", "");
                 queryData = queryData.replace("information", "");
                 queryData = queryData.replace("Information", "");
                 queryData = queryData.replace("Find", "");
                 queryData = queryData.replace("discuss", "");
                 queryData = queryData.replace("issues", "");
+                queryData = queryData.replace("impact", "");
                 queryData = queryData.replace("following", "");
                 queryData = queryData.replace("- ", " ");
                 queryData = queryData.replace(",", " ");
@@ -164,6 +172,34 @@ public class ReadFile {
                 queryData = queryData.replace("/", " ");
                 queryData = queryData.replace(":", " ");
                 queryData = queryData.replace(")", " ");
+//                queryData = queryData.replace("documents", "");
+//                queryData = queryData.replace("discussing", "");
+//                queryData = queryData.replace("Discussing", "");
+//                queryData = queryData.replace("Documents", "");
+//                queryData = queryData.replace("Relevant", "");
+//                queryData = queryData.replace("relevant", "");
+//                queryData = queryData.replace("non-relevant", "");
+//                queryData = queryData.replace("Non-Relevant", "");
+//                queryData = queryData.replace("Identify", "");
+//                queryData = queryData.replace("identify", "");
+//                queryData = queryData.replace("document", "");
+//                queryData = queryData.replace("Document", "");
+//                queryData = queryData.replace("discuss", "");
+//                queryData = queryData.replace("concerns", "");
+//                queryData = queryData.replace("concern", "");
+//                queryData = queryData.replace("information", "");
+//                queryData = queryData.replace("Information", "");
+//                queryData = queryData.replace("Find", "");
+//                queryData = queryData.replace("discuss", "");
+//                queryData = queryData.replace("issues", "");
+//                queryData = queryData.replace("following", "");
+//                queryData = queryData.replace("- ", " ");
+//                queryData = queryData.replace(",", " ");
+//                queryData = queryData.replace(".", " ");
+//                queryData = queryData.replace("?", " ");
+//                queryData = queryData.replace("/", " ");
+//                queryData = queryData.replace(":", " ");
+//                queryData = queryData.replace(")", " ");
 
                 if (tookDesc && !finish)
                     queryTitle += queryData + " ";
@@ -361,18 +397,28 @@ public class ReadFile {
         if(!isDocLegal(currentDoc))
             return "";
         String title="";
-        String[] docSplitByTitle = currentDoc.split("<TI>");
+        String tag ="<TI>";
+        String endTag = "</TI>";
+        if(!currentDoc.contains("<TI>")) {
+            tag = "<HEADLINE>";
+            endTag = "</HEADLINE>";
+        }
+        String[] docSplitByTitle = currentDoc.split(tag);
         if(docSplitByTitle==null || docSplitByTitle.length<=1 || (docSplitByTitle.length>1 && docSplitByTitle[1].equals("")))
             return "";
-        String[] docSplitByEndTitle = docSplitByTitle[1].split("</TI>");
+        String[] docSplitByEndTitle = docSplitByTitle[1].split(endTag);
         if(docSplitByEndTitle==null || docSplitByEndTitle.length==1 || docSplitByEndTitle[0].equals(""))
             return "";
         else title = deletePunctutations(docSplitByEndTitle[0]);
         return title;
     }
 
-
-    private String[] checkIfnumberWord(String s) {//12,980m niv/loren
+    /**
+     * checking wether a string is "wordnumber" type
+     * @param s - string to check
+     * @return - if true return string[] of word and number
+     */
+    private String[] checkIfnumberWord(String s) {
         boolean isNumberWord = false;
         boolean isNumberWord2 = false;
         String s2 = "";

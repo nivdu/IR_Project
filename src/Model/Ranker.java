@@ -18,6 +18,10 @@ public class Ranker {
         avrLengh = calculateAverageOfDocsLengths();
     }
 
+    /**
+     * CALLED from the constructor and claculate the avr length of corpus documents
+     * @return - double of the avr length
+     */
     private double calculateAverageOfDocsLengths() {
         double avrLengh = 0;
         if (docs != null && docs.size() > 0) {
@@ -33,6 +37,12 @@ public class Ranker {
         return avrLengh;
     }
 
+    /**
+     * use all the alghoritems for calc the rank of documents for the current query.
+     * @param wordsFromQuery - all the words from the given query
+     * @param docsID - docs that have at least one appearnce of query word
+     * @return - sorted hashmap (sort from big to small by the double) contain all the docs id's and their ranks
+     */
     public HashMap<String,Double> RankQueryDocs(ArrayList<QueryWord> wordsFromQuery, HashSet<String> docsID){
         if(wordsFromQuery==null || docsID == null)
             return null;
@@ -80,17 +90,8 @@ public class Ranker {
             max=0;
             currMaxDoc="";
         }
-        return sortedHashMap50;
         //for reduce memory use and runtime return only the first 50 docs.
-//        int limitTo50 = 0;
-//        HashMap<String, Double> sortedHashMap = new LinkedHashMap<String, Double>();
-//        for (Map.Entry<String, Double> aa : list) {
-//            limitTo50++;
-//            sortedHashMap.put(aa.getKey(), aa.getValue());
-//            if(limitTo50==50)
-//                break;
-//        }
-//        return sortedHashMap;
+        return sortedHashMap50;
     }
 
     /**
@@ -120,7 +121,7 @@ public class Ranker {
                         difference += (Math.abs(currDateInt[2] - docDate[2]));
                         if (difference == 0)
                             difference = 1;
-                        docsRank.put(docID, ((double) 1 / difference));//todo find better calc for difference between dates.
+                        docsRank.put(docID, ((double) 1 / difference));
                     }
                 }
             }
@@ -200,6 +201,12 @@ public class Ranker {
         return docsRank;
     }
 
+    /**
+     * bm25 algorithem for rank docs for queries
+     * @param wordsFromQuery - all the words from the current query
+     * @param docsID - all the docs from corpus that at least one query word found on them.
+     * @return - HashMap contains all the docs and their rank (double) from bm25 algho.
+     */
     public HashMap<String,Double> BM25(ArrayList<QueryWord> wordsFromQuery, HashSet<String> docsID){
         double k=1.2;
         double b=0.75;
@@ -216,10 +223,12 @@ public class Ranker {
             Set<String> keys = docsOfWord.keySet();
             for (String docID : keys) {
                 double rankOfDocQuery = 0;
-//                HashMap<String, int[]> docsOfWord = Qword.getDocsOfWord();//todo take it from word object tf of each word at each doc
                 //C(w,q)
                 int wordAppearanceAtQuery = Qword.getNumOfWordInQuery();
                 int tfAtCurrDoc = docsOfWord.get(docID)[0];//C(w,d)
+                if(docsOfWord.get(docID)[1]==1) {
+                    tfAtCurrDoc++;
+                }
                 int df = Qword.getDf();
                 int d;
                 d = docs.get(docID).getDocLength();
@@ -229,11 +238,14 @@ public class Ranker {
                 //mehane
                 double mehane = (tfAtCurrDoc+k*(1-b+b*(temp1)));
                 //log
-                double log = Math.log10((m+1)/(df));
+                double log = Math.log10((m-df+0.5)/(df+0.5));
+//                double log1 = Math.log10((m+1)/(df));
                 //mone
                 double mone = ((k+1)*tfAtCurrDoc)*wordAppearanceAtQuery*log;
-                double currWordCalc = mone/mehane;
+//                double mone1 = ((k+1)*tfAtCurrDoc)*wordAppearanceAtQuery*log1;
+                double currWordCalc = (mone/mehane) ;//+ (mone1/mehane);
                 rankOfDocQuery+=currWordCalc;
+//                rankOfDocQuery+=(tfAtCurrDoc/Integer.parseInt(Qword.getTfOverAll()));
                 if(docsRank.containsKey(docID))
                     docsRank.put(docID, rankOfDocQuery + docsRank.get(docID));
                 else docsRank.put(docID, rankOfDocQuery);
@@ -283,22 +295,11 @@ public class Ranker {
                     return (o2.getValue()).compareTo(o1.getValue());
                 }
             });
-            //todo check the sorting is working
             HashMap<String, Double> entitiesList = new LinkedHashMap<String, Double>();
             for (Map.Entry<String, Double> aa : list) {
                 entitiesList.put(aa.getKey(), aa.getValue());
             }
             return entitiesList;
-//            int countEntities = 0;
-//            HashMap<String,Double> fiveEntities = new HashMap<>();
-//            for (Map.Entry<String, Double> en : entitiesList.entrySet()) {
-//                if(countEntities<5){
-//                    fiveEntities.put(en.getKey(),en.getValue());
-//                    countEntities++;
-//                }
-//                else break;
-//            }
-//            return fiveEntities;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
