@@ -41,7 +41,8 @@ public class Searcher {
             }
             else if(dictionaryPosting.containsKey(term.toUpperCase()))
                 termLikeDic = term.toUpperCase();
-            else continue;
+            else
+                continue;
             String[] dfTfPointer = dictionaryPosting.get(termLikeDic);
             String pointerToPosting = dfTfPointer[2];
             String tfOverAll = dfTfPointer[1];

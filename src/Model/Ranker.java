@@ -201,6 +201,10 @@ public class Ranker {
         return docsRank;
     }
 
+    public HashMap<String, document> getDocs() {
+        return docs;
+    }
+
     /**
      * bm25 algorithem for rank docs for queries
      * @param wordsFromQuery - all the words from the current query
@@ -209,7 +213,7 @@ public class Ranker {
      */
     public HashMap<String,Double> BM25(ArrayList<QueryWord> wordsFromQuery, HashSet<String> docsID){
         double k=1.2;
-        double b=0.75;
+        double b=0.5;
         double avdl = avrLengh;
         int m = docs.size();
         //best match doc will be the first, second be the after him.....
@@ -226,6 +230,7 @@ public class Ranker {
                 //C(w,q)
                 int wordAppearanceAtQuery = Qword.getNumOfWordInQuery();
                 int tfAtCurrDoc = docsOfWord.get(docID)[0];//C(w,d)
+                //word from title = 2 word from text
                 if(docsOfWord.get(docID)[1]==1) {
                     tfAtCurrDoc++;
                 }
@@ -239,13 +244,13 @@ public class Ranker {
                 double mehane = (tfAtCurrDoc+k*(1-b+b*(temp1)));
                 //log
                 double log = Math.log10((m-df+0.5)/(df+0.5));
-//                double log1 = Math.log10((m+1)/(df));
+                double log1 = Math.log10((m+1)/(df));
                 //mone
                 double mone = ((k+1)*tfAtCurrDoc)*wordAppearanceAtQuery*log;
-//                double mone1 = ((k+1)*tfAtCurrDoc)*wordAppearanceAtQuery*log1;
-                double currWordCalc = (mone/mehane) ;//+ (mone1/mehane);
+                double mone1 = ((k+1)*tfAtCurrDoc)*wordAppearanceAtQuery*log1;
+                double currWordCalc = (mone/mehane) + (mone1/mehane);
                 rankOfDocQuery+=currWordCalc;
-//                rankOfDocQuery+=(tfAtCurrDoc/Integer.parseInt(Qword.getTfOverAll()));
+                rankOfDocQuery+=(0.5*(tfAtCurrDoc/Integer.parseInt(Qword.getTfOverAll())));
                 if(docsRank.containsKey(docID))
                     docsRank.put(docID, rankOfDocQuery + docsRank.get(docID));
                 else docsRank.put(docID, rankOfDocQuery);

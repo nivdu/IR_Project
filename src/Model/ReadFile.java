@@ -118,6 +118,7 @@ public class ReadFile {
                     if (semantic) {
                         queryTitle += addSemanticWords(queryTitle);
                     }
+                    else queryTitle += queryTitle;
                     continue;
                 }
                 if (line.length() >= 19 && line.substring(0, 19).equals("<desc> Description:")) {
