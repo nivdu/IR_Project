@@ -11,20 +11,13 @@ public class Searcher {
     private HashMap<String, String[]> dictionaryPosting; //df,tf_overall,pointerToPosting
     private Mutex mutex = new Mutex();
 
-
-    public Searcher(Parse parse) {
-        this.parse = parse;
-    }
-
-
     /**
      * Parse the query and return HashMap of all the documents relevant to the query and their ranks.
-     *
-     * @param query
-     * @param toStem
-     * @param pathTo
-     * @param chosenCities
-     * @return
+     * @param query - query to parse
+     * @param toStem - boolean true if stem is needed
+     * @param pathTo - path to save
+     * @param chosenCities - if not choosen = null else contain the cities names
+     * @return - hashmap of docs names and their rank for the current Query
      */
     public HashMap<String, Double> runQuery(Query query, boolean toStem, String pathTo, List<String> chosenCities) {
         HashSet<String> citiesDocs = docsOfCities(chosenCities, toStem, pathTo);
@@ -137,10 +130,18 @@ public class Searcher {
 
 
     /**
+     * Setter for parse class.
+     * @param parse - object parse class.
+     */
+    public Searcher(Parse parse) {
+        this.parse = parse;
+    }
+
+
+    /**
      * Responsible for loading the city dictionary from disk
      * First String is name of city
      * Second string is pointer to cityPosting
-     *
      * @param toStem - true if to do Stemming, else false
      * @param pathTo - path to create to
      * @return all the cities and their pointers to the cities posting
@@ -271,7 +272,8 @@ public class Searcher {
                 String[] splitedLineByCity = line.split(":");
                 if (splitedLineByCity.length < 2)
                     System.out.println("problem in size of cityDictionary");
-                cities.add(splitedLineByCity[0]);
+                if(Character.isLetter(splitedLineByCity[0].charAt(0)))
+                    cities.add(splitedLineByCity[0]);
                 line = br.readLine();
             }
         } catch (FileNotFoundException e) {
@@ -285,9 +287,8 @@ public class Searcher {
 
 
     /**
-     * @param docID
-     * @param pathTo
-     * @param toStem
+     * @param docID - doc id to take entities for
+     * @param toStem - true if need to stem.
      */
     public HashMap<String, Double> getEntities(String docID, String pathTo, boolean toStem) {
         return ranker.getEntities(docID, pathTo, toStem);

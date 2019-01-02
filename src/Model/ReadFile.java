@@ -167,7 +167,7 @@ public class ReadFile {
                 queryData = queryData.replace("impact", "");
                 queryData = queryData.replace("following", "");
                 queryData = queryData.replace("- ", " ");
-                queryData = queryData.replace(",", " ");
+                queryData = queryData.replace(",",  " ");
                 queryData = queryData.replace(".", " ");
                 queryData = queryData.replace("?", " ");
                 queryData = queryData.replace("/", " ");

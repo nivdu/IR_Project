@@ -20,7 +20,6 @@ public class Ranker {
 
     /**
      * CALLED from the constructor and claculate the avr length of corpus documents
-     *
      * @return - double of the avr length
      */
     private double calculateAverageOfDocsLengths() {
@@ -40,7 +39,6 @@ public class Ranker {
 
     /**
      * use all the alghoritems for calc the rank of documents for the current query.
-     *
      * @param wordsFromQuery - all the words from the given query
      * @param docsID         - docs that have at least one appearnce of query word
      * @return - sorted hashmap (sort from big to small by the double) contain all the docs id's and their ranks
@@ -49,20 +47,8 @@ public class Ranker {
         if (wordsFromQuery == null || docsID == null)
             return null;
         ArrayList<HashMap<String, Double>> docsRanks = new ArrayList<>();
-//        ArrayList<HashMap<String,Double>> docsRanks2Return = new ArrayList<>();
-        //run all the rank functions
-
-//        docsRanks.add(inTitleCalc(wordsFromQuery, docsID));
         docsRanks.add(BM25(wordsFromQuery, docsID));
-//        try { docsRanks.add(publishDataRank(docsID)); } catch (Exception e){}
-        //sort and normalize docs ranks
-//        for (HashMap hm:docsRanks){
-//            if(hm.size()>0)
-//                docsRanks2Return.add(sortHashMapByValues(hm));
-//        }
-//        if(docsRanks.size()==1)
         return sortHashMapByValues(docsRanks.get(0));
-//        return combineArrayByWights(docsRanks2Return);
     }
 
     public HashMap<String, Double> sortHashMapByValues(HashMap<String, Double> passedMap) {
@@ -98,7 +84,6 @@ public class Ranker {
 
     /**
      * for each doc calc is rank by is publish date
-     *
      * @param docsID - all the docs contain at least one word of the query
      *               return - Hash map key - docId , value - count of the number of word from the query placed at the doc title
      */
@@ -146,20 +131,13 @@ public class Ranker {
 
     /**
      * combine the docs ranks from all the functions to one Hashset by the wight of each function
-     *
      * @param docsRanks - array of HashSet of docs Ranks from all function
      */
     private HashMap<String, Double> combineArrayByWights(ArrayList<HashMap<String, Double>> docsRanks) {
         HashMap<String, Double> combinedDocsRank = new HashMap<>();
         double[] weights = new double[docsRanks.size()];//+1 for the describe query, sometimes contained and sometimes not.
         //todo from here
-        //title,bm25,date,description
-//        weights[0] = 0.1;//title
         weights[0] = 0.9;//bm25
-//        weights[2] = 0.01;//date
-//        if (weights.length == 4)
-//            weights[3] = 0.45;//by description
-
         for (int j = 0; j < docsRanks.size(); j++) {
             int order = 0;
             double temp2 = 0;
@@ -182,7 +160,6 @@ public class Ranker {
 
     /**
      * for each doc count the number of word from the query placed at the doc title.
-     *
      * @param wordsFromQuery - the words from the query
      * @param docsID         - all the docs contain at least one word of the query
      *                       return - Hash map key - docId , value - count of the number of word from the query placed at the doc title
@@ -212,7 +189,6 @@ public class Ranker {
 
     /**
      * bm25 algorithem for rank docs for queries
-     *
      * @param wordsFromQuery - all the words from the current query
      * @param docsID         - all the docs from corpus that at least one query word found on them.
      * @return - HashMap contains all the docs and their rank (double) from bm25 algho.
@@ -268,7 +244,6 @@ public class Ranker {
 
     /**
      * Get the entities of a given doc
-     *
      * @param docID  - ID od current doc
      * @param pathTo - The path to create to
      * @param toStem - true if to do with stemming, else false.
@@ -282,7 +257,7 @@ public class Ranker {
         } else path = pathTo + "\\WithoutStemming\\Entities.txt";
         File fileEntities = new File(path);
         if (!fileEntities.exists()) {
-            System.out.println("problem");
+            System.out.println("line 285 ranker class");
         }
         try {
             RandomAccessFile raf = new RandomAccessFile(path, "rw");

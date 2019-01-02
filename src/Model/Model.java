@@ -138,7 +138,6 @@ public class Model {
         loadedWithoutStem = !isStem;
         Parse parse1 = new Parse(isStem, pathFrom);
         searcher = new Searcher(parse1);
-        long Stime = System.currentTimeMillis();
         Thread t1 = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -148,8 +147,6 @@ public class Model {
         t1.start();
         boolean bl = searcher.loadDictionaryFromDisk(isStem, pathTo);
         t1.join();
-        long Ftime = System.currentTimeMillis();
-        System.out.println((Ftime - Stime) / 1000);
         if (bl) {
             return true;
         } else {

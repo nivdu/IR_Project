@@ -317,13 +317,6 @@ public class View {
 
 
         Stage stage = new Stage();
-//        AnchorPane anchorPane = new AnchorPane();
-//        anchorPane.getChildren().addAll(tableView);
-//        AnchorPane.setRightAnchor(tableView,0.0);
-//        AnchorPane.setLeftAnchor(tableView,0.0);
-//        anchorPane.setPrefWidth(500.0);
-//        anchorPane.setPrefHeight(400.0);
-//        Scene scene = new Scene(anchorPane,500,400);
         Scene scene = new Scene(vbox,500,400);
         stage.setScene(scene);
         stage.show();
