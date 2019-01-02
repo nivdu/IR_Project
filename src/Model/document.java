@@ -9,7 +9,7 @@ public class document implements Serializable {
     private int maxTf;
     private String city;
     private String publishDate;
-    private HashMap<String,int[]> dicDoc;
+    private HashMap<String, int[]> dicDoc;
     private HashMap<String, ArrayList<Integer>> locationOfCitiesAtCurrDoc;
     private String[] docSplited;
     private String[] docTitle;
@@ -17,16 +17,16 @@ public class document implements Serializable {
     private int[] docSplitDate;
     private long pointerToEntities;
 
-    public document(){
-        this.documentID="";
-        this.maxTf=0;
-        this.city="";
-        this.publishDate="";
-        this.dicDoc=null;
-        this.locationOfCitiesAtCurrDoc=null;
-        this.docSplited=null;
-        this.docTitle=null;
-        this.docSplitDate=null;
+    public document() {
+        this.documentID = "";
+        this.maxTf = 0;
+        this.city = "";
+        this.publishDate = "";
+        this.dicDoc = null;
+        this.locationOfCitiesAtCurrDoc = null;
+        this.docSplited = null;
+        this.docTitle = null;
+        this.docSplitDate = null;
     }
 
     public long getPointerToEntities() {
@@ -46,12 +46,10 @@ public class document implements Serializable {
     }
 
     public int[] getDocSplitDate() {
-
         return docSplitDate;
     }
 
     public int getDocLength() {
-
         return docLength;
     }
 
@@ -80,15 +78,21 @@ public class document implements Serializable {
         this.locationOfCitiesAtCurrDoc = locationOfCitiesAtCurrDoc;
     }
 
-    public HashMap<String,ArrayList<Integer>> getLocationOfCities() {
+    public HashMap<String, ArrayList<Integer>> getLocationOfCities() {
         return locationOfCitiesAtCurrDoc;
     }
 
-    public void removeDic(){ dicDoc.clear(); }
+    public void removeDic() {
+        dicDoc.clear();
+    }
 
-    public void removeDocSplitedArr(){ docSplited=null; }
+    public void removeDocSplitedArr() {
+        docSplited = null;
+    }
 
-    public void removeLocationOfCities(){ locationOfCitiesAtCurrDoc.clear();}
+    public void removeLocationOfCities() {
+        locationOfCitiesAtCurrDoc.clear();
+    }
 
     public void setDocTitle(String[] docTitle) {
         this.docTitle = docTitle;
@@ -101,7 +105,6 @@ public class document implements Serializable {
     public void setDocSplited(String[] docSplited) {
         this.docSplited = docSplited;
     }
-
 
     public int getMaxTf() {
         return maxTf;
@@ -119,7 +122,9 @@ public class document implements Serializable {
         return documentID;
     }
 
-    public void setPublishDate(String date) { this.publishDate = date; }
+    public void setPublishDate(String date) {
+        this.publishDate = date;
+    }
 
     public String[] getDocTitle() {
         return docTitle;

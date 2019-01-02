@@ -24,12 +24,13 @@ public class Indexer {
     private int filesNumber;
     private int numberOfUniqueTerms;
     private long sumOfPointersInEntities;
+
     /**
      * Constructor
      */
     Indexer(String pathFrom, String pathTo, Parse parse) {
         this.numberOfUniqueTerms = 0;
-        this.filesNumber=0;
+        this.filesNumber = 0;
         this.filesPostedCounter = 0;
         readFile = new ReadFile(pathFrom);
         this.parse = parse;
@@ -38,7 +39,7 @@ public class Indexer {
         tempPostingCounter = 0;
         dictionaryCities = new HashMap<>();
         this.pathTo = pathTo;
-        sumOfPointersInEntities=0;
+        sumOfPointersInEntities = 0;
     }
 
 
@@ -108,6 +109,7 @@ public class Indexer {
 
     /**
      * write docs data to disk
+     *
      * @param pathTo - pato to create
      */
     private void writeDocsDataToDisk(String pathTo) {
@@ -128,6 +130,7 @@ public class Indexer {
 
     /**
      * getter
+     *
      * @return - the number of indexed doc.
      */
     public int getIndexedDocNumber() {
@@ -136,6 +139,7 @@ public class Indexer {
 
     /**
      * getter
+     *
      * @return - the number of unique terms from current file stock.
      */
     public int getUniqueTermsNumber() {
@@ -144,11 +148,12 @@ public class Indexer {
 
     /**
      * cut the term from string (cut the chars before the first ":" and return it by its lower case
+     *
      * @param s - string to cut the term from
      * @return - String of the term (lower case of the term).
      */
     private String cutTheTerm(String s) {
-        if(s==null)
+        if (s == null)
             return "";
         String term = "";
         for (int i = 0; i < s.length(); i++) {
@@ -217,9 +222,10 @@ public class Indexer {
 
     /**
      * Save the entities of current doc
+     *
      * @param currDoc - current doc
      */
-    private void saveEntities(document currDoc,String pathToCreate) {
+    private void saveEntities(document currDoc, String pathToCreate) {
         HashMap<String, Integer> allEntities = findEntities(currDoc);
         if (allEntities == null) {
             System.out.println("line 182 Indexer");
@@ -231,46 +237,45 @@ public class Indexer {
             File entitiesFile = new File(pathToCreate + "\\Entities.txt");
             if (!entitiesFile.exists())
                 entitiesFile.createNewFile();
-            BufferedWriter bw = new BufferedWriter(new FileWriter(entitiesFile,true));
+            BufferedWriter bw = new BufferedWriter(new FileWriter(entitiesFile, true));
             //todo pointer to entities
             Set<String> keys = allEntities.keySet();
             //create line of entity : DocId:entity1,tf;entity2,tf...
-            String lineEntity = currDoc.getDocumentID() +": ";
-            for (String entitiy: keys) {
-                lineEntity+=entitiy + "," +allEntities.get(entitiy)+";";//todo maybe change shirshur
+            String lineEntity = currDoc.getDocumentID() + ": ";
+            for (String entitiy : keys) {
+                lineEntity += entitiy + "," + allEntities.get(entitiy) + ";";//todo maybe change shirshur
             }
-            lineEntity+="\n";
+            lineEntity += "\n";
             bw.write(lineEntity);
             bw.flush();
             bw.close();
             currDoc.setPointerToEntities(sumOfPointersInEntities);
-            sumOfPointersInEntities+=lineEntity.getBytes().length;//todo naybe add another 1 to enter line
+            sumOfPointersInEntities += lineEntity.getBytes().length;//todo naybe add another 1 to enter line
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
 
-
-    private HashMap<String,Integer> findEntities(document currDoc) {
-        HashMap<String,int[]> dicDoc = currDoc.getDicDoc();
-        HashMap<String,Integer> allEntities = new HashMap<>();
+    private HashMap<String, Integer> findEntities(document currDoc) {
+        HashMap<String, int[]> dicDoc = currDoc.getDicDoc();
+        HashMap<String, Integer> allEntities = new HashMap<>();
         Set<String> keys = dicDoc.keySet();
         for (String term : keys) {
             int[] termValues = dicDoc.get(term);//tf,title
-            if (termValues == null || termValues.length<2){
+            if (termValues == null || termValues.length < 2) {
                 System.out.println("line 190 Indexer");
                 continue;
             }
-            if(term.equals(term.toUpperCase()) && Pattern.matches("[a-zA-Z]+", term)){
-                allEntities.put(term,termValues[0]);
+            if (term.equals(term.toUpperCase()) && Pattern.matches("[a-zA-Z]+", term)) {
+                allEntities.put(term, termValues[0]);
             }
         }
         return allEntities;
     }
 
     private void saveDocsLenghsForRank(document currDoc) {
-        HashMap<String,int[]> dicDoc = currDoc.getDicDoc();
+        HashMap<String, int[]> dicDoc = currDoc.getDicDoc();
         if (dicDoc == null || dicDoc.size() == 0)
             return;
         int numOfWordsAtCurrDoc = 0;
@@ -337,8 +342,8 @@ public class Indexer {
             //letters first (ignoring differences in case), digits are second and marks (like &%^*%) are the last in priority.
             @Override
             public int compare(String s1, String s2) {
-                String n1 = s1.substring(0,s1.indexOf(":"));
-                String n2 = s2.substring(0,s2.indexOf(":"));
+                String n1 = s1.substring(0, s1.indexOf(":"));
+                String n2 = s2.substring(0, s2.indexOf(":"));
                 return n1.compareToIgnoreCase(n2);
             }
         };
@@ -358,6 +363,7 @@ public class Indexer {
 
     /**
      * takes all the postings of cities and create one long String and delete the postings from memory
+     *
      * @param dictionaryCities - dictionary of cities and locations
      * @return - string of all postings combined
      */
@@ -366,8 +372,8 @@ public class Indexer {
             //letters first (ignoring differences in case), digits are second and marks (like &%^*%) are the last in priority.
             @Override
             public int compare(String s1, String s2) {
-                String n1 = s1.substring(0,s1.indexOf(":"));
-                String n2 = s2.substring(0,s2.indexOf(":"));
+                String n1 = s1.substring(0, s1.indexOf(":"));
+                String n2 = s2.substring(0, s2.indexOf(":"));
                 return n1.compareToIgnoreCase(n2);
             }
         };
@@ -386,7 +392,7 @@ public class Indexer {
     }
 
 
-    public HashSet<String> languages(){
+    public HashSet<String> languages() {
         HashSet<String> languages = new HashSet<>();
         ArrayList<String> allFilesPaths = readFile.readCorpus();
         for (String path : allFilesPaths) {
@@ -412,6 +418,7 @@ public class Indexer {
 
     /**
      * combine the dictionary of document with the general dictionary
+     *
      * @param currDoc - the document which his dictionary will be combined
      */
     private void combineDicDocAndDictionary(document currDoc) {
@@ -426,9 +433,9 @@ public class Indexer {
                 dfPosting[0] = "" + (df + 1);
                 int[] dicDocInt = dicDoc.get(term);//{tf,title}
                 if (dfPosting[1].equals(""))
-                    dfPosting[1] = currDoc.getDocumentID() + "," + dicDocInt[0] +"," + dicDocInt[1];
+                    dfPosting[1] = currDoc.getDocumentID() + "," + dicDocInt[0] + "," + dicDocInt[1];
                 else
-                    dfPosting[1] += ";" + currDoc.getDocumentID() + "," + dicDocInt[0] +"," + dicDocInt[1];
+                    dfPosting[1] += ";" + currDoc.getDocumentID() + "," + dicDocInt[0] + "," + dicDocInt[1];
                 int tfOverall = Integer.parseInt(dfPosting[2]);
                 dfPosting[2] = "" + (tfOverall + dicDocInt[0]);
                 dictionaryPosting.put(termUpdated, dfPosting);
@@ -439,30 +446,31 @@ public class Indexer {
                 dfPosting[0] = "1";
                 String tf = "" + dicDoc.get(term)[0];
                 //Posting-> DOCNO,tf,title
-                dfPosting[1] = currDoc.getDocumentID() + "," + tf +"," + dicDoc.get(term)[1];
+                dfPosting[1] = currDoc.getDocumentID() + "," + tf + "," + dicDoc.get(term)[1];
                 dfPosting[2] = tf;
                 dictionaryPosting.put(term, dfPosting);
             }
         }
     }
 
-    private String termBigSmallLettersMerge(String term){
-        if(!(Pattern.matches("[a-zA-Z]+", term)))
+    private String termBigSmallLettersMerge(String term) {
+        if (!(Pattern.matches("[a-zA-Z]+", term)))
             return term;
-        if(term.equals(term.toUpperCase()) && dictionaryPosting.containsKey(term.toUpperCase()))
+        if (term.equals(term.toUpperCase()) && dictionaryPosting.containsKey(term.toUpperCase()))
             return term.toUpperCase();
-        if(term.equals(term.toLowerCase()) && dictionaryPosting.containsKey(term.toUpperCase())) {
-            dictionaryPosting.put(term.toLowerCase(),dictionaryPosting.get(term.toUpperCase()));
+        if (term.equals(term.toLowerCase()) && dictionaryPosting.containsKey(term.toUpperCase())) {
+            dictionaryPosting.put(term.toLowerCase(), dictionaryPosting.get(term.toUpperCase()));
             dictionaryPosting.remove(term.toUpperCase());
             return term.toLowerCase();
         }
-        if(dictionaryPosting.containsKey(term.toLowerCase()))
+        if (dictionaryPosting.containsKey(term.toLowerCase()))
             return term.toLowerCase();
         return term;
     }
 
     /**
      * combine the location of cities with the general dictionaryCities.
+     *
      * @param currDoc - the document which his dictionary will be combined.
      */
     private void combineCitiesFromDoc(document currDoc) {
@@ -495,14 +503,13 @@ public class Indexer {
     }
 
     private void unitAllTempPostingsToOnePostingInDisk(String pathToCreate, String pathOfDic, boolean termOrNot) {
-        String temp="";
-        String insertToOnePostDisk="";
-        if(termOrNot) {
-            temp= "\\Dictionary";
-        }
-        else temp= "\\cityDictionary";
+        String temp = "";
+        String insertToOnePostDisk = "";
+        if (termOrNot) {
+            temp = "\\Dictionary";
+        } else temp = "\\cityDictionary";
         BufferedWriter bwOfDic = initDirsForDictionary(pathOfDic, temp);//write to the correct dictionary txt
-        if(bwOfDic == null)
+        if (bwOfDic == null)
             System.out.println("problem in line 464 Indexer");
         long locationIndex = 0;
         File unitedPosting;
@@ -511,8 +518,8 @@ public class Indexer {
             //letters first (ignoring differences in case), digits are second and marks (like &%^*%) are the last in priority.
             @Override
             public int compare(String[] s1, String[] s2) {
-                String n1 = s1[0].substring(0,s1[0].indexOf(":"));
-                String n2 = s2[0].substring(0,s2[0].indexOf(":"));
+                String n1 = s1[0].substring(0, s1[0].indexOf(":"));
+                String n2 = s2[0].substring(0, s2[0].indexOf(":"));
                 return n1.compareToIgnoreCase(n2);
             }
         };
@@ -536,33 +543,31 @@ public class Indexer {
             //loop over the temp posting files and combine them into the united posting(to disk)
             insertToOnePostDisk = dequeueAndInsert2UnitedPosting(linesPQ, br, tempPostingFiles);
             while (!insertToOnePostDisk.equals("")) {
-                String term= cutTheTerm(insertToOnePostDisk);
-                if(termOrNot) {
-                    String[] valueOfTerm=null;
-                    if(dictionaryPosting.containsKey(term))
+                String term = cutTheTerm(insertToOnePostDisk);
+                if (termOrNot) {
+                    String[] valueOfTerm = null;
+                    if (dictionaryPosting.containsKey(term))
                         valueOfTerm = dictionaryPosting.get(term);
-                    else if(dictionaryPosting.containsKey(term.toLowerCase())) {
+                    else if (dictionaryPosting.containsKey(term.toLowerCase())) {
                         valueOfTerm = dictionaryPosting.get(term.toLowerCase());
                         term = term.toLowerCase();
-                    }
-                    else if(dictionaryPosting.containsKey(term.toUpperCase())) {
+                    } else if (dictionaryPosting.containsKey(term.toUpperCase())) {
                         valueOfTerm = dictionaryPosting.get(term.toUpperCase());
                         term = term.toUpperCase();
                     }
-                    if(valueOfTerm==null)
+                    if (valueOfTerm == null)
                         System.out.println("term isnt in dictionary");
                     numberOfUniqueTerms++;
                     bwOfDic.write(term + ":" + valueOfTerm[0] + ";" + valueOfTerm[2] + ";" + locationIndex + "\n");
                     //write to combined posting file
                     bw.write(insertToOnePostDisk);
-                }
-                else{
+                } else {
                     //String[] city = dictionaryCities.get(term);
                     String cityCoinCiv = ApiCity(term);
                     bwOfDic.write(term + ":" + cityCoinCiv + locationIndex + "\n");
                     bw.write(insertToOnePostDisk);
                 }
-                locationIndex+=insertToOnePostDisk.getBytes().length;
+                locationIndex += insertToOnePostDisk.getBytes().length;
                 insertToOnePostDisk = dequeueAndInsert2UnitedPosting(linesPQ, br, tempPostingFiles);
             }
             bwOfDic.flush();
@@ -575,7 +580,6 @@ public class Indexer {
     }
 
     /**
-     *
      * @param term - term represent the city to api for
      * @return - string contain the given term(city) (country + ";" + coin + ";" + population).
      */
@@ -596,29 +600,30 @@ public class Indexer {
                 int startIndCountry = currLine.indexOf("geobytescountry") + 18;
                 int endIndCountry = currLine.indexOf("\"", startIndCountry);
                 String country = "";
-                if (!(endIndCountry - startIndCountry== 0))
+                if (!(endIndCountry - startIndCountry == 0))
                     country = currLine.substring(startIndCountry, endIndCountry);
                 int startIndCoin = currLine.indexOf("geobytescurrencycode") + 23;
-                int endIndCoin = currLine.indexOf("\"",startIndCoin);
+                int endIndCoin = currLine.indexOf("\"", startIndCoin);
                 String coin = "";
                 if (!(endIndCoin - startIndCoin == 0))
                     coin = currLine.substring(startIndCoin, endIndCoin);
-                int startIndPop= currLine.indexOf("geobytespopulation") + 21;
-                int endIndPop = currLine.indexOf("\"",startIndPop);
+                int startIndPop = currLine.indexOf("geobytespopulation") + 21;
+                int endIndPop = currLine.indexOf("\"", startIndPop);
                 String population = "";
                 if (!(endIndPop - startIndPop == 0))
                     population = currLine.substring(startIndPop, endIndPop);
-                if(!country.equals(""))
+                if (!country.equals(""))
                     currCityData += country + ";";
-                if(!coin.equals(""))
+                if (!coin.equals(""))
                     currCityData += coin + ";";
-                if(!population.equals("")) {
+                if (!population.equals("")) {
                     population = parse.regularNumberTerms2(population, "");
                     currCityData += population + ";";
                 }
             }
             br.close();
-        } catch (IOException e) { }
+        } catch (IOException e) {
+        }
         return currCityData;
     }
 
@@ -627,7 +632,7 @@ public class Indexer {
         BufferedWriter bf = null;
         if (!dicOfDictionaries.exists())
             dicOfDictionaries.mkdir();
-        File fileOfDictionary = new File(pathOfDic + cityOrNot +".txt");
+        File fileOfDictionary = new File(pathOfDic + cityOrNot + ".txt");
         if (!fileOfDictionary.exists()) {
             try {
                 fileOfDictionary.createNewFile();
@@ -641,6 +646,7 @@ public class Indexer {
 
     /**
      * dequeue the min line from pq and write the line to the united post file.
+     *
      * @param linesPQ - pq of lines
      * @param br      - buffer reader for all the temp postings
      *                return- combined line.
@@ -688,18 +694,19 @@ public class Indexer {
         String T1 = cutTheTerm(l1).toLowerCase();
         String T2 = cutTheTerm(l2).toLowerCase();
         if (Pattern.matches("[a-zA-Z]+", T1) && Pattern.matches("[a-zA-Z]+", T2)) {
-            if ((((T1.length())<l1.length()-1) && T2.charAt(0) <= 122 && T2.charAt(0) >= 97)) {
+            if ((((T1.length()) < l1.length() - 1) && T2.charAt(0) <= 122 && T2.charAt(0) >= 97)) {
                 l1 = l1.substring(T1.length() + 1);
                 return l2 + ";" + l1;
             }
         }
-        if(T2.length()<(l2.length()-1))
+        if (T2.length() < (l2.length() - 1))
             l2 = l2.substring(T2.length() + 1);
         return l1 + ";" + l2;
     }
 
     /**
      * insert to the PQ the line from the br array at index (index).
+     *
      * @param br    - array of buffer readers
      * @param index -
      */
@@ -707,7 +714,7 @@ public class Indexer {
         String line = null;
         try {
             line = br[index].readLine();
-            if(line==null) {
+            if (line == null) {
                 br[index].close();
                 postings[index].delete();
             }
@@ -726,6 +733,7 @@ public class Indexer {
 
     /**
      * reset the posting ,the dictionary file and the memory of the program
+     *
      * @return true if the reset succeed' else return false
      */
     public boolean reset() {
@@ -734,8 +742,8 @@ public class Indexer {
         for (File file : filesInPathTo) {
             if (file.isDirectory() && (file.getName().equals("WithoutStemming") || file.getName().equals("WithStemming")) && file.listFiles().length > 0)
                 recDelete(file.listFiles());
-            if(file.isDirectory() && (file.getName().equals("WithoutStemming") || file.getName().equals("WithStemming")))
-               file.delete();
+            if (file.isDirectory() && (file.getName().equals("WithoutStemming") || file.getName().equals("WithStemming")))
+                file.delete();
         }
         System.gc();
         return true;
@@ -751,6 +759,7 @@ public class Indexer {
 
     /**
      * Dictionary of the terms : term, tf overall
+     *
      * @return the dictionary of the terms
      */
     public List<String> displayDictionary(boolean toStem) {
@@ -769,7 +778,7 @@ public class Indexer {
             while (line != null && line != "") {
                 String[] splitByTerm = line.split(":");
                 String[] splitByTF = splitByTerm[1].split(";");
-                dictionaryFromDisk.add(splitByTerm[0]+";"+splitByTF[1]);
+                dictionaryFromDisk.add(splitByTerm[0] + ";" + splitByTF[1]);
                 line = bf.readLine();
             }
             return dictionaryFromDisk;
@@ -783,6 +792,7 @@ public class Indexer {
 
     /**
      * load the dictionary from the disk to the memory
+     *
      * @return true if the loading succeed, else retutn false
      */
     public boolean loadDictionaryFromDiskToMemory(boolean toStem) {

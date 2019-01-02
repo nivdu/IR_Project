@@ -8,32 +8,33 @@ import java.util.*;
 public class Searcher {
     private Parse parse;
     private Ranker ranker;
-    private HashMap<String,String[]> dictionaryPosting; //df,tf_overall,pointerToPosting
+    private HashMap<String, String[]> dictionaryPosting; //df,tf_overall,pointerToPosting
     private Mutex mutex = new Mutex();
 
 
-    public Searcher(Parse parse){
+    public Searcher(Parse parse) {
         this.parse = parse;
     }
 
 
     /**
      * Parse the query and return HashMap of all the documents relevant to the query and their ranks.
+     *
      * @param query
      * @param toStem
      * @param pathTo
      * @param chosenCities
      * @return
      */
-    public HashMap<String,Double> runQuery(Query query, boolean toStem, String pathTo, List<String> chosenCities) {
-        HashSet<String> citiesDocs = docsOfCities(chosenCities,toStem,pathTo);
+    public HashMap<String, Double> runQuery(Query query, boolean toStem, String pathTo, List<String> chosenCities) {
+        HashSet<String> citiesDocs = docsOfCities(chosenCities, toStem, pathTo);
         ArrayList<QueryWord> listOfWords = new ArrayList<>();
         query.setQuerySplited(query.getData().split(" |\\\n|\\--|\\(|\\)|\\[|\\]|\\)|\\(|\\}|\\{|\\&|\\}|\\:|\\||\\?|\\!|\\}|\\_|\\@|\\'\'|\\;|\\\""));
         HashMap<String, int[]> queryTermsTF = parse.parseMainFunc(null, query);
         HashSet<String> allRelevantDocsInPosting = new HashSet<>();
-        boolean isLoad = dictionaryPosting!=null;
+        boolean isLoad = dictionaryPosting != null;
         mutex.lock();
-        if (!isLoad){
+        if (!isLoad) {
             loadDictionaryFromDisk(toStem, pathTo);
         }
         mutex.unlock();
@@ -45,10 +46,9 @@ public class Searcher {
         String termLikeDic = "";
         //foreach word in query
         for (String term : keys) {
-            if(dictionaryPosting.containsKey(term.toLowerCase())) {
+            if (dictionaryPosting.containsKey(term.toLowerCase())) {
                 termLikeDic = term.toLowerCase();
-            }
-            else if(dictionaryPosting.containsKey(term.toUpperCase()))
+            } else if (dictionaryPosting.containsKey(term.toUpperCase()))
                 termLikeDic = term.toUpperCase();
             else
                 continue;
@@ -73,13 +73,12 @@ public class Searcher {
                     if (citiesDocs == null) {
                         docsOfWord.put(docIDTFTitle[0], tfTitle);//docID,TF,Title
                         allRelevantDocsInPosting.add(docIDTFTitle[0]);
-                    }
-                    else if (citiesDocs.contains(docIDTFTitle[0])) {
+                    } else if (citiesDocs.contains(docIDTFTitle[0])) {
                         docsOfWord.put(docIDTFTitle[0], tfTitle);//docID,TF,Title
                         allRelevantDocsInPosting.add(docIDTFTitle[0]);
                     }
                 }
-                QueryWord queryWord = new QueryWord(termLikeDic, docsOfWord, queryTermsTF.get(term)[0], Integer.parseInt(dfTfPointer[0]),tfOverAll);
+                QueryWord queryWord = new QueryWord(termLikeDic, docsOfWord, queryTermsTF.get(term)[0], Integer.parseInt(dfTfPointer[0]), tfOverAll);
                 listOfWords.add(queryWord);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -87,16 +86,17 @@ public class Searcher {
                 e.printStackTrace();
             }
         }
-        HashMap<String,Double> test = ranker.RankQueryDocs(listOfWords, allRelevantDocsInPosting);
+        HashMap<String, Double> test = ranker.RankQueryDocs(listOfWords, allRelevantDocsInPosting);
         return test;
     }
 
 
     /**
      * Get a List of chosen cities by the user  and return the documents that connect to these cities
+     *
      * @param chosenCities - list of the chosen cities by user
-     * @param toStem - true if to do stemming, else false
-     * @param pathTo - path to create
+     * @param toStem       - true if to do stemming, else false
+     * @param pathTo       - path to create
      * @return - all the DOCID of the relevant documents.
      */
     private HashSet<String> docsOfCities(List<String> chosenCities, boolean toStem, String pathTo) {
@@ -145,8 +145,8 @@ public class Searcher {
      * @param pathTo - path to create to
      * @return all the cities and their pointers to the cities posting
      */
-        private HashMap<String, String> loadCitiesDictionaryFromDisk(boolean toStem, String pathTo) {
-        HashMap<String,String> cityAndPointer = new HashMap<>();
+    private HashMap<String, String> loadCitiesDictionaryFromDisk(boolean toStem, String pathTo) {
+        HashMap<String, String> cityAndPointer = new HashMap<>();
         String pathToCreate = "";
         if (toStem) {
             pathToCreate = pathTo + "\\WithStemming";
@@ -158,10 +158,10 @@ public class Searcher {
             line = bf.readLine();
             while (line != null && line != "") {
                 String[] splitedLineInDicByTerm = line.split(":|\\;");
-                if(splitedLineInDicByTerm.length<2)
+                if (splitedLineInDicByTerm.length < 2)
                     System.out.println("problem in size of cityDictionary");
-                cityAndPointer.put(splitedLineInDicByTerm[0],splitedLineInDicByTerm[splitedLineInDicByTerm.length-1]);//city,pointer
-                line=bf.readLine();
+                cityAndPointer.put(splitedLineInDicByTerm[0], splitedLineInDicByTerm[splitedLineInDicByTerm.length - 1]);//city,pointer
+                line = bf.readLine();
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -173,11 +173,12 @@ public class Searcher {
 
     /**
      * Responsible for loading the dictionary from disk
+     *
      * @param toStem - true if to do Stemming, else false
      * @param pathTo - path to create to
      * @return - true if succeed, else return false
      */
-    public boolean loadDictionaryFromDisk(boolean toStem,String pathTo) {
+    public boolean loadDictionaryFromDisk(boolean toStem, String pathTo) {
         dictionaryPosting = new HashMap<>();
         try {
             String pathToCreate;
@@ -190,7 +191,7 @@ public class Searcher {
             line = bf.readLine();
             while (line != null && line != "") {
                 String[] splitedLineInDictionaryByTerm = line.split(":");
-                if(splitedLineInDictionaryByTerm.length<2)
+                if (splitedLineInDictionaryByTerm.length < 2)
                     System.out.println("problem line 216 Searcher");
                 String[] splitedLineInDictionary = splitedLineInDictionaryByTerm[1].split(";");
                 if (splitedLineInDictionary == null) return false;
@@ -212,12 +213,13 @@ public class Searcher {
 
     /**
      * responsible for loading the docs file from disk
+     *
      * @param toStem - true if to do Stemming, else false
      * @param pathTo - path to create to
      * @return all the docId and it's document object
      */
     public HashMap<String, document> loadDocsFile(boolean toStem, String pathTo) {
-            String pathToCreate;
+        String pathToCreate;
         if (toStem) {
             pathToCreate = pathTo + "\\WithStemming";
         } else pathToCreate = pathTo + "\\WithoutStemming";
@@ -243,12 +245,11 @@ public class Searcher {
     /**
      * remove the dictionary posting
      */
-    public void clearDic(){
-            dictionaryPosting.clear();
+    public void clearDic() {
+        dictionaryPosting.clear();
     }
 
     /**
-     *
      * @param toStem - true if to do Stemming, else false
      * @param pathTo - path to create to
      * @return HashSet of all the cities in the corpus
@@ -257,18 +258,18 @@ public class Searcher {
         HashSet<String> cities = new HashSet<>();
         String path = "";
         if (toStem) {
-            path= pathTo + "\\WithStemming\\Dictionaries\\cityDictionary.txt";
-        } else path= pathTo + "\\WithoutStemming\\Dictionaries\\cityDictionary.txt";
-        File fileCityDictionary = new File (path);
-        if(!fileCityDictionary.exists()){
+            path = pathTo + "\\WithStemming\\Dictionaries\\cityDictionary.txt";
+        } else path = pathTo + "\\WithoutStemming\\Dictionaries\\cityDictionary.txt";
+        File fileCityDictionary = new File(path);
+        if (!fileCityDictionary.exists()) {
             System.out.println("line 261 searcher");
         }
         try {
-            BufferedReader br= new BufferedReader(new FileReader(fileCityDictionary));
+            BufferedReader br = new BufferedReader(new FileReader(fileCityDictionary));
             String line = br.readLine();
             while (line != null && line != "") {
                 String[] splitedLineByCity = line.split(":");
-                if(splitedLineByCity.length<2)
+                if (splitedLineByCity.length < 2)
                     System.out.println("problem in size of cityDictionary");
                 cities.add(splitedLineByCity[0]);
                 line = br.readLine();
@@ -279,17 +280,16 @@ public class Searcher {
             e.printStackTrace();
         }
 
-        return  cities;
+        return cities;
     }
 
 
     /**
-     *
      * @param docID
      * @param pathTo
      * @param toStem
      */
-    public HashMap<String,Double> getEntities(String docID, String pathTo, boolean toStem){
-        return ranker.getEntities(docID,pathTo,toStem);
+    public HashMap<String, Double> getEntities(String docID, String pathTo, boolean toStem) {
+        return ranker.getEntities(docID, pathTo, toStem);
     }
 }

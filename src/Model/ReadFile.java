@@ -173,35 +173,6 @@ public class ReadFile {
                 queryData = queryData.replace("/", " ");
                 queryData = queryData.replace(":", " ");
                 queryData = queryData.replace(")", " ");
-//                queryData = queryData.replace("documents", "");
-//                queryData = queryData.replace("discussing", "");
-//                queryData = queryData.replace("Discussing", "");
-//                queryData = queryData.replace("Documents", "");
-//                queryData = queryData.replace("Relevant", "");
-//                queryData = queryData.replace("relevant", "");
-//                queryData = queryData.replace("non-relevant", "");
-//                queryData = queryData.replace("Non-Relevant", "");
-//                queryData = queryData.replace("Identify", "");
-//                queryData = queryData.replace("identify", "");
-//                queryData = queryData.replace("document", "");
-//                queryData = queryData.replace("Document", "");
-//                queryData = queryData.replace("discuss", "");
-//                queryData = queryData.replace("concerns", "");
-//                queryData = queryData.replace("concern", "");
-//                queryData = queryData.replace("information", "");
-//                queryData = queryData.replace("Information", "");
-//                queryData = queryData.replace("Find", "");
-//                queryData = queryData.replace("discuss", "");
-//                queryData = queryData.replace("issues", "");
-//                queryData = queryData.replace("following", "");
-//                queryData = queryData.replace("- ", " ");
-//                queryData = queryData.replace(",", " ");
-//                queryData = queryData.replace(".", " ");
-//                queryData = queryData.replace("?", " ");
-//                queryData = queryData.replace("/", " ");
-//                queryData = queryData.replace(":", " ");
-//                queryData = queryData.replace(")", " ");
-
                 if (tookDesc && !finish)
                     queryTitle += queryData + " ";
                 if (tookNarrative && !tookDesc && !finish)
