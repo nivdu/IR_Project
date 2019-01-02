@@ -28,12 +28,10 @@ public class Searcher {
     public HashMap<String,Double> runQuery(Query query, boolean toStem, String pathTo, List<String> chosenCities) {
         HashSet<String> citiesDocs = docsOfCities(chosenCities,toStem,pathTo);
         ArrayList<QueryWord> listOfWords = new ArrayList<>();
-        query.setQuerySplited(query.getData().split(" "));
-        mutex.lock();
+        query.setQuerySplited(query.getData().split(" |\\\n|\\--|\\(|\\)|\\[|\\]|\\)|\\(|\\}|\\{|\\&|\\}|\\:|\\||\\?|\\!|\\}|\\_|\\@|\\'\'|\\;|\\\""));
         HashMap<String, int[]> queryTermsTF = parse.parseMainFunc(null, query);
-        mutex.unlock();
         HashSet<String> allRelevantDocsInPosting = new HashSet<>();
-        boolean isLoad = dictionaryPosting!=null;//todo check
+        boolean isLoad = dictionaryPosting!=null;
         mutex.lock();
         if (!isLoad){
             loadDictionaryFromDisk(toStem, pathTo);
@@ -52,9 +50,11 @@ public class Searcher {
             }
             else if(dictionaryPosting.containsKey(term.toUpperCase()))
                 termLikeDic = term.toUpperCase();
-            else continue;
+            else
+                continue;
             String[] dfTfPointer = dictionaryPosting.get(termLikeDic);
             String pointerToPosting = dfTfPointer[2];
+            String tfOverAll = dfTfPointer[1];
             long pointer = Long.valueOf(pointerToPosting).longValue();
             try {
                 RandomAccessFile raf = new RandomAccessFile(pathToCreate + "/Postings/unitedPosting.txt", "rw");
@@ -79,7 +79,7 @@ public class Searcher {
                         allRelevantDocsInPosting.add(docIDTFTitle[0]);
                     }
                 }
-                QueryWord queryWord = new QueryWord(termLikeDic, docsOfWord, queryTermsTF.get(term)[0], Integer.parseInt(dfTfPointer[0]));
+                QueryWord queryWord = new QueryWord(termLikeDic, docsOfWord, queryTermsTF.get(term)[0], Integer.parseInt(dfTfPointer[0]),tfOverAll);
                 listOfWords.add(queryWord);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -87,7 +87,7 @@ public class Searcher {
                 e.printStackTrace();
             }
         }
-        HashMap<String,Double> test = ranker.RankQueryDocs(listOfWords, allRelevantDocsInPosting);//if query like niv and loren (the campus dont contain it) this will return null. todo handle it
+        HashMap<String,Double> test = ranker.RankQueryDocs(listOfWords, allRelevantDocsInPosting);
         return test;
     }
 
@@ -113,7 +113,6 @@ public class Searcher {
         for (String city : keys) {
             String pointer = citiesAndPointer.get(city);
             long pointerLong = Long.valueOf(pointer).longValue();
-            String line = "";
             try {
                 RandomAccessFile raf = new RandomAccessFile(pathToCreate + "/citiesPosting/unitedPosting.txt", "rw");
                 raf.seek(pointerLong);

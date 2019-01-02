@@ -15,13 +15,12 @@ import java.util.concurrent.*;
 public class Model {
     private Indexer indexer;
     private Searcher searcher;
-    private Ranker ranker;//todo delete this
     private boolean loadedStem;
     private boolean loadedWithoutStem;
+
     /**
      * creating the dictionary and the posting of the inverted index
      */
-
     public boolean generateInvertedIndex(String pathFrom, String pathTo, boolean toStem) {
         //check the inserted path from.
         if (!checkIfLegalPaths(pathFrom, pathTo))
@@ -246,22 +245,22 @@ public class Model {
     }
 
     /**
-     * can call only after inverted index is created//todo disable this functions (buttons) untill create inverted index.
+     * can call only after inverted index is created, main function of rank query.
      *
-     * @param query
-     * @return
+     * @param query - query string from the user.
+     * @return -  Return the docs order by ranks
      */
     public HashMap<String,Double> runQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic,boolean toSaveResults,String pathForResults) {
         try {
             long Stime = System.currentTimeMillis();
-            if(toStem && !loadedStem){
+            if (toStem && !loadedStem) {
                 Alert chooseFile = new Alert(Alert.AlertType.ERROR);
                 chooseFile.setHeaderText("load dictionary before query");
                 chooseFile.setContentText("You must load again after choose withStem and then run a query!");
                 chooseFile.show();
                 return null;
             }
-            if(!toStem && !loadedWithoutStem){
+            if (!toStem && !loadedWithoutStem) {
                 Alert chooseFile = new Alert(Alert.AlertType.ERROR);
                 chooseFile.setHeaderText("load dictionary before query");
                 chooseFile.setContentText("You must load again after choose withoutStem and then run a query!");
@@ -270,9 +269,8 @@ public class Model {
             }
             //runQueryFile("", toStem, pathFrom, pathTo, semantic);
             long Ftime = System.currentTimeMillis();
-            System.out.println((Ftime-Stime)/1000);
-        }
-        catch (Exception e){
+            System.out.println((Ftime - Stime) / 1000);
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -312,6 +310,12 @@ public class Model {
         return queryResults;
     }
 
+    /**
+     * can call only after inverted index is created, main function of rank query.
+     *
+     * @param pathQueryFile - path of the query file.
+     * @return -  Return the docs order by ranks
+     */
     public HashMap<Query, HashMap<String, Double>> runQueryFile(String pathQueryFile,boolean toStem, String pathFrom, String pathTo, boolean semantic,List<String> citiesFromViewList,boolean toSaveResults,String pathForResults) throws IOException, InterruptedException {
         if (!checkIfLegalPaths(pathFrom, pathTo))
             return null;
@@ -321,8 +325,6 @@ public class Model {
         //HashMap<String,String> queriesAndDocs = new HashMap<>();
         ArrayList<Query> queriesArr = readfile.readQueryFile(pathQueryFile, semantic);
         final ExecutorService executor = Executors.newFixedThreadPool(4); // it's just an arbitrary number
-//        final List<Future<?>> futures = new ArrayList<>();
-        Mutex m1 = new Mutex();
         final List<Future<?>> futures = new ArrayList<>();
         HashMap<Query, HashMap<String, Double>> ttt = new HashMap<Query, HashMap<String, Double>>();
         Queue<Query> QQ = new LinkedList<Query>();
@@ -366,8 +368,12 @@ public class Model {
         //
         return ttt;
     }
-//            HashMap<String, Double> queryResults = searcher.runQuery(query, toStem, pathTo, null);//todo maybe object of queryAns
-//            todo if button save results pressed{
+  
+  
+    /**
+     * Write to text file the 50 best match document for each query, write it for trecval style.
+     */
+    
     public void writeToRes(String pathForResults, HashMap<String, Double> queryResults, Query query) throws IOException {
                 File resultsFile;
                 resultsFile = new File(pathForResults + "\\QueryResults.txt");
@@ -392,7 +398,15 @@ public class Model {
             //todo insert into priority Q and every iteration at loop write to fileAt pathTo : queryID:docID1,docID2,....,docIDN. V
             //todo do something with the list because the next loop will override it. V
         }
+      
 
+    /**
+     * if one of the paths isn't legal show alert and return false, else return true.
+     *
+     * @param pathFrom - path to take from
+     * @param pathTo   - path to write result to
+     * @return - true if both of the strings are legal paths, else false.
+     */
     private boolean checkIfLegalPaths(String pathFrom, String pathTo) {
         File checkStop_Words = new File(pathFrom + "//stop_words.txt");
         if (!checkStop_Words.exists()) {
@@ -415,11 +429,10 @@ public class Model {
     }
 
     public HashSet<String> setCities(String pathTo, boolean toStem) {
-        return searcher.setCities(pathTo,toStem);
+        return searcher.setCities(pathTo, toStem);
     }
-
+  
     public HashMap<String,Double> getEntities(String docID, String pathTo, boolean toStem){
         return searcher.getEntities(docID,pathTo,toStem);
     }
-
 }

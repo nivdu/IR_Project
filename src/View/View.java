@@ -195,16 +195,12 @@ public class View {
             BrowseQueryFile.setDisable(false);
             BrowseQueryPath.setDisable(false);
         }
-//        else{
-//            showAlert(Alert.AlertType.ERROR, "Load","Load Failed!");
-//        }
     }
 
     @FXML
     private void Display(ActionEvent event) throws IOException {
         List<String> dictionary= controller.Display(stemming.isSelected(),pathTo.getText());
         if(dictionary == null){
-//            showAlert(Alert.AlertType.ERROR, "Display","Display Failed!");
             return;
         }
         ListView<String> listView = new ListView<String>();
@@ -343,7 +339,6 @@ public class View {
             }
         }
         HashMap<String,Double> docsAndRank = controller.RunQuery(queryText.getText(),stemming.isSelected(), pathTo.getText(), pathFrom.getText(), citiesFromViewList, semantic.isSelected(),saveResults.isSelected(),pathResults.getText());
-
         final ObservableList<MyDataType> docsList = FXCollections.observableArrayList();
         Set<String> keys = docsAndRank.keySet();
         for (String doc : keys) {
