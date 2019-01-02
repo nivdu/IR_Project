@@ -2,7 +2,6 @@ package Model;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
-import sun.awt.Mutex;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -246,13 +245,11 @@ public class Model {
 
     /**
      * can call only after inverted index is created, main function of rank query.
-     *
      * @param query - query string from the user.
      * @return -  Return the docs order by ranks
      */
     public HashMap<String, Double> runQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic, boolean toSaveResults, String pathForResults) {
         try {
-            long Stime = System.currentTimeMillis();
             if (toStem && !loadedStem) {
                 Alert chooseFile = new Alert(Alert.AlertType.ERROR);
                 chooseFile.setHeaderText("load dictionary before query");
@@ -267,14 +264,9 @@ public class Model {
                 chooseFile.show();
                 return null;
             }
-            //runQueryFile("", toStem, pathFrom, pathTo, semantic);
-            long Ftime = System.currentTimeMillis();
-            System.out.println((Ftime - Stime) / 1000);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-//        int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
         //check the inserted path from.
         if (!checkIfLegalPaths(pathFrom, pathTo))
             return null;
@@ -286,7 +278,6 @@ public class Model {
         }
         Query currQuery = new Query(query, "111");
         HashMap<String, Double> queryResults = searcher.runQuery(currQuery, toStem, pathTo, citiesChosen);
-
         if (toSaveResults) {
             try {
                 File file = new File(pathForResults);
@@ -312,17 +303,30 @@ public class Model {
 
     /**
      * can call only after inverted index is created, main function of rank query.
-     *
      * @param pathQueryFile - path of the query file.
      * @return -  Return the docs order by ranks
      */
     public HashMap<Query, HashMap<String, Double>> runQueryFile(String pathQueryFile, boolean toStem, String pathFrom, String pathTo, boolean semantic, List<String> citiesFromViewList, boolean toSaveResults, String pathForResults) throws IOException, InterruptedException {
+        if (toStem && !loadedStem) {
+            Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+            chooseFile.setHeaderText("load dictionary before query");
+            chooseFile.setContentText("You must load again after choose withStem and then run a query!");
+            chooseFile.show();
+            return null;
+        }
+        if (!toStem && !loadedWithoutStem) {
+            Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+            chooseFile.setHeaderText("load dictionary before query");
+            chooseFile.setContentText("You must load again after choose withoutStem and then run a query!");
+            chooseFile.show();
+            return null;
+        }
+        //check the inserted path from.
         if (!checkIfLegalPaths(pathFrom, pathTo))
             return null;
         if (!checkIfDirectoryWithOrWithoutStemExist(toStem, pathTo))
             return null;
         ReadFile readfile = new ReadFile(pathQueryFile);
-        //HashMap<String,String> queriesAndDocs = new HashMap<>();
         ArrayList<Query> queriesArr = readfile.readQueryFile(pathQueryFile, semantic);
         final ExecutorService executor = Executors.newFixedThreadPool(4); // it's just an arbitrary number
         final List<Future<?>> futures = new ArrayList<>();
@@ -361,11 +365,9 @@ public class Model {
                 for (int i = 0; i < size; i++) {
                     Query tempQ = QQ.remove();
                     writeToRes(pathForResults, ttt.get(tempQ), tempQ);
-
                 }
             }
         }
-        //
         return ttt;
     }
 
@@ -381,22 +383,17 @@ public class Model {
             resultsFile.createNewFile();
         }
         BufferedWriter bw = new BufferedWriter(new FileWriter(resultsFile, true));
-        //todo pointer to entities
-        //todo create line of entity : DocId:rank\n
         int count = 0;
         for (Map.Entry<String, Double> aa : queryResults.entrySet()) {
             String writeMe = query.getQueryID() + " 0 " + aa.getKey() + " 1 42.38 mt\n";
             count++;
             //write only the first 50 docs by rank order
-            if (count <= 50) {//todo cancel the "//"
+            if (count <= 50) {
                 bw.write(writeMe);
             }
         }
         bw.flush();
         bw.close();
-        //todo write it to the gui or something
-        //todo insert into priority Q and every iteration at loop write to fileAt pathTo : queryID:docID1,docID2,....,docIDN. V
-        //todo do something with the list because the next loop will override it. V
     }
 
 
