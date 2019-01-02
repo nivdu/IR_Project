@@ -9,13 +9,22 @@ public class Searcher {
     private Parse parse;
     private Ranker ranker;
     private HashMap<String,String[]> dictionaryPosting; //df,tf_overall,pointerToPosting
-    Mutex mutex = new Mutex();
+    private Mutex mutex = new Mutex();
 
 
     public Searcher(Parse parse){
         this.parse = parse;
     }
 
+
+    /**
+     * Parse the query and return HashMap of all the documents relevant to the query and their ranks.
+     * @param query
+     * @param toStem
+     * @param pathTo
+     * @param chosenCities
+     * @return
+     */
     public HashMap<String,Double> runQuery(Query query, boolean toStem, String pathTo, List<String> chosenCities) {
         HashSet<String> citiesDocs = docsOfCities(chosenCities,toStem,pathTo);
         ArrayList<QueryWord> listOfWords = new ArrayList<>();
@@ -59,12 +68,16 @@ public class Searcher {
                     if (docIDTFTitle.length < 3)
                         System.out.println("problem line 48 Searcher");
                     int[] tfTitle = {Integer.parseInt(docIDTFTitle[1]), Integer.parseInt(docIDTFTitle[2])};//TF overall, title
-                    docsOfWord.put(docIDTFTitle[0], tfTitle);//docID,TF,Title
+
                     //Insert docID to HashSet
-                    if (citiesDocs == null)
+                    if (citiesDocs == null) {
+                        docsOfWord.put(docIDTFTitle[0], tfTitle);//docID,TF,Title
                         allRelevantDocsInPosting.add(docIDTFTitle[0]);
-                    else if (citiesDocs.contains(docIDTFTitle[0]))
+                    }
+                    else if (citiesDocs.contains(docIDTFTitle[0])) {
+                        docsOfWord.put(docIDTFTitle[0], tfTitle);//docID,TF,Title
                         allRelevantDocsInPosting.add(docIDTFTitle[0]);
+                    }
                 }
                 QueryWord queryWord = new QueryWord(termLikeDic, docsOfWord, queryTermsTF.get(term)[0], Integer.parseInt(dfTfPointer[0]),tfOverAll);
                 listOfWords.add(queryWord);
@@ -78,6 +91,14 @@ public class Searcher {
         return test;
     }
 
+
+    /**
+     * Get a List of chosen cities by the user  and return the documents that connect to these cities
+     * @param chosenCities - list of the chosen cities by user
+     * @param toStem - true if to do stemming, else false
+     * @param pathTo - path to create
+     * @return - all the DOCID of the relevant documents.
+     */
     private HashSet<String> docsOfCities(List<String> chosenCities, boolean toStem, String pathTo) {
         if (chosenCities == null || chosenCities.size() == 0)
             return null;
@@ -93,7 +114,7 @@ public class Searcher {
             String pointer = citiesAndPointer.get(city);
             long pointerLong = Long.valueOf(pointer).longValue();
             try {
-                RandomAccessFile raf = new RandomAccessFile(pathToCreate + "/citiesPostings/unitedPosting.txt", "rw");
+                RandomAccessFile raf = new RandomAccessFile(pathToCreate + "/citiesPosting/unitedPosting.txt", "rw");
                 raf.seek(pointerLong);
                 String linePosting = raf.readLine();
                 String[] lineSplitedByCity = linePosting.split(":");
@@ -103,8 +124,6 @@ public class Searcher {
                 docsInCities = new HashSet<>();
                 for (String doc : docsSplitedInLine) {
                     String[] docIDTFTitle = doc.split(",");
-                    if (docIDTFTitle.length < 3)
-                        System.out.println("line 98 Searcher");
                     docsInCities.add(docIDTFTitle[0]);
                 }
             } catch (FileNotFoundException e) {
@@ -118,12 +137,13 @@ public class Searcher {
 
 
     /**
+     * Responsible for loading the city dictionary from disk
      * First String is name of city
      * Second string is pointer to cityPosting
      *
-     * @param toStem
-     * @param pathTo
-     * @return
+     * @param toStem - true if to do Stemming, else false
+     * @param pathTo - path to create to
+     * @return all the cities and their pointers to the cities posting
      */
         private HashMap<String, String> loadCitiesDictionaryFromDisk(boolean toStem, String pathTo) {
         HashMap<String,String> cityAndPointer = new HashMap<>();
@@ -151,6 +171,12 @@ public class Searcher {
         return cityAndPointer;
     }
 
+    /**
+     * Responsible for loading the dictionary from disk
+     * @param toStem - true if to do Stemming, else false
+     * @param pathTo - path to create to
+     * @return - true if succeed, else return false
+     */
     public boolean loadDictionaryFromDisk(boolean toStem,String pathTo) {
         dictionaryPosting = new HashMap<>();
         try {
@@ -175,7 +201,6 @@ public class Searcher {
                 dictionaryPosting.put(splitedLineInDictionaryByTerm[0], dfPostingTF);
                 line = bf.readLine();
             }
-//            this.ranker = new Ranker(loadDocsFile(toStem, pathToCreate));
             return true;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -185,6 +210,12 @@ public class Searcher {
         return false;
     }
 
+    /**
+     * responsible for loading the docs file from disk
+     * @param toStem - true if to do Stemming, else false
+     * @param pathTo - path to create to
+     * @return all the docId and it's document object
+     */
     public HashMap<String, document> loadDocsFile(boolean toStem, String pathTo) {
             String pathToCreate;
         if (toStem) {
@@ -199,11 +230,11 @@ public class Searcher {
             objIS.close();
             fis.close();
         } catch (FileNotFoundException e) {
-            System.out.println("problem in writeDocsDataToDisk function (Model");
+            System.out.println("problem in writeDocsDataToDisk function (Searcher)");
         } catch (IOException e) {
-            System.out.println("problem in writeDocsDataToDisk function (Model");
+            System.out.println("problem in writeDocsDataToDisk function (Searcher)");
         } catch (ClassNotFoundException e) {
-            System.out.println("problem in writeDocsDataToDisk function (Model");
+            System.out.println("problem in writeDocsDataToDisk function (Searcher)");
         }
         this.ranker = new Ranker(docsHash);
         return docsHash;
@@ -217,19 +248,12 @@ public class Searcher {
     }
 
     /**
-     * cut the Query string by tags
-     * @param query - Query to cut
-     * @return - String array of the Query contents.
+     *
+     * @param toStem - true if to do Stemming, else false
+     * @param pathTo - path to create to
+     * @return HashSet of all the cities in the corpus
      */
-    private document queryCut(String query){
-        if(query==null || query.equals(""))
-            return null;
-        document queryDoc = null;
-        return queryDoc;
-    }
-
-
-    public HashSet<String> setCities(String pathTo, boolean toStem) {
+    public HashSet<String> setCities(String pathTo, boolean toStem) {//todo check function
         HashSet<String> cities = new HashSet<>();
         String path = "";
         if (toStem) {
@@ -256,5 +280,16 @@ public class Searcher {
         }
 
         return  cities;
+    }
+
+
+    /**
+     *
+     * @param docID
+     * @param pathTo
+     * @param toStem
+     */
+    public HashMap<String,Double> getEntities(String docID, String pathTo, boolean toStem){
+        return ranker.getEntities(docID,pathTo,toStem);
     }
 }

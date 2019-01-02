@@ -250,7 +250,7 @@ public class Model {
      * @param query - query string from the user.
      * @return -  Return the docs order by ranks
      */
-    public boolean runQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic) {
+    public HashMap<String,Double> runQuery(String query, boolean toStem, String pathTo, String pathFrom, List<String> citiesChosen, boolean semantic,boolean toSaveResults,String pathForResults) {
         try {
             long Stime = System.currentTimeMillis();
             if (toStem && !loadedStem) {
@@ -258,35 +258,56 @@ public class Model {
                 chooseFile.setHeaderText("load dictionary before query");
                 chooseFile.setContentText("You must load again after choose withStem and then run a query!");
                 chooseFile.show();
-                return false;
+                return null;
             }
             if (!toStem && !loadedWithoutStem) {
                 Alert chooseFile = new Alert(Alert.AlertType.ERROR);
                 chooseFile.setHeaderText("load dictionary before query");
                 chooseFile.setContentText("You must load again after choose withoutStem and then run a query!");
                 chooseFile.show();
-                return false;
+                return null;
             }
-            runQueryFile("", toStem, pathFrom, pathTo, semantic);
+            //runQueryFile("", toStem, pathFrom, pathTo, semantic);
             long Ftime = System.currentTimeMillis();
             System.out.println((Ftime - Stime) / 1000);
         } catch (Exception e) {
             e.printStackTrace();
         }
+
 //        int numberOfDocsAtCorpus = indexer.getIndexedDocNumber();
         //check the inserted path from.
         if (!checkIfLegalPaths(pathFrom, pathTo))
-            return false;
+            return null;
         if (!checkIfDirectoryWithOrWithoutStemExist(toStem, pathTo))
-            return false;
+            return null;
         //if semantic checkBox have V.
         if (semantic) {
             query += addSemanticWords(query);
         }
-        Query currQuery = new Query(query, "111", null);
-        //HashMap<String, Double> queryResults = searcher.runQuery(currQuery, toStem, pathTo, null);
+        Query currQuery = new Query(query, "111");
+        HashMap<String, Double> queryResults = searcher.runQuery(currQuery, toStem, pathTo, citiesChosen);
+
+        if(toSaveResults){
+            try {
+                File file = new File(pathForResults);
+                if (!file.exists()){
+                    Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+                    chooseFile.setHeaderText("Error with path for saving results");
+                    chooseFile.setContentText("The path you selected is not legal or not a path of directory. please choose another one. :)");
+                    chooseFile.show();
+                } else {
+                    File resultsFile = new File(pathForResults + "\\QueryResults.txt");
+                    if (resultsFile.exists())
+                        resultsFile.delete();
+                    writeToRes(pathForResults, queryResults, currQuery);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         //todo view results in gui
-        return true;
+        return queryResults;
     }
 
     /**
@@ -295,13 +316,13 @@ public class Model {
      * @param pathQueryFile - path of the query file.
      * @return -  Return the docs order by ranks
      */
-    public boolean runQueryFile(String pathQueryFile, boolean toStem, String pathFrom, String pathTo, boolean semantic) throws IOException, InterruptedException {
-        pathQueryFile = "C:\\Users\\nivdu\\Desktop\\אחזור\\פרוייקט גוגל\\מנוע חלק ב" + "\\queries.txt";//todo need to take from the user
+    public HashMap<Query, HashMap<String, Double>> runQueryFile(String pathQueryFile,boolean toStem, String pathFrom, String pathTo, boolean semantic,List<String> citiesFromViewList,boolean toSaveResults,String pathForResults) throws IOException, InterruptedException {
         if (!checkIfLegalPaths(pathFrom, pathTo))
-            return false;
+            return null;
         if (!checkIfDirectoryWithOrWithoutStemExist(toStem, pathTo))
-            return false;
+            return null;
         ReadFile readfile = new ReadFile(pathQueryFile);
+        //HashMap<String,String> queriesAndDocs = new HashMap<>();
         ArrayList<Query> queriesArr = readfile.readQueryFile(pathQueryFile, semantic);
         final ExecutorService executor = Executors.newFixedThreadPool(4); // it's just an arbitrary number
         final List<Future<?>> futures = new ArrayList<>();
@@ -310,7 +331,7 @@ public class Model {
         for (Query query : queriesArr) {
             ((LinkedList<Query>) QQ).add(query);
             Future<?> future = executor.submit(() -> {
-                HashMap<String, Double> queryResults = searcher.runQuery(query, toStem, pathTo, null);
+                HashMap<String, Double> queryResults = searcher.runQuery(query, toStem, pathTo, citiesFromViewList);//todo maybe object of queryAns
                 ttt.put(query, queryResults);
             });
             futures.add(future);
@@ -325,48 +346,59 @@ public class Model {
         futures.clear();
         executor.shutdown();
         executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.MINUTES);
-        int size = queriesArr.size();
-        for (int i = 0; i < size; i++) {
-            Query tempQ = QQ.remove();
-            writeToRes(toStem, pathTo, ttt.get(tempQ), tempQ);
-        }
-        return true;
-    }
+        if(toSaveResults) {
+            File file = new File(pathForResults);
+            if (!file.exists()){
+                Alert chooseFile = new Alert(Alert.AlertType.ERROR);
+                chooseFile.setHeaderText("Error with path for saving results");
+                chooseFile.setContentText("The path you selected is not legal or not a path of directory. please choose another one. :)");
+                chooseFile.show();
+            } else {
+                File resultsFile = new File(pathForResults + "\\QueryResults.txt");
+                if (resultsFile.exists())
+                    resultsFile.delete();
+                int size = queriesArr.size();
+                for (int i = 0; i < size; i++) {
+                    Query tempQ = QQ.remove();
+                    writeToRes(pathForResults, ttt.get(tempQ), tempQ);
 
+                }
+            }
+        }
+        //
+        return ttt;
+    }
+  
+  
     /**
      * Write to text file the 50 best match document for each query, write it for trecval style.
      */
-    public void writeToRes(boolean toStem, String pathTo, HashMap<String, Double> queryResults, Query query) throws IOException {
-        boolean pressed = true;
-        if (pressed) {
-            File resultsFile;
-            if (toStem) {
-                resultsFile = new File(pathTo + "\\WithStemming\\results.txt");
-            } else {
-                resultsFile = new File(pathTo + "\\WithoutStemming\\results.txt");
-            }
-            if (!resultsFile.exists()) {
-                resultsFile.createNewFile();
-            }
-            BufferedWriter bw = new BufferedWriter(new FileWriter(resultsFile, true));
-            //todo pointer to entities
-            //todo create line of entity : DocId:rank\n
-            int count = 0;
-            for (Map.Entry<String, Double> aa : queryResults.entrySet()) {
-                String writeMe = query.getQueryID() + " 0 " + aa.getKey() + " 1 42.38 mt\n";
-                count++;
-                //write only the first 50 docs by rank order
-                if (count <= 50) {
-                    bw.write(writeMe);
+    
+    public void writeToRes(String pathForResults, HashMap<String, Double> queryResults, Query query) throws IOException {
+                File resultsFile;
+                resultsFile = new File(pathForResults + "\\QueryResults.txt");
+                if (!resultsFile.exists()) {
+                    resultsFile.createNewFile();
                 }
-            }
-            bw.flush();
-            bw.close();
+                BufferedWriter bw = new BufferedWriter(new FileWriter(resultsFile, true));
+                //todo pointer to entities
+                //todo create line of entity : DocId:rank\n
+                int count = 0;
+                for (Map.Entry<String, Double> aa : queryResults.entrySet()) {
+                    String writeMe = query.getQueryID() +" 0 " + aa.getKey() + " 1 42.38 mt\n";
+                    count++;
+                    //write only the first 50 docs by rank order
+                    if (count <= 50) {//todo cancel the "//"
+                        bw.write(writeMe);
+                    }
+                }
+                bw.flush();
+                bw.close();
+            //todo write it to the gui or something
+            //todo insert into priority Q and every iteration at loop write to fileAt pathTo : queryID:docID1,docID2,....,docIDN. V
+            //todo do something with the list because the next loop will override it. V
         }
-        //todo write it to the gui or something
-        //todo insert into priority Q and every iteration at loop write to fileAt pathTo : queryID:docID1,docID2,....,docIDN. V
-        //todo do something with the list because the next loop will override it. V
-    }
+      
 
     /**
      * if one of the paths isn't legal show alert and return false, else return true.
@@ -398,5 +430,9 @@ public class Model {
 
     public HashSet<String> setCities(String pathTo, boolean toStem) {
         return searcher.setCities(pathTo, toStem);
+    }
+  
+    public HashMap<String,Double> getEntities(String docID, String pathTo, boolean toStem){
+        return searcher.getEntities(docID,pathTo,toStem);
     }
 }

@@ -207,7 +207,7 @@ public class ReadFile {
                 if (tookNarrative && !tookDesc && !finish)
                     queryTitle += queryData + " ";
                 if (finish) {
-                    queriesFromFile.add(new Query(queryTitle, queryNumber, desc));
+                    queriesFromFile.add(new Query(queryTitle, queryNumber));
                     queryNumber = "";
                     desc = "";
                     queryTitle = "";

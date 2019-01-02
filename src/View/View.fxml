@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.RowConstraints?>
 
-<GridPane alignment="center" hgap="10" vgap="10" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="View.View">
+<GridPane alignment="center" hgap="10" vgap="10" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="View.View">
     <columnConstraints>
         <ColumnConstraints />
     </columnConstraints>
@@ -34,16 +34,19 @@
                 <Button fx:id="invertIndex" layoutX="363.0" layoutY="180.0" mnemonicParsing="false" onAction="#Commit" text="Commit" />
                 <Button fx:id="reset" disable="true" layoutX="368.0" layoutY="241.0" mnemonicParsing="false" onAction="#Reset" text="Reset" />
             <Label layoutX="206.0" layoutY="312.0" />
-            <TextField fx:id="queryText" layoutX="203.0" layoutY="290.0" />
-            <Label layoutX="55.0" layoutY="294.0" text="Insert query:" />
-            <Button fx:id="runQuery" disable="true" layoutX="437.0" layoutY="287.0" mnemonicParsing="false" onAction="#RunQuery" prefHeight="32.0" prefWidth="101.0" text="Run Query" />
-            <Label layoutX="55.0" layoutY="343.0" text="Choose query file:" />
-            <Button fx:id="chooseFile" disable="true" layoutX="365.0" layoutY="336.0" mnemonicParsing="false" text="Browse" />
-            <TextField layoutX="203.0" layoutY="339.0" />
-            <CheckBox fx:id="semantic" disable="true" layoutX="437.0" layoutY="407.0" mnemonicParsing="false" text="semantic" />
-            <ListView fx:id="cities" layoutX="203.0" layoutY="389.0" prefHeight="94.0" prefWidth="172.0" />
-            <Label layoutX="50.0" layoutY="411.0" text="Choose cities:" />
-            <Button fx:id="RunQueryFile" layoutX="437.0" layoutY="336.0" mnemonicParsing="false" text="Run Query File" />
+            <TextField fx:id="queryText" layoutX="197.0" layoutY="317.0" />
+            <Label layoutX="58.0" layoutY="321.0" text="Insert query:" />
+            <Button fx:id="runQuery" disable="true" layoutX="437.0" layoutY="314.0" mnemonicParsing="false" onAction="#RunQuery" prefHeight="32.0" prefWidth="101.0" text="Run Query" />
+            <Label layoutX="58.0" layoutY="368.0" text="Choose query file:" />
+            <Button fx:id="BrowseQueryFile" disable="true" layoutX="368.0" layoutY="361.0" mnemonicParsing="false" onAction="#BrowseQueryFile" text="Browse" />
+            <TextField fx:id="QueryFileText" layoutX="197.0" layoutY="364.0" />
+            <CheckBox fx:id="semantic" disable="true" layoutX="411.0" layoutY="437.0" mnemonicParsing="false" text="semantic" />
+            <ListView fx:id="cities" layoutX="177.0" layoutY="405.0" prefHeight="75.0" prefWidth="172.0" />
+            <Button fx:id="RunQueryFile" disable="true" layoutX="437.0" layoutY="361.0" mnemonicParsing="false" onAction="#RunQueryFile" text="Run Query File" />
+            <CheckBox fx:id="saveResults" disable="true" layoutX="17.0" layoutY="280.0" mnemonicParsing="false" text="Save Query's Results" />
+            <TextField fx:id="pathResults" layoutX="197.0" layoutY="280.0" />
+            <Button fx:id="BrowseQueryPath" disable="true" layoutX="363.0" layoutY="277.0" mnemonicParsing="false" onAction="#browseResults" text="Choose path for saving results" />
+            <Label layoutX="60.0" layoutY="441.0" text="Choose cities:" />
             </children>
         </Pane>
     </children>

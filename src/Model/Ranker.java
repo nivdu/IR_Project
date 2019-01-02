@@ -261,10 +261,10 @@ public class Ranker {
 
 
     /**
-     * URL - "https://www.geeksforgeeks.org/sorting-a-hashmap-according-to-values" of sorting hashmap
-     * @param docID
-     * @param pathTo
-     * @param toStem
+     * Get the entities of a given doc
+     * @param docID - ID od current doc
+     * @param pathTo - The path to create to
+     * @param toStem - true if to do with stemming, else false.
      */
     public HashMap<String,Double> getEntities(String docID, String pathTo, boolean toStem){
         document docEntities = docs.get(docID);
@@ -312,4 +312,5 @@ public class Ranker {
         }
         return null;
     }
+
 }
