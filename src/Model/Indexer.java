@@ -238,19 +238,18 @@ public class Indexer {
             if (!entitiesFile.exists())
                 entitiesFile.createNewFile();
             BufferedWriter bw = new BufferedWriter(new FileWriter(entitiesFile, true));
-            //todo pointer to entities
             Set<String> keys = allEntities.keySet();
             //create line of entity : DocId:entity1,tf;entity2,tf...
             String lineEntity = currDoc.getDocumentID() + ": ";
             for (String entitiy : keys) {
-                lineEntity += entitiy + "," + allEntities.get(entitiy) + ";";//todo maybe change shirshur
+                lineEntity += entitiy + "," + allEntities.get(entitiy) + ";";
             }
             lineEntity += "\n";
             bw.write(lineEntity);
             bw.flush();
             bw.close();
             currDoc.setPointerToEntities(sumOfPointersInEntities);
-            sumOfPointersInEntities += lineEntity.getBytes().length;//todo naybe add another 1 to enter line
+            sumOfPointersInEntities += lineEntity.getBytes().length;
         } catch (IOException e) {
             e.printStackTrace();
         }

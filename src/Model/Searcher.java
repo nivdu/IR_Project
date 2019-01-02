@@ -255,7 +255,7 @@ public class Searcher {
      * @param pathTo - path to create to
      * @return HashSet of all the cities in the corpus
      */
-    public HashSet<String> setCities(String pathTo, boolean toStem) {//todo check function
+    public HashSet<String> setCities(String pathTo, boolean toStem) {
         HashSet<String> cities = new HashSet<>();
         String path = "";
         if (toStem) {

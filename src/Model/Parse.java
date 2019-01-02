@@ -90,7 +90,7 @@ public class Parse {
     }
 
     public document parseDoc(document doc2Parse) {
-        if(doc2Parse==null) {//todo delete this if
+        if(doc2Parse==null) {
             System.out.println("parser line 91");
             return null;
         }
@@ -171,16 +171,11 @@ public class Parse {
             }
         }
     }
-//todo change the eara
+
     /**
      * parse main function - parse the full split document and return the dicDoc dictionary contain the terms from it.
-//     * @param splitedDoc - the current doc split to tokens
-//     * @param citiesFromTags - the city names from all corpus tags ->(<F P=104>)
-//     * @param locationOfCitiesAtCurrDoc - saves each city term from the current document with the location of the city from the document file.
-//     * @param dicDoc - the current document dictionary
      * @return - the dicDoc dictionary contain the terms from the current given array.
      */
-
     public HashMap<String, int[]> parseMainFunc(document doc2Parse, Query query2Parse){
         if(doc2Parse==null && query2Parse==null) {
             System.out.println("parse line 148");
@@ -546,7 +541,7 @@ public class Parse {
             String toAdd = months.get(token) + "-" + nextT;
             addToDicDoc(dicDoc, toAdd);
             return 1;
-        } else if (months.containsKey(token) && isNumber(nextT)) {//todo maby check if only numbers without digits and dots.
+        } else if (months.containsKey(token) && isNumber(nextT)) {
             String toAdd = nextT + "-" + months.get(token);
             addToDicDoc(dicDoc, toAdd);
             return 1;

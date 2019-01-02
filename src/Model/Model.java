@@ -293,8 +293,6 @@ public class Model {
                 e.printStackTrace();
             }
         }
-
-        //todo view results in gui
         return queryResults;
     }
 
@@ -332,7 +330,7 @@ public class Model {
         for (Query query : queriesArr) {
             ((LinkedList<Query>) QQ).add(query);
             Future<?> future = executor.submit(() -> {
-                HashMap<String, Double> queryResults = searcher.runQuery(query, toStem, pathTo, citiesFromViewList);//todo maybe object of queryAns
+                HashMap<String, Double> queryResults = searcher.runQuery(query, toStem, pathTo, citiesFromViewList);
                 ttt.put(query, queryResults);
             });
             futures.add(future);
